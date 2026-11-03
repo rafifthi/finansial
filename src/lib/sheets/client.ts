@@ -30,7 +30,8 @@ export function serviceAccountCredentials(): { email: string; key: string } | nu
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const key = process.env.GOOGLE_PRIVATE_KEY;
   // Env files usually carry the PEM with escaped newlines.
-  if (email && key) return { email, key: key.replace(/\\n/g, "\n") };
+  // Hosted env UIs may keep surrounding quotes; strip them before unescaping newlines.
+  if (email && key) return { email, key: key.trim().replace(/^"|"$/g, "").replace(/\\n/g, "\n") };
   // Local-only key file; the ignore hints keep the bundler from tracing the whole project.
   const file = resolve(/*turbopackIgnore: true*/ process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE ?? DEFAULT_KEY_FILE);
   if (!existsSync(/*turbopackIgnore: true*/ file)) return null;

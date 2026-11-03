@@ -11,7 +11,9 @@ import { NumberField } from "@/components/base/number-field/number-field";
 import { toast } from "@/components/base/toast/toast";
 import { TABLE_PERMISSION } from "@/lib/auth/roles";
 import type { MoneyFormat } from "@/lib/finance/money";
+import { CategoryIdentityField } from "./category-identity-field";
 import { DateField, MoneyField, SelectField, type Option } from "./fields";
+import { InstitutionField } from "./institution-field";
 import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
 import { useBookId, useCan } from "./permissions";
 
@@ -24,7 +26,11 @@ export type FieldSpec =
   | { name: string; label: string; type: "date" }
   | { name: string; label: string; type: "month" }
   | { name: string; label: string; type: "select"; options: Option[]; allowEmpty?: string }
-  | { name: string; label: string; type: "checkbox" };
+  | { name: string; label: string; type: "checkbox" }
+  /** Category emoji + colour (writes the `emoji` and `color` columns). */
+  | { name: string; label: string; type: "identity" }
+  /** Account's bank or app, searchable, with logos. */
+  | { name: string; label: string; type: "institution" };
 
 type Values = Record<string, unknown>;
 
@@ -198,6 +204,28 @@ function EntityFormBody({
                   onChange={(x) => set(f.name, x)}
                   options={f.options}
                   allowEmpty={f.allowEmpty}
+                />
+              );
+            case "identity":
+              return (
+                <CategoryIdentityField
+                  key={f.name}
+                  name={String(values.name ?? "")}
+                  group={String(values.group ?? "")}
+                  emoji={String(values.emoji ?? "")}
+                  color={String(values.color ?? "")}
+                  onChange={(patch) => setValues((x) => ({ ...x, ...patch }))}
+                />
+              );
+            case "institution":
+              return (
+                <InstitutionField
+                  key={f.name}
+                  label={f.label}
+                  name={String(values.name ?? "")}
+                  type={(values.type as never) ?? "bank"}
+                  value={String(v ?? "")}
+                  onChange={(x) => set(f.name, x)}
                 />
               );
             case "checkbox":

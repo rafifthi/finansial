@@ -2,11 +2,23 @@
  * App-level surfaces on top of BoardUI.
  *
  * Glass: one knob, --glass (0 = solid … 1 = most glassy), set per device from
- * Settings → Appearance (see components/app/glass-preference.tsx). At 0 every
- * surface renders exactly like its solid BoardUI token.
+ * Settings → Appearance (lib/glass.ts writes it onto <html>, with
+ * data-glass="off" at 0). Every glass surface derives from the three values
+ * below, so the slider moves all of them together. At 0 a surface renders
+ * exactly like its solid BoardUI token.
  * --------------------------------------------------------------------------*/
 :root {
-  --glass: 0.6;
+  --glass: 0.6; /* lib/glass.ts DEFAULT_GLASS; the boot script overrides it before paint */
+  --glass-clarity: 42%; /* how much shows through at full glass */
+  --glass-blur: calc(var(--glass) * 22px);
+  --glass-saturate: calc(1 + var(--glass) * 0.7);
+}
+
+/* The system's Reduce transparency beats the in-app level, live. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: 0 !important;
+  }
 }
 
 /* Soft colour wash behind the glass so the blur has something to show. */
@@ -26,24 +38,42 @@ body::before {
     radial-gradient(44rem 32rem at 45% 108%, color-mix(in oklab, var(--color-chart-1) 22%, transparent), transparent 70%);
 }
 
-/* Unlayered on purpose: it must beat the bg-* utility on the same element. */
-.glass {
+/* Unlayered on purpose: it must beat the bg-* utility on the same element.
+ * Tint by setting --glass-base (the solid token the surface stands for). */
+.glass,
+.glass-cards > section {
   --glass-base: var(--color-background-primary-default);
-  background-color: color-mix(in oklab, var(--glass-base) calc(100% - var(--glass) * 42%), transparent);
-  -webkit-backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
-  backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
+  background-color: color-mix(in oklab, var(--glass-base) calc(100% - var(--glass) * var(--glass-clarity)), transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
-.glass-secondary {
+/* BoardUI stat cards render their own <section>s; glaze them from the grid. */
+.glass-secondary,
+.glass-cards > section {
   --glass-base: var(--color-background-secondary-default);
 }
 .glass-full {
   --glass-base: var(--color-background-full);
 }
-/* BoardUI stat cards render their own <section>s; glaze them from the grid. */
-.glass-cards > section {
-  background-color: color-mix(in oklab, var(--color-background-secondary-default) calc(100% - var(--glass) * 42%), transparent);
-  -webkit-backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
-  backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
+/* hover:bg-* can't reach past .glass; links and buttons opt in here instead. */
+.glass-hover:hover {
+  --glass-base: var(--color-background-primary-hover);
+}
+/* Floating, text-dense surfaces (menus, toasts) over busy content: same blur,
+ * less see-through, so rows stay legible at any level. */
+.glass-raised {
+  --glass-clarity: 24%;
+}
+/* Off means off: no backdrop pass at all (also no containing block for fixed children). */
+:root[data-glass="off"] :is(.glass, .glass-cards > section) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  :is(.glass, .glass-cards > section) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 /* Floating bulk-action bar */
@@ -59,5 +89,36 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .float-in {
     animation: none;
+  }
+}
+
+/* shadcn/ui menus (components/ui): BoardUI's menu motion, 150ms fade + scale-95
+ * + 2px blur. Radix keeps the content mounted until the exit animation ends. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    scale: 0.95;
+    filter: blur(2px);
+  }
+}
+@keyframes menu-out {
+  to {
+    opacity: 0;
+    scale: 0.95;
+    filter: blur(2px);
+  }
+}
+[data-slot$="menu-content"][data-state="open"],
+[data-slot$="menu-sub-content"][data-state="open"] {
+  animation: menu-in 150ms ease-out;
+}
+[data-slot$="menu-content"][data-state="closed"],
+[data-slot$="menu-sub-content"][data-state="closed"] {
+  animation: menu-out 150ms ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot$="menu-content"],
+  [data-slot$="menu-sub-content"] {
+    animation: none !important;
   }
 }

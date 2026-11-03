@@ -45,6 +45,8 @@ export const AccountSchema = z.object({
   name: z.string().min(1),
   type: z.enum(ACCOUNT_TYPES),
   opening_balance: z.number().default(0),
+  /** Bank / fintech id from lib/finance/institutions.ts for its logo; "" detects from the name, "none" opts out. */
+  institution: z.string().default(""),
   archived: z.boolean().default(false),
 });
 
@@ -55,7 +57,9 @@ export const CategorySchema = z.object({
   group: z.enum(CATEGORY_GROUPS),
   default_account_id: optId,
   goal_id: optId,
+  /** Identity shown wherever the category appears: a palette name (see category-icon.tsx) and an emoji. */
   color: z.string().default(""),
+  emoji: z.string().default(""),
   archived: z.boolean().default(false),
 });
 
@@ -161,6 +165,7 @@ export const TABLES = {
     name: "string",
     type: "string",
     opening_balance: "number",
+    institution: "string",
     archived: "boolean",
   }),
   categories: table("Categories", CategorySchema, {
@@ -171,6 +176,7 @@ export const TABLES = {
     default_account_id: "string",
     goal_id: "string",
     color: "string",
+    emoji: "string",
     archived: "boolean",
   }),
   budgets: table("Budgets", BudgetSchema, {
@@ -338,4 +344,6 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   /** Last day of each budget period; 31 = end of month (calendar months). */
   cutoff_day: "31",
   members: "",
+  /** "true" lets a transaction pick an account other than its category's. */
+  account_override: "false",
 };

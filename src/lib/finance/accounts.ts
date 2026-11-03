@@ -15,6 +15,9 @@ export function pocketsOf(settings: Record<string, string>): Record<CategoryGrou
 export const accountOfCategory = (c: Pick<Category, "default_account_id" | "group">, pockets: Record<CategoryGroup, string>) =>
   c.default_account_id || pockets[c.group] || "";
 
+/** Book setting: may a transaction use an account other than its category's? */
+export const overridesAllowed = (settings: Record<string, string>) => settings.account_override === "true";
+
 /** How many rows point at an account; anything non-zero needs a target to move to before deleting. */
 export interface AccountUsage {
   transactions: number;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireBookPage } from "@/auth";
 import Link from "next/link";
 import { AccountActions } from "@/components/app/account-actions";
+import { AccountLogo } from "@/components/app/account-logo";
 import { Card, EmptyState } from "@/components/app/card";
 import { EntityFormButton } from "@/components/app/entity-form";
 import { PageHeader } from "@/components/app/page-header";
@@ -61,7 +62,12 @@ export default async function AccountsPage({ params }: PageProps<"/b/[bookId]/ac
             return (
               <Card
                 key={a.id}
-                title={a.name}
+                title={
+                  <span className="flex min-w-0 items-center gap-3">
+                    <AccountLogo account={a} />
+                    <span className="truncate">{a.name}</span>
+                  </span>
+                }
                 className={a.archived ? "opacity-60" : undefined}
                 action={
                   <AccountActions

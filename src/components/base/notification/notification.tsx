@@ -127,6 +127,8 @@ const styles = sortCx({
     "relative flex w-full items-start gap-3 overflow-hidden p-4 pe-11",
     "rounded-2xl border border-border-button-default",
     "bg-background-primary-default shadow-dropdown",
+    // Follows the app's glass setting (styles/app.css); solid where that CSS isn't loaded.
+    "glass glass-raised",
   ].join(" "),
   visual: "relative flex size-10 shrink-0 items-center justify-center rounded-full",
   icon: "size-5",

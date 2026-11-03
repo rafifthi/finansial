@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { RiDeleteBinLine } from "@remixicon/react";
+import { RiBankLine, RiDeleteBinLine } from "@remixicon/react";
 import { deleteTransactions, saveTransaction, type TxnInput } from "@/actions/transactions";
 import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
@@ -10,6 +10,7 @@ import { SegmentedControl, SegmentedControlItem } from "@/components/base/segmen
 import { toast } from "@/components/base/toast/toast";
 import type { FormOptions } from "@/lib/data/app-data";
 import type { Transaction } from "@/lib/sheets/schema";
+import { AccountLogo } from "./account-logo";
 import { DateField, MoneyField, SelectField } from "./fields";
 import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
 import { useBookId, useViewerMember } from "./permissions";
@@ -82,18 +83,21 @@ function TransactionFormBody({
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
 
   const kind = draft.type === "income" ? "income" : "expense";
+  const label = (c: FormOptions["categories"][number]) => [c.emoji, c.name].filter(Boolean).join(" ");
   const categoryOptions = options.categories
     .filter((c) => c.kind === kind)
-    .map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }));
+    .map((c) => ({ id: c.id, label: `${label(c)} · ${c.group}` }));
   const accountOptions = options.accounts.map((a) => ({ id: a.id, label: a.name }));
+  const accountName = (id: string) => options.accounts.find((a) => a.id === id)?.name;
+  const categoryAccount = options.categories.find((c) => c.id === draft.category_id)?.default_account_id ?? "";
 
   function onCategory(id: string) {
-    const cat = options.categories.find((c) => c.id === id);
     setDraft((d) => ({
       ...d,
       category_id: id,
-      // Follow the category's default account unless the user already picked one.
-      account_id: d.account_id || cat?.default_account_id || "",
+      // An explicit pick (when overrides are on) sticks; otherwise the account follows the
+      // category, except that an edit back to its original category keeps its original account.
+      account_id: options.accountOverride ? d.account_id : initial && id === initial.category_id ? initial.account_id : "",
     }));
   }
 
@@ -147,7 +151,8 @@ function TransactionFormBody({
           selectedKeys={[draft.type]}
           onSelectionChange={(keys) => {
             const type = [...keys][0] as Draft["type"] | undefined;
-            if (type && type !== draft.type) setDraft((d) => ({ ...d, type, category_id: "", installment_id: "" }));
+            if (type && type !== draft.type)
+              setDraft((d) => ({ ...d, type, category_id: "", installment_id: "", account_id: options.accountOverride ? d.account_id : "" }));
           }}
         >
           <SegmentedControlItem id="expense">Expense</SegmentedControlItem>
@@ -165,15 +170,28 @@ function TransactionFormBody({
             <SelectField
               label="Savings category"
               value={draft.category_id ?? ""}
-              onChange={onCategory}
-              options={options.categories.filter((c) => c.group === "Savings").map((c) => ({ id: c.id, label: c.name }))}
+              onChange={(v) => set("category_id", v)}
+              options={options.categories.filter((c) => c.group === "Savings").map((c) => ({ id: c.id, label: label(c) }))}
               allowEmpty="None (plain transfer)"
             />
           </>
         ) : (
           <>
             <SelectField label="Category" value={draft.category_id ?? ""} onChange={onCategory} options={categoryOptions} />
-            <SelectField label="Account" value={draft.account_id ?? ""} onChange={(v) => set("account_id", v)} options={accountOptions} allowEmpty="Category default" />
+            {options.accountOverride ? (
+              <SelectField
+                label={draft.type === "income" ? "Received into" : "Paid from"}
+                value={draft.account_id ?? ""}
+                onChange={(v) => set("account_id", v)}
+                options={accountOptions}
+                allowEmpty={categoryAccount && accountName(categoryAccount) ? `Category account (${accountName(categoryAccount)})` : "Category account"}
+              />
+            ) : (
+              <CategoryAccount
+                type={draft.type}
+                account={draft.category_id ? (options.accounts.find((a) => a.id === (draft.account_id || categoryAccount)) ?? "none") : null}
+              />
+            )}
           </>
         )}
 
@@ -205,5 +223,36 @@ function TransactionFormBody({
 
         <FormError>{error}</FormError>
     </DrawerForm>
+  );
+}
+
+/**
+ * Read-only account line: with overrides off, the category decides where the
+ * money comes from (Settings → Categories), so the form only shows it.
+ */
+function CategoryAccount({
+  type,
+  account,
+}: {
+  type: Draft["type"];
+  /** null: no category yet; "none": the category has no account. */
+  account: FormOptions["accounts"][number] | "none" | null;
+}) {
+  const found = account && account !== "none" ? account : null;
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-background-secondary-default px-3 py-2.5">
+      {found ? (
+        <AccountLogo account={found} size="sm" />
+      ) : (
+        <RiBankLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
+      )}
+      <div className="flex min-w-0 flex-col">
+        <span className="text-caption-1-medium text-text-tertiary">{type === "income" ? "Received into" : "Paid from"}</span>
+        <span className={found ? "truncate text-body-medium text-text-primary" : "text-body-regular text-text-tertiary"}>
+          {account === null ? "Follows the category" : found ? found.name : "No account set for this category"}
+        </span>
+      </div>
+      {found ? <span className="ms-auto shrink-0 text-caption-1-regular text-text-tertiary">Category&apos;s account</span> : null}
+    </div>
   );
 }

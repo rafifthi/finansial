@@ -1,7 +1,7 @@
 import "server-only";
 import { today } from "@/lib/finance/dates";
 import { normalizeCutoff, periodOf, periodProgress } from "@/lib/finance/period";
-import { accountOfCategory, pocketsOf } from "@/lib/finance/accounts";
+import { accountOfCategory, overridesAllowed, pocketsOf } from "@/lib/finance/accounts";
 import type { MoneyFormat } from "@/lib/finance/money";
 import type { Account, Category } from "@/lib/sheets/schema";
 import type { Book, Membership } from "@/lib/sheets/schema";
@@ -33,6 +33,8 @@ export async function loadAppData({ book, membership }: { book: Book; membership
     money: { currency: settings.currency, locale: settings.locale } satisfies MoneyFormat,
     /** Category group → the account its money is kept in ("" when unset). */
     pockets: pocketsOf(settings),
+    /** Transactions may pick an account other than their category's (Settings → Categories). */
+    accountOverride: overridesAllowed(settings),
     members: settings.members.split(",").map((m) => m.trim()).filter(Boolean),
     cutoffDay: normalizeCutoff(settings.cutoff_day),
     /** Current budget period ("YYYY-MM") and where today sits in it. */
@@ -54,12 +56,21 @@ export function monthParam(value: string | string[] | undefined, fallback = peri
 /** Lightweight option lists for client forms (no Maps, serialisable). */
 export function formOptions(data: AppData) {
   return {
-    accounts: data.accounts.filter((a) => !a.archived).map((a) => ({ id: a.id, name: a.name, type: a.type })),
+    accounts: data.accounts.filter((a) => !a.archived).map((a) => ({ id: a.id, name: a.name, type: a.type, institution: a.institution })),
     categories: data.categories
       .filter((c) => !c.archived)
-      .map((c) => ({ id: c.id, name: c.name, kind: c.kind, group: c.group, default_account_id: accountOfCategory(c, data.pockets) })),
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        kind: c.kind,
+        group: c.group,
+        emoji: c.emoji,
+        color: c.color,
+        default_account_id: accountOfCategory(c, data.pockets),
+      })),
     installments: data.installments.map((i) => ({ id: i.id, name: i.name, monthly_amount: i.monthly_amount })),
     members: data.members,
+    accountOverride: data.accountOverride,
     money: data.money,
     today: data.today,
   };

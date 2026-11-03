@@ -39,6 +39,7 @@ const cat = (id: string, group: Category["group"], extra: Partial<Category> = {}
   default_account_id: "",
   goal_id: "",
   color: "",
+  emoji: "",
   archived: false,
   ...extra,
 });
@@ -86,8 +87,8 @@ describe("dates", () => {
 
 describe("ledger", () => {
   const accounts: Account[] = [
-    { id: "jago", name: "Jago", type: "bank", opening_balance: 1000, archived: false },
-    { id: "bibit", name: "Bibit", type: "investment", opening_balance: 0, archived: false },
+    { id: "jago", name: "Jago", type: "bank", opening_balance: 1000, institution: "", archived: false },
+    { id: "bibit", name: "Bibit", type: "investment", opening_balance: 0, institution: "", archived: false },
   ];
   const txns = [
     txn({ type: "income", amount: 5000, category_id: "salary" }),

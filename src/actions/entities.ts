@@ -42,6 +42,14 @@ export const saveEntity = bookAction(
       values.kind = values.group === "Income" ? "income" : "expense";
       // New categories start in their group's pocket.
       if (!id && !values.default_account_id) values.default_account_id = pocketsOf(await store.settings())[values.group as never] ?? "";
+      values.emoji = Array.from(String(values.emoji ?? "").trim()).slice(0, 8).join("");
+    }
+    // Books created before a column existed (category emoji, account institution) lack it in
+    // the sheet; add it first so the write isn't silently dropped.
+    const headers = (await store.snapshot())[table].headers.map(String);
+    if (Object.keys(def.columns).some((c) => !headers.includes(c))) {
+      await store.db.ensureSchema();
+      store.invalidate();
     }
     if ((table === "recurring" || table === "installments") && !values.account_id && values.category_id) {
       const category = (await store.rows("categories")).find((c) => c.id === values.category_id);
@@ -143,6 +151,11 @@ export const saveSettings = bookAction(
     await store.setSetting("currency", s.currency);
     await store.setSetting("locale", s.locale);
   },
+);
+
+/** Whether transactions may use an account other than their category's. */
+export const setAccountOverride = bookAction("setup:write", z.object({ enabled: z.boolean() }), ({ enabled }, { store }) =>
+  store.setSetting("account_override", String(enabled)),
 );
 
 export const runRecurringNow = bookAction("data:write", z.object({}), async (_input, { book }) => {

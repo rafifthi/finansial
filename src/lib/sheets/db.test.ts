@@ -70,7 +70,7 @@ describe("SheetDb", () => {
     });
     const db = new SheetDb(api, "x");
 
-    await db.insert("accounts", [{ id: "a3", name: "Bibit", type: "investment", opening_balance: 5, archived: false }]);
+    await db.insert("accounts", [{ id: "a3", name: "Bibit", type: "investment", opening_balance: 5, institution: "", archived: false }]);
     expect(tabs.get("Accounts")![3]).toEqual(["a3", "Bibit", "", "investment", 5, false]);
 
     // Someone sorts the sheet by hand: a2 moves to the top.
@@ -96,7 +96,7 @@ describe("SheetDb", () => {
     const db = new SheetDb(api, "x");
     const log = await db.ensureSchema();
     expect(log.join("\n")).toContain("Created tabs");
-    expect(tabs.get("Accounts")![0]).toEqual(["id", "name", "type", "opening_balance", "archived"]);
+    expect(tabs.get("Accounts")![0]).toEqual(["id", "name", "type", "opening_balance", "institution", "archived"]);
     expect(tabs.get("Transactions")![0]).toContain("verified");
   });
 });

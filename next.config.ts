@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Every page reads live sheet data behind a login, so there is nothing to
+  // prerender; Cache Components stays off to keep rendering fully dynamic.
+  cacheComponents: false,
   turbopack: {
     rules: {
       "*.css": {

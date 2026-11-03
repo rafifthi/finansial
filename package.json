@@ -6,22 +6,45 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:import": "tsx scripts/import-reference.ts",
+    "user:add": "tsx scripts/add-user.ts",
+    "registry:init": "tsx scripts/init-db.ts",
+    "migrate:multibook": "tsx scripts/migrate-multibook.ts"
   },
   "dependencies": {
+    "@googleapis/drive": "^27.0.0",
+    "@googleapis/sheets": "^18.1.2",
+    "@internationalized/date": "^3.12.4",
+    "@remixicon/react": "^4.9.0",
+    "@tanstack/react-table": "^8.21.3",
+    "date-fns": "^4.4.0",
+    "motion": "^12.43.0",
+    "nanoid": "^6.0.2",
     "next": "16.4.3",
+    "next-auth": "5.0.0-beta.32",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-aria-components": "^1.22.1",
+    "react-dom": "19.3.0",
+    "recharts": "^3.10.1",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.9",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.5"
   },
   "packageManager": "pnpm@12.16.1"
 }

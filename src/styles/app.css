@@ -1,0 +1,63 @@
+/* ---------------------------------------------------------------------------
+ * App-level surfaces on top of BoardUI.
+ *
+ * Glass: one knob, --glass (0 = solid … 1 = most glassy), set per device from
+ * Settings → Appearance (see components/app/glass-preference.tsx). At 0 every
+ * surface renders exactly like its solid BoardUI token.
+ * --------------------------------------------------------------------------*/
+:root {
+  --glass: 0.6;
+}
+
+/* Soft colour wash behind the glass so the blur has something to show. */
+body {
+  isolation: isolate;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--glass);
+  background:
+    radial-gradient(42rem 32rem at 8% -8%, color-mix(in oklab, var(--color-accent-400) 32%, transparent), transparent 70%),
+    radial-gradient(38rem 30rem at 100% 12%, color-mix(in oklab, var(--color-chart-5) 26%, transparent), transparent 70%),
+    radial-gradient(44rem 32rem at 45% 108%, color-mix(in oklab, var(--color-chart-1) 22%, transparent), transparent 70%);
+}
+
+/* Unlayered on purpose: it must beat the bg-* utility on the same element. */
+.glass {
+  --glass-base: var(--color-background-primary-default);
+  background-color: color-mix(in oklab, var(--glass-base) calc(100% - var(--glass) * 42%), transparent);
+  -webkit-backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
+  backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
+}
+.glass-secondary {
+  --glass-base: var(--color-background-secondary-default);
+}
+.glass-full {
+  --glass-base: var(--color-background-full);
+}
+/* BoardUI stat cards render their own <section>s; glaze them from the grid. */
+.glass-cards > section {
+  background-color: color-mix(in oklab, var(--color-background-secondary-default) calc(100% - var(--glass) * 42%), transparent);
+  -webkit-backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
+  backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7));
+}
+
+/* Floating bulk-action bar */
+@keyframes float-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+.float-in {
+  animation: float-in 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .float-in {
+    animation: none;
+  }
+}

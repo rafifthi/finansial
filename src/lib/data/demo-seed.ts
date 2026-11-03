@@ -1,0 +1,304 @@
+import type {
+  Account,
+  Book,
+  Budget,
+  Category,
+  Goal,
+  Installment,
+  Membership,
+  Recurring,
+  Setting,
+  Transaction,
+  User,
+} from "@/lib/sheets/schema";
+import { hashPasswordSync } from "@/lib/auth/password";
+import { addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
+
+export const DEMO_PASSWORD = "demo1234";
+export const DEMO_USERS = [
+  { id: "u-rafif", email: "admin@demo.local", name: "Rafif" },
+  { id: "u-kanza", email: "member@demo.local", name: "Kanza" },
+  { id: "u-viewer", email: "viewer@demo.local", name: "Accountant" },
+] as const;
+
+export const DEMO_FAMILY_SHEET = "demo-family";
+export const DEMO_PERSONAL_SHEET = "demo-personal";
+
+/** Demo registry: Rafif owns a Family book (shared with Kanza and a viewer) and a Personal one. */
+export function demoRegistrySeed() {
+  const hash = hashPasswordSync(DEMO_PASSWORD);
+  const users: User[] = DEMO_USERS.map((u, i) => ({
+    ...u,
+    password_hash: hash,
+    is_system_admin: i === 0,
+    disabled: false,
+    created_at: "",
+    last_login_at: "",
+  }));
+  const book = (id: string, name: string, kind: Book["kind"], sheet: string, icon: string): Book => ({
+    id,
+    name,
+    kind,
+    icon,
+    spreadsheet_id: sheet,
+    owner_user_id: "u-rafif",
+    status: "active",
+    provision_step: "done",
+    migrated_from: "",
+    created_at: "",
+  });
+  const books = [
+    book("b-family", "Cutez Family", "family", DEMO_FAMILY_SHEET, "home"),
+    book("b-personal", "Rafif Personal", "personal", DEMO_PERSONAL_SHEET, "user"),
+  ];
+  const m = (id: string, book_id: string, user_id: string, role: Membership["role"], member: string): Membership => ({
+    id,
+    book_id,
+    user_id,
+    role,
+    member,
+    last_opened_at: "",
+    created_at: "",
+  });
+  const memberships = [
+    m("m1", "b-family", "u-rafif", "admin", "Rafif"),
+    m("m2", "b-family", "u-kanza", "member", "Kanza"),
+    m("m3", "b-family", "u-viewer", "viewer", ""),
+    m("m4", "b-personal", "u-rafif", "admin", ""),
+  ];
+  return { users, books, memberships, invites: [] };
+}
+
+/** Seed for a demo book spreadsheet, by id. Unknown ids start empty (new books). */
+export function demoBookSeed(spreadsheetId: string) {
+  if (spreadsheetId === DEMO_FAMILY_SHEET) return demoSeed();
+  if (spreadsheetId === DEMO_PERSONAL_SHEET) return demoPersonalSeed();
+  return {};
+}
+
+/**
+ * Demo household modelled on the reference "Money Management V3" sheet, used
+ * by DB_DRIVER=memory. Deterministic so screenshots and tests are stable.
+ */
+export function demoSeed() {
+  const now = today();
+  const thisMonth = monthOf(now);
+
+  const accounts: Account[] = [
+    { id: "jenius", name: "Jenius", type: "bank", opening_balance: 4_000_000, archived: false },
+    { id: "jago", name: "Jago", type: "bank", opening_balance: 6_500_000, archived: false },
+    { id: "cash", name: "Cash", type: "cash", opening_balance: 500_000, archived: false },
+    { id: "bibit", name: "Bibit", type: "investment", opening_balance: 61_000_000, archived: false },
+    { id: "cc-cimb", name: "CC CIMB Niaga", type: "credit_card", opening_balance: 0, archived: false },
+  ];
+
+  const c = (
+    id: string,
+    name: string,
+    group: Category["group"],
+    default_account_id: string,
+    color: string,
+    goal_id = "",
+  ): Category => ({
+    id,
+    name,
+    kind: group === "Income" ? "income" : "expense",
+    group,
+    default_account_id,
+    goal_id,
+    color,
+    archived: false,
+  });
+
+  const categories: Category[] = [
+    c("monthly-kanza", "Monthly Kanza", "Income", "jago", "lime"),
+    c("bonus-kanza", "Bonus Kanza", "Income", "jago", "lime"),
+    c("monthly-rafif", "Monthly Rafif", "Income", "jenius", "lime"),
+    c("tambal", "Tambal", "Income", "jago", "lime"),
+    c("billing", "Billing", "Needs", "jenius", "blue"),
+    c("kuota", "Kuota", "Needs", "jago", "blue"),
+    c("infaq", "Infaq", "Needs", "jago", "blue"),
+    c("groceries", "Groceries", "Needs", "jago", "blue"),
+    c("transport", "Transport", "Needs", "jago", "blue"),
+    c("insurance", "Insurance", "Needs", "jago", "blue"),
+    c("meals", "Meals", "Needs", "jenius", "blue"),
+    c("cicilan-mobil", "Cicilan Mobil", "Needs", "jago", "blue"),
+    c("petty-cash", "Petty Cash", "Wants", "jenius", "pink"),
+    c("date", "Date", "Wants", "jago", "pink"),
+    c("subscription", "Subscription", "Wants", "jenius", "pink"),
+    c("anak", "Anak", "Savings", "jago", "violet", "g-anak"),
+    c("dana-darurat", "Dana Darurat", "Savings", "jago", "violet", "g-dandur"),
+    c("travel", "Travel", "Savings", "jago", "violet", "g-travel"),
+    c("rumah", "Rumah", "Savings", "jago", "violet", "g-house"),
+  ];
+
+  const plan: Record<string, number> = {
+    "monthly-kanza": 6_000_000,
+    "bonus-kanza": 1_150_000,
+    "monthly-rafif": 6_000_000,
+    billing: 890_333,
+    infaq: 216_600,
+    groceries: 350_000,
+    transport: 2_500_000,
+    meals: 1_500_000,
+    "cicilan-mobil": 2_000_000,
+    "petty-cash": 647_750,
+    date: 1_000_000,
+    anak: 342_000,
+    "dana-darurat": 1_400_000,
+    travel: 1_000_000,
+    rumah: 800_000,
+  };
+
+  const months = monthsEnding(thisMonth, 6);
+  const budgets: Budget[] = months.flatMap((m) =>
+    Object.entries(plan).map(([category_id, amount]) => ({ id: `b-${m}-${category_id}`, month: m, category_id, amount })),
+  );
+
+  let n = 0;
+  const tx = (p: Partial<Transaction> & Pick<Transaction, "date" | "amount" | "category_id">): Transaction => ({
+    id: `t${++n}`,
+    type: "expense",
+    account_id: categories.find((x) => x.id === p.category_id)?.default_account_id ?? "jago",
+    to_account_id: "",
+    member: "",
+    description: "",
+    verified: true,
+    recurring_id: "",
+    installment_id: "",
+    created_at: "",
+    updated_at: "",
+    created_by: "",
+    updated_by: "",
+    ...p,
+  });
+
+  // A pseudo-random but stable sequence for amounts.
+  let s = 7;
+  const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  const meals = ["Nasi Padang", "Tukang Sayur", "Nasi Goreng", "Sourdough", "Ayam Panglima", "TDN", "Mangga + Susu"];
+  const rides = ["Gojek CSW", "E-Money", "Gojek Gym → Pitput", "Grab Kantor"];
+
+  const transactions: Transaction[] = [];
+  for (const m of months) {
+    const last = m === thisMonth ? now : dayInMonth(m, 31);
+    const day = (d: number) => {
+      const date = dayInMonth(m, d);
+      return date <= last ? date : null;
+    };
+    const push = (d: number, p: Omit<Parameters<typeof tx>[0], "date">) => {
+      const date = day(d);
+      if (date) transactions.push(tx({ ...p, date, verified: m !== thisMonth || rnd() > 0.35 }));
+    };
+    push(1, { type: "income", amount: 6_000_000, category_id: "monthly-kanza", member: "Kanza", description: "Gaji" });
+    push(1, { type: "income", amount: 6_000_000, category_id: "monthly-rafif", member: "Rafif", description: "Gaji" });
+    push(1, { amount: 230_000, category_id: "billing", description: "Gas" });
+    push(3, { amount: 333_000, category_id: "billing", description: "Wifi", recurring_id: "r-wifi" });
+    push(3, { amount: 100_000, category_id: "billing", description: "IPL" });
+    push(5, { amount: 2_000_000, category_id: "cicilan-mobil", description: "Cicilan Mobil", installment_id: "i-mobil" });
+    push(2, { type: "transfer", amount: 1_000_000, category_id: "travel", to_account_id: "bibit", description: "Tabungan Travel" });
+    push(2, { type: "transfer", amount: 1_400_000, category_id: "dana-darurat", to_account_id: "bibit", description: "Dana Darurat" });
+    push(2, { type: "transfer", amount: 342_000, category_id: "anak", to_account_id: "bibit", description: "Tabungan Anak" });
+    push(2, { type: "transfer", amount: 800_000, category_id: "rumah", to_account_id: "bibit", description: "Tabungan Rumah" });
+    push(10, { amount: 216_600, category_id: "infaq", description: "Infaq" });
+    for (let d = 2; d <= 30; d += 1) {
+      if (rnd() > 0.45) push(d, { amount: Math.round(10_000 + rnd() * 90_000), category_id: "meals", description: meals[d % meals.length] });
+      if (rnd() > 0.55) push(d, { amount: Math.round(11_000 + rnd() * 190_000), category_id: "transport", description: rides[d % rides.length] });
+      if (d % 7 === 3) push(d, { amount: Math.round(30_000 + rnd() * 150_000), category_id: "date", description: "Bakmi GM" });
+      if (d % 9 === 4) push(d, { amount: Math.round(50_000 + rnd() * 200_000), category_id: "petty-cash", description: "Obat Louie" });
+      if (d % 11 === 6) push(d, { amount: Math.round(40_000 + rnd() * 120_000), category_id: "groceries", description: "Superindo" });
+    }
+  }
+
+  const goals: Goal[] = [
+    { id: "g-travel", name: "Travel", target_amount: 30_000_000, target_date: dayInMonth(addMonths(thisMonth, 1), 30), starting_amount: 18_000_000, archived: false },
+    { id: "g-house", name: "House", target_amount: 50_000_000, target_date: dayInMonth(addMonths(thisMonth, 2), 31), starting_amount: 28_000_000, archived: false },
+    { id: "g-dandur", name: "Dana Darurat", target_amount: 30_000_000, target_date: "", starting_amount: 13_000_000, archived: false },
+    { id: "g-anak", name: "Tabungan Anak", target_amount: 40_000_000, target_date: "", starting_amount: 24_000_000, archived: false },
+  ];
+
+  const installments: Installment[] = [
+    { id: "i-mobil", name: "Cicilan Mobil", account_id: "jago", category_id: "cicilan-mobil", monthly_amount: 2_000_000, tenor_months: 33, start_month: months[0], total_amount: 64_900_000, note: "" },
+    { id: "i-kai", name: "KAI Berangkat", account_id: "cc-cimb", category_id: "transport", monthly_amount: 450_000, tenor_months: 3, start_month: addMonths(thisMonth, -1), total_amount: 1_350_000, note: "CC CIMB Niaga 0%" },
+  ];
+
+  const recurring: Recurring[] = [
+    { id: "r-wifi", type: "expense", amount: 333_000, category_id: "billing", account_id: "jenius", to_account_id: "", member: "", description: "Wifi", frequency: "monthly", day: 3, start_date: `${months[0]}-01`, end_date: "", last_run: now, installment_id: "" },
+  ];
+
+  const settings: Setting[] = [
+    { key: "currency", value: "IDR" },
+    { key: "locale", value: "id-ID" },
+    { key: "cutoff_day", value: "31" },
+    { key: "members", value: "Kanza,Rafif" },
+  ];
+
+  return { accounts, categories, budgets, transactions, goals, installments, recurring, settings };
+}
+
+/** A small single-person book: a few categories and a handful of entries this period. */
+function demoPersonalSeed() {
+  const now = today();
+  const month = monthOf(now);
+  const day = (d: number) => dayInMonth(month, d) <= now ? dayInMonth(month, d) : now;
+  const accounts: Account[] = [
+    { id: "p-jenius", name: "Jenius (personal)", type: "bank", opening_balance: 2_500_000, archived: false },
+    { id: "p-gopay", name: "GoPay", type: "ewallet", opening_balance: 150_000, archived: false },
+  ];
+  const c = (id: string, name: string, group: Category["group"], acc = "p-jenius"): Category => ({
+    id,
+    name,
+    kind: group === "Income" ? "income" : "expense",
+    group,
+    default_account_id: acc,
+    goal_id: "",
+    color: "",
+    archived: false,
+  });
+  const categories = [
+    c("p-allowance", "Allowance", "Income"),
+    c("p-coffee", "Coffee", "Wants", "p-gopay"),
+    c("p-hobby", "Hobby", "Wants"),
+    c("p-lunch", "Lunch", "Needs", "p-gopay"),
+    c("p-gadget", "Gadget fund", "Savings"),
+  ];
+  const t = (id: string, d: number, amount: number, category_id: string, description: string, type: Transaction["type"] = "expense"): Transaction => ({
+    id,
+    date: day(d),
+    type,
+    amount,
+    category_id,
+    account_id: categories.find((x) => x.id === category_id)!.default_account_id,
+    to_account_id: "",
+    member: "",
+    description,
+    verified: true,
+    recurring_id: "",
+    installment_id: "",
+    created_at: "",
+    updated_at: "",
+    created_by: "",
+    updated_by: "",
+  });
+  const transactions = [
+    t("p1", 1, 1_500_000, "p-allowance", "Monthly allowance", "income"),
+    t("p2", 2, 42_000, "p-coffee", "Kopi Kenangan"),
+    t("p3", 2, 35_000, "p-lunch", "Warteg"),
+    t("p4", 3, 250_000, "p-hobby", "Climbing gym"),
+    t("p5", 3, 300_000, "p-gadget", "Save for headphones"),
+  ];
+  const budgets: Budget[] = [
+    { id: "pb1", month, category_id: "p-allowance", amount: 1_500_000 },
+    { id: "pb2", month, category_id: "p-coffee", amount: 300_000 },
+    { id: "pb3", month, category_id: "p-lunch", amount: 600_000 },
+    { id: "pb4", month, category_id: "p-hobby", amount: 300_000 },
+    { id: "pb5", month, category_id: "p-gadget", amount: 300_000 },
+  ];
+  const settings: Setting[] = [
+    { key: "currency", value: "IDR" },
+    { key: "locale", value: "id-ID" },
+    { key: "cutoff_day", value: "31" },
+    { key: "members", value: "" },
+  ];
+  return { accounts, categories, transactions, budgets, settings };
+}

@@ -1,0 +1,257 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import {
+  type RemixiconComponentType,
+  RiAddLine,
+  RiArrowLeftRightLine,
+  RiBookShelfLine,
+  RiCalendarScheduleLine,
+  RiCheckDoubleLine,
+  RiFlagLine,
+  RiGroupLine,
+  RiHomeLine,
+  RiLogoutBoxRLine,
+  RiMoreLine,
+  RiPieChartLine,
+  RiRepeatLine,
+  RiSettings4Line,
+  RiShieldUserLine,
+  RiUserLine,
+  RiWallet3Line,
+} from "@remixicon/react";
+import { ThemeToggle } from "@/components/application/theme/theme-toggle";
+import { Avatar } from "@/components/base/avatar/avatar";
+import { Badge } from "@/components/base/badges/badge";
+import { Chip } from "@/components/base/badges/chip";
+import { IconButton } from "@/components/base/buttons/icon-button";
+import { Drawer } from "@/components/base/drawer/drawer";
+import { ROLE_INFO, type Role } from "@/lib/auth/roles";
+import type { FormOptions } from "@/lib/data/app-data";
+import { cx } from "@/utils/cx";
+import { BookSwitcher, type ShellBook } from "./book-switcher";
+import { useCan } from "./permissions";
+import { TransactionDrawer } from "./transaction-form";
+
+interface NavEntry {
+  path: string;
+  label: string;
+  icon: RemixiconComponentType;
+  badgeKey?: "unverified";
+  /** Shown only to book admins. */
+  admins?: boolean;
+}
+
+/** In-book destinations; `path` is relative to /b/<bookId>. */
+const BOOK_NAV: NavEntry[] = [
+  { path: "", label: "Dashboard", icon: RiHomeLine },
+  { path: "/transactions", label: "Transactions", icon: RiArrowLeftRightLine },
+  { path: "/reconcile", label: "Reconcile", icon: RiCheckDoubleLine, badgeKey: "unverified" },
+  { path: "/budget", label: "Budget", icon: RiPieChartLine },
+  { path: "/goals", label: "Goals", icon: RiFlagLine },
+  { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine },
+  { path: "/accounts", label: "Accounts", icon: RiWallet3Line },
+  { path: "/recurring", label: "Recurring", icon: RiRepeatLine },
+  { path: "/members", label: "Members", icon: RiGroupLine, admins: true },
+  { path: "/settings", label: "Book settings", icon: RiSettings4Line },
+];
+
+export interface SidebarUser {
+  name: string;
+  email: string;
+  isSystemAdmin: boolean;
+}
+
+interface ShellProps {
+  user: SidebarUser;
+  books: ShellBook[];
+  /** The open book, or none on account pages (profile, books, admin). */
+  current?: ShellBook;
+  badges: { unverified?: number };
+  signOutAction: () => Promise<void>;
+}
+
+interface ResolvedNav {
+  href: string;
+  label: string;
+  icon: RemixiconComponentType;
+  badge?: number;
+  exact?: boolean;
+}
+
+function navFor({ current, user, badges }: Pick<ShellProps, "current" | "user" | "badges">): ResolvedNav[] {
+  if (current) {
+    return BOOK_NAV.filter((n) => !n.admins || current.role === "admin").map((n) => ({
+      href: `/b/${current.id}${n.path}`,
+      label: n.label,
+      icon: n.icon,
+      badge: n.badgeKey ? badges[n.badgeKey] : undefined,
+      exact: n.path === "",
+    }));
+  }
+  return [
+    { href: "/books", label: "Your books", icon: RiBookShelfLine },
+    { href: "/profile", label: "Profile", icon: RiUserLine },
+    ...(user.isSystemAdmin ? [{ href: "/admin/users", label: "All users", icon: RiShieldUserLine }] : []),
+  ];
+}
+
+const isActive = (pathname: string, item: ResolvedNav) =>
+  item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () => void }) {
+  const { user, current, books, signOutAction } = props;
+  const pathname = usePathname();
+  const initials = (user.name || user.email).slice(0, 1).toUpperCase();
+  const nav = navFor(props);
+
+  return (
+    <div className="flex h-full flex-col justify-between gap-6">
+      <div className="flex flex-col gap-4">
+        <BookSwitcher books={books} current={current} onNavigate={onNavigate} />
+        <nav aria-label="Main" className="flex flex-col gap-0.5">
+          {nav.map((item) => {
+            const active = isActive(pathname, item);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                className={cx(
+                  "flex items-center justify-between rounded-2lg p-2 outline-none transition-colors",
+                  "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+                  active ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected" : "hover:bg-background-secondary-hover",
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <item.icon className={cx("size-5 shrink-0", active ? "text-white" : "text-foreground-icon-secondary")} aria-hidden />
+                  <span className={cx("text-body-medium", active ? "text-white" : "text-text-secondary")}>{item.label}</span>
+                </span>
+                {item.badge ? <Badge color={active ? "primary" : "neutral"}>{item.badge}</Badge> : null}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <ThemeToggle />
+        <div className="flex items-center gap-2 rounded-2xl p-2">
+          <Link
+            href="/profile"
+            onClick={onNavigate}
+            aria-current={pathname === "/profile" ? "page" : undefined}
+            title="Your profile"
+            className="-m-1 flex min-w-0 flex-1 items-center gap-2 rounded-xl p-1 outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+          >
+            <Avatar size="md" initials={initials} />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="flex items-center gap-1.5">
+                <span className="truncate text-body-medium text-text-primary">{user.name}</span>
+                {current ? <RoleChip role={current.role} /> : null}
+              </span>
+              <span className="truncate text-body-2-regular text-text-tertiary">{user.email}</span>
+            </span>
+          </Link>
+          <form action={signOutAction}>
+            <IconButton type="submit" icon={RiLogoutBoxRLine} aria-label="Sign out" />
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RoleChip({ role }: { role: Role }) {
+  return (
+    <Chip variant="caption" color={role === "admin" ? "blue" : "neutral"}>
+      {ROLE_INFO[role].label}
+    </Chip>
+  );
+}
+
+/** Phone tab bar: Dashboard, Transactions, (+), Budget, More. */
+const TAB_PATHS = ["", "/transactions", "/budget"];
+
+export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: FormOptions }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const pathname = usePathname();
+  const canAdd = useCan("data:write") && Boolean(quickAdd);
+  const nav = navFor(props);
+  const tabs = props.current
+    ? TAB_PATHS.map((p) => nav.find((n) => n.href === `/b/${props.current!.id}${p}`)).filter((n): n is ResolvedNav => Boolean(n))
+    : nav.slice(0, 2);
+  const inMore = !tabs.some((t) => isActive(pathname, t));
+  const initials = (props.user.name || props.user.email).slice(0, 1).toUpperCase();
+
+  const tab = (active: boolean) =>
+    cx(
+      "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-caption-1-medium outline-none",
+      "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+      active ? "text-accent-600 dark:text-accent-400" : "text-text-tertiary",
+    );
+  const tabLink = (item: ResolvedNav) => (
+    <Link key={item.href} href={item.href} className={tab(isActive(pathname, item))} aria-current={isActive(pathname, item) ? "page" : undefined}>
+      <item.icon className="size-6" aria-hidden />
+      <span className="truncate">{item.label === "Your books" ? "Books" : item.label}</span>
+    </Link>
+  );
+
+  return (
+    <>
+      <aside className="glass glass-secondary sticky top-3 hidden h-[calc(100dvh-24px)] w-[260px] shrink-0 overflow-y-auto rounded-3xl border border-border-button-white bg-background-secondary-default p-3 shadow-sidebar lg:block">
+        <SidebarPanel {...props} />
+      </aside>
+
+      {/* Phone / tablet: slim top bar (book switcher) + bottom tab bar */}
+      <header className="glass glass-full sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-separator-border bg-background-full px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:hidden">
+        <div className="min-w-0 flex-1">
+          <BookSwitcher books={props.books} current={props.current} compact />
+        </div>
+        <Link href="/profile" aria-label="Your profile" className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+          <Avatar size="md" initials={initials} />
+        </Link>
+      </header>
+
+      <nav
+        aria-label="Main"
+        className="glass glass-full fixed inset-x-0 bottom-0 z-30 border-t border-separator-border bg-background-full px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 lg:hidden"
+      >
+        <div className="mx-auto flex max-w-lg items-end gap-1">
+          {tabs.slice(0, 2).map(tabLink)}
+          {canAdd ? (
+            <div className="flex flex-1 justify-center">
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                aria-label="Add transaction"
+                className="-mt-5 flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-500 to-accent-600 text-white shadow-nav-selected outline-none ring-4 ring-background-full focus-visible:ring-border-focus-ring active:scale-95"
+              >
+                <RiAddLine className="size-7" aria-hidden />
+              </button>
+            </div>
+          ) : null}
+          {tabs.slice(2).map(tabLink)}
+          <button type="button" onClick={() => setMenuOpen(true)} className={cx(tab(inMore), "relative cursor-pointer")}>
+            <RiMoreLine className="size-6" aria-hidden />
+            <span>More</span>
+            {props.badges.unverified ? (
+              <span className="absolute end-[calc(50%-1.1rem)] top-1 size-2 rounded-full bg-yellow-500" aria-label="Items to reconcile" />
+            ) : null}
+          </button>
+        </div>
+      </nav>
+
+      <Drawer isOpen={menuOpen} onOpenChange={setMenuOpen} placement="bottom" aria-label="Menu" overlayClassName="p-0 pt-10">
+        <div className="glass glass-secondary max-h-full overflow-y-auto rounded-t-3xl bg-background-secondary-default p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <SidebarPanel {...props} onNavigate={() => setMenuOpen(false)} />
+        </div>
+      </Drawer>
+      {quickAdd ? <TransactionDrawer options={quickAdd} isOpen={addOpen} onOpenChange={setAddOpen} /> : null}
+    </>
+  );
+}

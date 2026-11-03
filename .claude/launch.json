@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "finansial",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "finansial-demo",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DB_DRIVER=memory",
+        "pnpm",
+        "dev"
+      ],
+      "port": 3000
+    }
+  ]
+}

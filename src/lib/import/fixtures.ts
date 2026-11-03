@@ -1,0 +1,75 @@
+import type { ReferenceGrids } from "./reference";
+
+// Excerpts of the real reference sheet layout (formatted values).
+export const REFERENCE_FIXTURE: ReferenceGrids = {
+  setup: [
+    ["", "Account [ Summary] ", "Income Sources [budgeting]", "Needs", "Wants", "Savings", "Account [Assets]", "Month", "Payday Date"],
+    ["", "Jenius", "Monthly Kanza", "Billing", "Petty Cash", "Anak", "Bibit", "January", "25 Jul 2025"],
+    ["", "Jago", "Bonus Kanza", "Kuota", "Date", "Dana Darurat", "Deposit", "February", ""],
+    ["", "", "Monthly Rafif", "Meals", "", "Travel        ", "", "March", ""],
+    ["", "", "", "Groceries ", "", "Rumah", "", "April", ""],
+  ],
+  summary: [
+    ["", "FALSE", "Jago", "Anak", "", "", "Savings", "Savings", "", "Rp450,000", "2.84%", ""],
+    ["", "FALSE", "Jenius", "Billing", "", "", "Needs", "Needs", "", "Rp756,800", "4.78%", ""],
+    ["", "FALSE", "Jenius", "#REF!", "", "", "#REF!", "Needs", "", "Rp0", "0.00%", ""],
+    ["", "FALSE", "Jenius", "Meals", "", "", "Needs", "Needs", "", "Rp1,731,450", "10.93%", ""],
+    ["", "FALSE", "Jago", "Groceries ", "", "", "Needs", "Needs", "", "Rp238,500", "1.50%", ""],
+  ],
+  budgeting: [
+    ["858"],
+    ["", "Month ➠"],
+    ["", "Income Sources"],
+    ["", "Monthly Kanza", "Rp6,402,500", "Rp5,150,000", "", "", "", "", "", "", "", "Rp6,000,000", "Rp5,400,000", ""],
+    ["", "Monthly Rafif", "Rp5,941,000", "", "", "", "", "", "", "", "", "Rp6,000,000", "Rp6,000,000", ""],
+    ["", "Total", "Rp15,848,460"],
+    ["", "Savings List"],
+    ["", "Travel        ", "Rp1,000,000", "", "", "", "", "", "", "", "", "Rp1,000,000", "", ""],
+    ["", "Sisa (Emergency/Next month budget)", "Rp185,300"],
+    ["", "Total", "Rp6,096,300"],
+    ["", "Grand Total", "Rp6,096,300"],
+    ["", "Budgeting List"],
+    ["", "Meals", "Rp1,731,450", "", "", "", "", "", "", "", "", "Rp1,500,000", "Rp1,500,000", ""],
+    ["", "Cicilan Mobil", "", "", "", "", "", "", "", "", "", "Rp2,000,000", "Rp2,000,000", ""],
+    ["", "Total", "Rp9,752,160"],
+    ["", "Allocated Money\t", "100.00%"],
+  ],
+  spending: [
+    ["", "", "3 November 2026"],
+    ["", "", "", "Description", "", "Category"],
+    ["", "TRUE", "01 Oct 2026", "Gas", "", "Billing", "Rp230,000"],
+    ["", "FALSE", "02 Oct 2026", "Nasi Padang", "", "Meals", "Rp13,000"],
+    ["", "TRUE", "02 Oct 2026", "Tukang Sayur", "", "Meals", "Rp30,500"],
+    ["", "TRUE", "02 Oct 2026", "Tukang Sayur", "", "Meals", "Rp30,500"],
+    ["", "TRUE", "03 Oct 2026", "Mystery", "", "Unknown", "Rp5,000"],
+    ["", "FALSE", "", "", "", "", ""],
+  ],
+  goals: [
+    [
+      "Travel Goals : Rp.30.000.000 By November 2026 Month",
+      "Progress",
+      "Minus",
+      "",
+      "House Goals : Rp.50.000.000 By December 2026 Month",
+      "Progress",
+      "Minus",
+      "",
+      "Dandur Goals : Rp.30.000.000 Now : Rp.21.745.790 Month",
+    ],
+  ],
+  mobil: [
+    ["Cicilan Mobil\nTarget : 64.900.000\n"],
+    ["", "10", "Rp2,000,000"],
+    ["", "11", "Rp2,000,000"],
+    ["", "12", ""],
+    ["2027", "1", ""],
+  ],
+  pendingCc: [
+    ["CC CIMB NIAGA", "Total", "Bulan ke-", "Lunas Bulan"],
+    ["KAI Berangkat", "", "", ""],
+    ["Total", "", "", ""],
+    ["CC JENIUS RAFIF", "Per Bulan", "Bulan ke-", "Lunas Bulan"],
+    ["KAI Pulang", "Rp450,000", "2", "December 2026"],
+  ],
+};
+

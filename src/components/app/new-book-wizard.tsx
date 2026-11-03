@@ -343,7 +343,7 @@ export function NewBookWizard({
           <div className="flex flex-col gap-1">
             <SelectField label="Cut-off day" value={String(cutoff)} onChange={(v) => setCutoff(Number(v) || END_OF_MONTH)} options={CUTOFF_OPTIONS} />
             <p className="text-body-2-regular text-text-tertiary">
-              {start === "import" ? "Keep “End of month” to match your old sheet's monthly totals. " : ""}You can change it later in Book settings.
+              {start === "import" ? "Keep “End of month” to match your old sheet's monthly totals. " : ""}You can change it later in Settings → Book.
             </p>
           </div>
         </Panel>

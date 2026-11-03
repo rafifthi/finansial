@@ -19,7 +19,6 @@ import {
   RiRepeatLine,
   RiSettings4Line,
   RiShieldUserLine,
-  RiUserLine,
   RiWallet3Line,
 } from "@remixicon/react";
 import { ThemeToggle } from "@/components/application/theme/theme-toggle";
@@ -55,7 +54,7 @@ const BOOK_NAV: NavEntry[] = [
   { path: "/accounts", label: "Accounts", icon: RiWallet3Line },
   { path: "/recurring", label: "Recurring", icon: RiRepeatLine },
   { path: "/members", label: "Members", icon: RiGroupLine, admins: true },
-  { path: "/settings", label: "Book settings", icon: RiSettings4Line },
+  { path: "/settings", label: "Settings", icon: RiSettings4Line },
 ];
 
 export interface SidebarUser {
@@ -93,10 +92,13 @@ function navFor({ current, user, badges }: Pick<ShellProps, "current" | "user" |
   }
   return [
     { href: "/books", label: "Your books", icon: RiBookShelfLine },
-    { href: "/profile", label: "Profile", icon: RiUserLine },
+    { href: "/settings", label: "Settings", icon: RiSettings4Line },
     ...(user.isSystemAdmin ? [{ href: "/admin/users", label: "All users", icon: RiShieldUserLine }] : []),
   ];
 }
+
+/** Where the avatar goes: the Account tab of whichever Settings page applies. */
+const accountHref = (current?: ShellBook) => (current ? `/b/${current.id}/settings?tab=account` : "/settings?tab=account");
 
 const isActive = (pathname: string, item: ResolvedNav) =>
   item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -141,10 +143,9 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
         <ThemeToggle />
         <div className="flex items-center gap-2 rounded-2xl p-2">
           <Link
-            href="/profile"
+            href={accountHref(current)}
             onClick={onNavigate}
-            aria-current={pathname === "/profile" ? "page" : undefined}
-            title="Your profile"
+            title="Account settings"
             className="-m-1 flex min-w-0 flex-1 items-center gap-2 rounded-xl p-1 outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
           >
             <Avatar size="md" initials={initials} />
@@ -212,7 +213,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
         <div className="min-w-0 flex-1">
           <BookSwitcher books={props.books} current={props.current} compact />
         </div>
-        <Link href="/profile" aria-label="Your profile" className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+        <Link href={accountHref(props.current)} aria-label="Account settings" className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
           <Avatar size="md" initials={initials} />
         </Link>
       </header>

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { requireBookPage } from "@/auth";
 import Link from "next/link";
+import { AccountActions } from "@/components/app/account-actions";
 import { Card, EmptyState } from "@/components/app/card";
 import { EntityFormButton } from "@/components/app/entity-form";
 import { PageHeader } from "@/components/app/page-header";
 import { Chip } from "@/components/base/badges/chip";
 import { loadAppData } from "@/lib/data/app-data";
 import { fieldSpecs } from "@/lib/data/field-specs";
+import { accountUsage } from "@/lib/finance/accounts";
 import { accountBalances } from "@/lib/finance/ledger";
 import { formatMoney } from "@/lib/finance/money";
 
@@ -26,6 +28,16 @@ export default async function AccountsPage({ params }: PageProps<"/b/[bookId]/ac
   const balances = accountBalances(data.accounts, data.transactions);
   const verified = accountBalances(data.accounts, data.transactions.filter((t) => t.verified));
   const fmt = (n: number) => formatMoney(n, data.money);
+  /** Transfers (and recurring transfers) between `id` and each other account. */
+  const transfersWith = (id: string) => {
+    const out: Record<string, number> = {};
+    for (const t of [...data.transactions, ...data.recurring]) {
+      if (t.type !== "transfer") continue;
+      const other = t.account_id === id ? t.to_account_id : t.to_account_id === id ? t.account_id : "";
+      if (other) out[other] = (out[other] ?? 0) + 1;
+    }
+    return out;
+  };
   const total = data.accounts.filter((a) => !a.archived).reduce((s, a) => s + (balances.get(a.id) ?? 0), 0);
 
   return (
@@ -51,7 +63,14 @@ export default async function AccountsPage({ params }: PageProps<"/b/[bookId]/ac
                 key={a.id}
                 title={a.name}
                 className={a.archived ? "opacity-60" : undefined}
-                action={<EntityFormButton table="accounts" title="Account" trigger="icon" fields={specs.accounts} money={data.money} initial={a} />}
+                action={
+                  <AccountActions
+                    item={{ account: a, usage: accountUsage(a.id, data), transfersWith: transfersWith(a.id) }}
+                    accounts={data.accounts}
+                    fields={specs.accounts}
+                    money={data.money}
+                  />
+                }
               >
                 <div className="flex flex-col gap-1">
                   <span className="text-display-4-medium text-text-primary tabular-nums">{fmt(bal)}</span>

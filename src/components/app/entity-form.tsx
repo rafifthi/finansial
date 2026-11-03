@@ -41,6 +41,7 @@ export function EntityFormButton({
   trigger = "button",
   label,
   canDelete = true,
+  onDelete,
 }: {
   table: EntityTable;
   title: string;
@@ -50,6 +51,8 @@ export function EntityFormButton({
   trigger?: "button" | "icon";
   label?: string;
   canDelete?: boolean;
+  /** Replaces the plain delete with a custom flow (e.g. a confirm dialog); the drawer closes first. */
+  onDelete?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const isEdit = Boolean(initial.id);
@@ -71,6 +74,13 @@ export function EntityFormButton({
           initial={initial}
           money={money}
           canDelete={isEdit && canDelete}
+          onDelete={
+            onDelete &&
+            (() => {
+              setOpen(false);
+              onDelete();
+            })
+          }
           onDone={() => setOpen(false)}
         />
       </FormDrawer>
@@ -85,6 +95,7 @@ function EntityFormBody({
   initial,
   money,
   canDelete,
+  onDelete,
   onDone,
 }: {
   table: EntityTable;
@@ -93,6 +104,7 @@ function EntityFormBody({
   initial: Values;
   money: MoneyFormat;
   canDelete: boolean;
+  onDelete?: () => void;
   onDone: () => void;
 }) {
   const bookId = useBookId();
@@ -125,7 +137,7 @@ function EntityFormBody({
       footer={
         <>
           {canDelete ? (
-            <Button type="button" variant="danger" leadingIcon={RiDeleteBinLine} onClick={destroy} disabled={pending}>
+            <Button type="button" variant="danger" leadingIcon={RiDeleteBinLine} onClick={onDelete ?? destroy} disabled={pending}>
               Delete
             </Button>
           ) : (

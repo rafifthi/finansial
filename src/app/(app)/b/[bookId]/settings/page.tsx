@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { requireBookPage } from "@/auth";
+import { personalSections } from "@/components/app/account-settings";
+import { BookDetails } from "@/components/app/book-details";
 import { Card } from "@/components/app/card";
+import { GroupAccountButton } from "@/components/app/category-accounts";
 import { EntityFormButton } from "@/components/app/entity-form";
 import { PageHeader } from "@/components/app/page-header";
-import { GlassPreference } from "@/components/app/glass-preference";
-import { BookDetails } from "@/components/app/book-details";
 import { HouseholdSettings, MyMember } from "@/components/app/settings-form";
-import { ThemeToggle } from "@/components/application/theme/theme-toggle";
-import { Chip } from "@/components/base/badges/chip";
+import { SettingsTabs } from "@/components/app/settings-tabs";
 import { GROUP_CHIP } from "@/components/app/transactions-view";
+import { Chip } from "@/components/base/badges/chip";
 import { loadAppData } from "@/lib/data/app-data";
+import { accountOfCategory } from "@/lib/finance/accounts";
 import { fieldSpecs } from "@/lib/data/field-specs";
 import { usingDemoDb } from "@/lib/data/store";
 import { CATEGORY_GROUPS } from "@/lib/sheets/schema";
@@ -19,24 +21,21 @@ export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: PageProps<"/b/[bookId]/settings">) {
   const { group: focus } = await searchParams;
-  const data = await loadAppData(await requireBookPage((await params).bookId));
+  const ctx = await requireBookPage((await params).bookId);
+  const [data, [account, appearance]] = await Promise.all([loadAppData(ctx), personalSections(ctx.user)]);
   const specs = fieldSpecs(data);
   const sheetId = data.book.spreadsheet_id;
+  const accountOptions = data.accounts.filter((a) => !a.archived).map((a) => ({ id: a.id, label: a.name }));
+  const accountOf = (c: (typeof data.categories)[number]) => accountOfCategory(c, data.pockets);
 
-  return (
+  const book = (
     <>
-      <PageHeader
-        title="Book settings"
-        description={`Preferences for ${data.book.name}. Stored in this book's own spreadsheet (Settings and Categories tabs).`}
-      />
-
+      <p className="text-body-regular text-text-secondary">
+        Shared with everyone in {data.book.name}. Stored in this book&apos;s own spreadsheet (Settings and Categories tabs).
+      </p>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="You in this book">
-          <MyMember
-            members={data.members}
-            current={data.membership.member}
-            personal={data.book.kind === "personal"}
-          />
+          <MyMember members={data.members} current={data.membership.member} personal={data.book.kind === "personal"} />
         </Card>
 
         <Card title="Household">
@@ -96,64 +95,88 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
           )}
         </Card>
       </div>
+    </>
+  );
 
-      <Card title="Appearance" description="Personal to this device and browser.">
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-          <GlassPreference />
-          <ThemeToggle appearance="segmented" />
-        </div>
-      </Card>
-
-      <Card
-        id="categories"
-        title="Categories"
-        description="Group drives the Needs / Wants / Savings split. Link a Savings category to a goal to track progress."
-        action={
-          <EntityFormButton
-            table="categories"
-            title="Category"
-            fields={specs.categories}
-            money={data.money}
-            initial={{ group: CATEGORY_GROUPS.includes(focus as never) ? focus : "Needs" }}
-          />
-        }
-      >
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {CATEGORY_GROUPS.map((group) => (
-            <div
-              key={group}
-              className={cx(
-                "flex flex-col gap-2 rounded-2xl",
-                focus === group && "bg-background-secondary-default p-3 ring-2 ring-accent-300 dark:ring-accent-700",
-              )}
-            >
-              <Chip color={GROUP_CHIP[group]} className="self-start">
-                {group}
-              </Chip>
-              <ul className="flex flex-col divide-y divide-separator-border">
-                {data.categories
-                  .filter((c) => c.group === group)
-                  .map((c) => (
-                    <li key={c.id} className={c.archived ? "flex items-center gap-2 py-2 opacity-50" : "flex items-center gap-2 py-2"}>
+  const categories = (
+    <Card
+      id="categories"
+      title="Categories"
+      description="Group drives the Needs / Wants / Savings split. Each category has the account its money is kept in (or, for income, lands in); new transactions start there."
+      action={
+        <EntityFormButton
+          table="categories"
+          title="Category"
+          fields={specs.categories}
+          money={data.money}
+          initial={{ group: CATEGORY_GROUPS.includes(focus as never) ? focus : "Needs" }}
+        />
+      }
+    >
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        {CATEGORY_GROUPS.map((group) => (
+          <div
+            key={group}
+            className={cx(
+              "flex flex-col gap-2 rounded-2xl",
+              focus === group && "bg-background-secondary-default p-3 ring-2 ring-accent-300 dark:ring-accent-700",
+            )}
+          >
+            <Chip color={GROUP_CHIP[group]} className="self-start">
+              {group}
+            </Chip>
+            <GroupAccountButton
+              group={group}
+              categories={data.categories.filter((c) => c.group === group && !c.archived).map((c) => ({ name: c.name, account: accountOf(c) }))}
+              accounts={accountOptions}
+            />
+            <ul className="flex flex-col divide-y divide-separator-border">
+              {data.categories
+                .filter((c) => c.group === group)
+                .map((c) => (
+                  <li key={c.id} className={cx("flex items-center gap-2 py-2", c.archived && "opacity-50")}>
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       <div className="flex min-w-0 flex-1 flex-col">
                         <span className="truncate text-body-medium text-text-primary">{c.name}</span>
                         <span className="truncate text-body-2-regular text-text-tertiary">
                           {[
-                            data.accountById.get(c.default_account_id)?.name,
-                            data.goals.find((g) => g.id === c.goal_id)?.name && `→ ${data.goals.find((g) => g.id === c.goal_id)?.name}`,
+                            data.accountById.get(accountOf(c))?.name ?? "No account",
+                            c.goal_id && `→ ${data.goals.find((g) => g.id === c.goal_id)?.name}`,
                           ]
                             .filter(Boolean)
-                            .join(" · ") || "—"}
+                            .join(" · ")}
                         </span>
                       </div>
-                      <EntityFormButton table="categories" title="Category" trigger="icon" fields={specs.categories} money={data.money} initial={c} />
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </Card>
+                      {/* The drawer shows the account new transactions actually use, group fallback included. */}
+                      <EntityFormButton
+                        table="categories"
+                        title="Category"
+                        trigger="icon"
+                        fields={specs.categories}
+                        money={data.money}
+                        initial={{ ...c, default_account_id: accountOf(c) }}
+                      />
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+
+  return (
+    <>
+      <PageHeader title="Settings" description={`Your account, and preferences for ${data.book.name}.`} />
+      <SettingsTabs
+        sections={[
+          account,
+          { id: "book", label: "Book", content: book },
+          { id: "categories", label: "Categories", content: categories },
+          appearance,
+        ]}
+      />
     </>
   );
 }

@@ -167,7 +167,7 @@ export const resumeBook = userAction(z.object({ bookId: z.string().min(1) }), as
 export const discardDraftBook = userAction(z.object({ bookId: z.string().min(1) }), async ({ bookId }, user) => {
   const book = (await registry().fresh("books")).find((b) => b.id === bookId);
   if (!book || book.owner_user_id !== user.id) throw new PermissionError("Book not found.");
-  if (book.status === "active") throw new Error("This book is already in use. Archive it from Book settings instead.");
+  if (book.status === "active") throw new Error("This book is already in use. Archive it from Settings → Book instead.");
   const memberships = (await registry().fresh("memberships")).filter((m) => m.book_id === bookId).map((m) => m.id);
   await registry().remove("memberships", memberships);
   await registry().remove("books", [bookId]);

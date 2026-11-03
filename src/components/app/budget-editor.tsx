@@ -24,7 +24,17 @@ export interface EditorLine {
   group: "Needs" | "Wants" | "Savings" | "Income";
   budget: number;
   actual: number;
+  /** Account the category's money is kept in (its own default, else the group's pocket). */
+  accountId: string;
 }
+
+export interface PocketAccount {
+  id: string;
+  name: string;
+  balance: number;
+}
+
+type Group = EditorLine["group"];
 
 const SECTIONS = [
   {
@@ -45,10 +55,12 @@ export function BudgetEditor({
   month,
   lines,
   money,
+  accounts,
 }: {
   month: string;
   lines: EditorLine[];
   money: MoneyFormat;
+  accounts: PocketAccount[];
 }) {
   const [values, setValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(lines.map((l) => [l.categoryId, l.budget])),
@@ -94,6 +106,8 @@ export function BudgetEditor({
         });
     });
 
+  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name;
+
   const copy = () =>
     startTransition(async () => {
       const res = await copyPreviousMonth(bookId, { month });
@@ -129,7 +143,7 @@ export function BudgetEditor({
         </Chip>
         <div className="col-span-2 flex flex-wrap gap-2 sm:ms-auto">
           {canEditCategories ? (
-            <ButtonLink href={bookHref("/settings#categories")} variant="ghost" leadingIcon={RiPriceTag3Line}>
+            <ButtonLink href={bookHref("/settings?tab=categories#categories")} variant="ghost" leadingIcon={RiPriceTag3Line}>
               Manage categories
             </ButtonLink>
           ) : null}
@@ -146,6 +160,14 @@ export function BudgetEditor({
         </div>
       </div>
 
+      <PocketPlan
+        lines={lines}
+        values={values}
+        accounts={accounts}
+        money={money}
+        settingsHref={canEditCategories ? bookHref("/settings?tab=categories#categories") : undefined}
+      />
+
       {/* Below lg: a save bar floats above the tab bar once something changed */}
       {canWrite && dirty ? (
         <div className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-2xl border border-border-button-default bg-background-primary-default p-2 ps-4 shadow-sidebar lg:hidden">
@@ -159,7 +181,7 @@ export function BudgetEditor({
       <div className="grid gap-4 xl:grid-cols-2">
         {SECTIONS.map((section) => {
           const items = lines.filter((l) => l.group === section.group);
-          const settingsHref = bookHref(`/settings?group=${section.group}#categories`);
+          const settingsHref = bookHref(`/settings?tab=categories&group=${section.group}#categories`);
           const total = items.reduce(
             (s, l) => s + (values[l.categoryId] ?? 0),
             0,
@@ -206,8 +228,15 @@ export function BudgetEditor({
                     >
                       <div className="flex min-w-0 flex-col gap-1.5">
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="truncate text-body-medium text-text-primary">
-                            {l.name}
+                          <span className="flex min-w-0 items-baseline gap-1.5">
+                            <span className="truncate text-body-medium text-text-primary">
+                              {l.name}
+                            </span>
+                            {l.accountId ? (
+                              <span className="shrink-0 text-caption-1-medium text-text-tertiary">
+                                {accountName(l.accountId)}
+                              </span>
+                            ) : null}
                           </span>
                           <span className="shrink-0 text-body-2-regular text-text-tertiary tabular-nums">
                             {fmt(l.actual)}
@@ -260,6 +289,93 @@ export function BudgetEditor({
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * Per account: what this month's plan keeps there, what's still to be spent
+ * from it, and whether its balance covers that. Read as the payday transfer list.
+ */
+function PocketPlan({
+  lines,
+  values,
+  accounts,
+  money,
+  settingsHref,
+}: {
+  lines: EditorLine[];
+  values: Record<string, number>;
+  accounts: PocketAccount[];
+  money: MoneyFormat;
+  /** Where admins set each category's account. */
+  settingsHref?: string;
+}) {
+  const fmt = (n: number) => formatMoney(n, money);
+  const rows = new Map<string, { planned: number; remaining: number; groups: Set<Group> }>();
+  for (const l of lines) {
+    if (l.group === "Income") continue;
+    const planned = values[l.categoryId] ?? 0;
+    if (!planned) continue;
+    const row = rows.get(l.accountId) ?? { planned: 0, remaining: 0, groups: new Set<Group>() };
+    row.planned += planned;
+    // What hasn't been spent (or, for savings, set aside) yet still has to be there.
+    row.remaining += Math.max(planned - l.actual, 0);
+    row.groups.add(l.group);
+    rows.set(l.accountId, row);
+  }
+  if (rows.size === 0) return null;
+  const ordered = [...rows.entries()].sort(([a], [b]) => (a ? (b ? 0 : -1) : 1));
+
+  return (
+    <section className="glass flex flex-col gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-5">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-headline-semibold text-text-primary">Pockets</h2>
+        <p className="text-body-2-regular text-text-tertiary">
+          Where this month&apos;s budget is kept, from each category&apos;s account. Move these amounts on payday.
+        </p>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {ordered.map(([id, row]) => {
+          const account = accounts.find((a) => a.id === id);
+          const short = account ? row.remaining - account.balance : 0;
+          return (
+            <li key={id || "none"} className="flex flex-col gap-1 rounded-2xl bg-background-secondary-default p-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className={cx("truncate text-body-medium", account ? "text-text-primary" : "text-text-tertiary")}>
+                  {account?.name ?? "No account set"}
+                </span>
+                <span className="shrink-0 text-body-semibold text-text-primary tabular-nums">{fmt(row.planned)}</span>
+              </div>
+              <span className="text-body-2-regular text-text-tertiary">{[...row.groups].join(" · ")}</span>
+              {account ? (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-body-2-regular text-text-secondary tabular-nums">Balance {fmt(account.balance)}</span>
+                  {short > 0 ? (
+                    <Chip color="rose" variant="caption">
+                      Short {fmt(short)}
+                    </Chip>
+                  ) : (
+                    <Chip color="lime" variant="caption">
+                      Covered
+                    </Chip>
+                  )}
+                </div>
+              ) : (
+                <span className="text-body-2-regular text-text-secondary">
+                  {settingsHref ? (
+                    <Link href={settingsHref} className="text-accent-600 hover:underline dark:text-accent-400">
+                      Set these categories&apos; accounts
+                    </Link>
+                  ) : (
+                    "Ask an admin to set these categories' accounts."
+                  )}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

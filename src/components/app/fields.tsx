@@ -25,6 +25,7 @@ export function SelectField({
   allowEmpty,
   className,
   size,
+  "aria-label": ariaLabel,
 }: {
   label?: ReactNode;
   value: string;
@@ -35,12 +36,14 @@ export function SelectField({
   allowEmpty?: string;
   className?: string;
   size?: "sm" | "md";
+  /** Accessible name when there's no visible label. */
+  "aria-label"?: string;
 }) {
   const items = allowEmpty ? [{ id: "__none", label: allowEmpty }, ...options] : options;
   return (
     <Select
       label={label}
-      aria-label={typeof label === "string" ? label : placeholder}
+      aria-label={ariaLabel ?? (typeof label === "string" ? label : placeholder)}
       placeholder={placeholder}
       selectedKey={value || (allowEmpty ? "__none" : null)}
       onSelectionChange={(k) => onChange(k === "__none" || k == null ? "" : String(k))}

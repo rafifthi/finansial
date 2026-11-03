@@ -35,7 +35,7 @@ export function fieldSpecs(data: AppData) {
       type: "select",
       options: ["Needs", "Wants", "Savings", "Income"].map((g) => ({ id: g, label: g })),
     },
-    { name: "default_account_id", label: "Default account", type: "select", options: accountOptions, allowEmpty: "None" },
+    { name: "default_account_id", label: "Account (for new transactions)", type: "select", options: accountOptions, allowEmpty: "None" },
     {
       name: "goal_id",
       label: "Funds goal",

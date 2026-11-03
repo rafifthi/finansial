@@ -3,11 +3,14 @@
 import {
   createContext,
   useContext,
+  useState,
   type ComponentType,
   type ReactNode,
   type Ref,
 } from "react";
+import { RiEyeLine, RiEyeOffLine } from "@remixicon/react";
 import {
+  Button as AriaButton,
   FieldError as AriaFieldError,
   Group as AriaGroup,
   Input as AriaInput,
@@ -276,6 +279,26 @@ export interface InputProps
   inputDir?: "ltr" | "rtl" | "auto";
 }
 
+/** Show / hide toggle for password fields; sits in InputBase's trailing slot. */
+function RevealButton({ revealed, onToggle }: { revealed: boolean; onToggle: () => void }) {
+  const Icon = revealed ? RiEyeOffLine : RiEyeLine;
+  return (
+    <AriaButton
+      onPress={onToggle}
+      aria-label={revealed ? "Hide password" : "Show password"}
+      className={({ isFocusVisible, isHovered }) =>
+        cx(
+          "-m-1 flex shrink-0 cursor-pointer items-center justify-center rounded-md p-1 outline-none transition-colors",
+          isHovered ? "text-foreground-icon-primary" : "text-foreground-icon-tertiary",
+          isFocusVisible && "ring-2 ring-border-focus-ring",
+        )
+      }
+    >
+      <Icon className="size-5" aria-hidden />
+    </AriaButton>
+  );
+}
+
 export function Input({
   label,
   hint,
@@ -292,9 +315,12 @@ export function Input({
   className,
   ...textFieldProps
 }: InputProps) {
+  const isPassword = textFieldProps.type === "password";
+  const [revealed, setRevealed] = useState(false);
   return (
     <TextField
       {...textFieldProps}
+      type={isPassword && revealed ? "text" : textFieldProps.type}
       className={className}
       // Don't clobber an explicit aria-label; fall back to the placeholder
       // only for unlabelled fields that don't provide one.
@@ -321,6 +347,7 @@ export function Input({
             placeholder={placeholder}
             leadingIcon={leadingIcon}
             trailingIcon={trailingIcon}
+            trailingAddon={isPassword ? <RevealButton revealed={revealed} onToggle={() => setRevealed((r) => !r)} /> : undefined}
             leadingAddon={leadingAddon}
             fieldClassName={fieldClassName}
           />

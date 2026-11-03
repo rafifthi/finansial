@@ -1,6 +1,7 @@
 import "server-only";
 import { today } from "@/lib/finance/dates";
 import { normalizeCutoff, periodOf, periodProgress } from "@/lib/finance/period";
+import { accountOfCategory, pocketsOf } from "@/lib/finance/accounts";
 import type { MoneyFormat } from "@/lib/finance/money";
 import type { Account, Category } from "@/lib/sheets/schema";
 import type { Book, Membership } from "@/lib/sheets/schema";
@@ -30,6 +31,8 @@ export async function loadAppData({ book, membership }: { book: Book; membership
     recurring: pick("recurring"),
     settings,
     money: { currency: settings.currency, locale: settings.locale } satisfies MoneyFormat,
+    /** Category group → the account its money is kept in ("" when unset). */
+    pockets: pocketsOf(settings),
     members: settings.members.split(",").map((m) => m.trim()).filter(Boolean),
     cutoffDay: normalizeCutoff(settings.cutoff_day),
     /** Current budget period ("YYYY-MM") and where today sits in it. */
@@ -54,7 +57,7 @@ export function formOptions(data: AppData) {
     accounts: data.accounts.filter((a) => !a.archived).map((a) => ({ id: a.id, name: a.name, type: a.type })),
     categories: data.categories
       .filter((c) => !c.archived)
-      .map((c) => ({ id: c.id, name: c.name, kind: c.kind, group: c.group, default_account_id: c.default_account_id })),
+      .map((c) => ({ id: c.id, name: c.name, kind: c.kind, group: c.group, default_account_id: accountOfCategory(c, data.pockets) })),
     installments: data.installments.map((i) => ({ id: i.id, name: i.name, monthly_amount: i.monthly_amount })),
     members: data.members,
     money: data.money,

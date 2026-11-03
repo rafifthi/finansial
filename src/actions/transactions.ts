@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { accountOfCategory, pocketsOf } from "@/lib/finance/accounts";
 import { bookAction } from "@/lib/data/action";
 import { newId } from "@/lib/data/store";
 import { TXN_TYPES } from "@/lib/sheets/schema";
@@ -31,7 +32,8 @@ export const saveTransaction = bookAction("data:write", TxnInput, async ({ id, .
   const now = new Date().toISOString();
   let account_id = input.account_id;
   if (!account_id && input.category_id) {
-    account_id = (await store.rows("categories")).find((c) => c.id === input.category_id)?.default_account_id ?? "";
+    const category = (await store.rows("categories")).find((c) => c.id === input.category_id);
+    account_id = category ? accountOfCategory(category, pocketsOf(await store.settings())) : "";
   }
   const values = { ...input, account_id, to_account_id: input.type === "transfer" ? input.to_account_id : "" };
   if (id) {

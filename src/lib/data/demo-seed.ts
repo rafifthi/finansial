@@ -85,11 +85,11 @@ export function demoSeed() {
   const thisMonth = monthOf(now);
 
   const accounts: Account[] = [
-    { id: "jenius", name: "Jenius", type: "bank", opening_balance: 4_000_000, archived: false },
-    { id: "jago", name: "Jago", type: "bank", opening_balance: 6_500_000, archived: false },
-    { id: "cash", name: "Cash", type: "cash", opening_balance: 500_000, archived: false },
-    { id: "bibit", name: "Bibit", type: "investment", opening_balance: 61_000_000, archived: false },
-    { id: "cc-cimb", name: "CC CIMB Niaga", type: "credit_card", opening_balance: 0, archived: false },
+    { id: "jenius", name: "Jenius", type: "bank", opening_balance: 4_000_000, institution: "", archived: false },
+    { id: "jago", name: "Jago", type: "bank", opening_balance: 6_500_000, institution: "", archived: false },
+    { id: "cash", name: "Cash", type: "cash", opening_balance: 500_000, institution: "", archived: false },
+    { id: "bibit", name: "Bibit", type: "investment", opening_balance: 61_000_000, institution: "", archived: false },
+    { id: "cc-cimb", name: "CC CIMB Niaga", type: "credit_card", opening_balance: 0, institution: "", archived: false },
   ];
 
   const c = (
@@ -98,6 +98,7 @@ export function demoSeed() {
     group: Category["group"],
     default_account_id: string,
     color: string,
+    emoji: string,
     goal_id = "",
   ): Category => ({
     id,
@@ -107,29 +108,30 @@ export function demoSeed() {
     default_account_id,
     goal_id,
     color,
+    emoji,
     archived: false,
   });
 
   const categories: Category[] = [
-    c("monthly-kanza", "Monthly Kanza", "Income", "jago", "lime"),
-    c("bonus-kanza", "Bonus Kanza", "Income", "jago", "lime"),
-    c("monthly-rafif", "Monthly Rafif", "Income", "jenius", "lime"),
-    c("tambal", "Tambal", "Income", "jago", "lime"),
-    c("billing", "Billing", "Needs", "jenius", "blue"),
-    c("kuota", "Kuota", "Needs", "jago", "blue"),
-    c("infaq", "Infaq", "Needs", "jago", "blue"),
-    c("groceries", "Groceries", "Needs", "jago", "blue"),
-    c("transport", "Transport", "Needs", "jago", "blue"),
-    c("insurance", "Insurance", "Needs", "jago", "blue"),
-    c("meals", "Meals", "Needs", "jenius", "blue"),
-    c("cicilan-mobil", "Cicilan Mobil", "Needs", "jago", "blue"),
-    c("petty-cash", "Petty Cash", "Wants", "jenius", "pink"),
-    c("date", "Date", "Wants", "jago", "pink"),
-    c("subscription", "Subscription", "Wants", "jenius", "pink"),
-    c("anak", "Anak", "Savings", "jago", "violet", "g-anak"),
-    c("dana-darurat", "Dana Darurat", "Savings", "jago", "violet", "g-dandur"),
-    c("travel", "Travel", "Savings", "jago", "violet", "g-travel"),
-    c("rumah", "Rumah", "Savings", "jago", "violet", "g-house"),
+    c("monthly-kanza", "Monthly Kanza", "Income", "jago", "lime", "💼"),
+    c("bonus-kanza", "Bonus Kanza", "Income", "jago", "yellow", "🎁"),
+    c("monthly-rafif", "Monthly Rafif", "Income", "jenius", "cyan", "💼"),
+    c("tambal", "Tambal", "Income", "jago", "neutral", "🪙"),
+    c("billing", "Billing", "Needs", "jenius", "blue", "🧾"),
+    c("kuota", "Kuota", "Needs", "jago", "cyan", "📶"),
+    c("infaq", "Infaq", "Needs", "jago", "lime", "🤲"),
+    c("groceries", "Groceries", "Needs", "jago", "lime", "🛒"),
+    c("transport", "Transport", "Needs", "jago", "yellow", "🚗"),
+    c("insurance", "Insurance", "Needs", "jago", "blue", "🛡️"),
+    c("meals", "Meals", "Needs", "jenius", "orange", "🍜"),
+    c("cicilan-mobil", "Cicilan Mobil", "Needs", "jago", "neutral", "🚙"),
+    c("petty-cash", "Petty Cash", "Wants", "jenius", "orange", "💸"),
+    c("date", "Date", "Wants", "jago", "rose", "💕"),
+    c("subscription", "Subscription", "Wants", "jenius", "purple", "📺"),
+    c("anak", "Anak", "Savings", "jago", "yellow", "👶", "g-anak"),
+    c("dana-darurat", "Dana Darurat", "Savings", "jago", "rose", "🚨", "g-dandur"),
+    c("travel", "Travel", "Savings", "jago", "cyan", "✈️", "g-travel"),
+    c("rumah", "Rumah", "Savings", "jago", "purple", "🏠", "g-house"),
   ];
 
   const plan: Record<string, number> = {
@@ -242,8 +244,8 @@ function demoPersonalSeed() {
   const month = monthOf(now);
   const day = (d: number) => dayInMonth(month, d) <= now ? dayInMonth(month, d) : now;
   const accounts: Account[] = [
-    { id: "p-jenius", name: "Jenius (personal)", type: "bank", opening_balance: 2_500_000, archived: false },
-    { id: "p-gopay", name: "GoPay", type: "ewallet", opening_balance: 150_000, archived: false },
+    { id: "p-jenius", name: "Jenius (personal)", type: "bank", opening_balance: 2_500_000, institution: "", archived: false },
+    { id: "p-gopay", name: "GoPay", type: "ewallet", opening_balance: 150_000, institution: "", archived: false },
   ];
   const c = (id: string, name: string, group: Category["group"], acc = "p-jenius"): Category => ({
     id,
@@ -253,6 +255,7 @@ function demoPersonalSeed() {
     default_account_id: acc,
     goal_id: "",
     color: "",
+    emoji: "",
     archived: false,
   });
   const categories = [

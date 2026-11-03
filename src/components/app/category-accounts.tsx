@@ -2,13 +2,52 @@
 
 import { useState, useTransition } from "react";
 import { RiBankLine } from "@remixicon/react";
-import { setGroupPocket } from "@/actions/entities";
+import { setAccountOverride, setGroupPocket } from "@/actions/entities";
 import { Button } from "@/components/base/buttons/button";
+import { Switch } from "@/components/base/switch/switch";
 import { toast } from "@/components/base/toast/toast";
 import type { CategoryGroup } from "@/lib/finance/accounts";
 import { SelectField, type Option } from "./fields";
 import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
 import { useBookId, useCan } from "./permissions";
+
+/**
+ * Book switch: off (default), a transaction's account always comes from its
+ * category and the form only shows it; on, the form adds a picker to override it.
+ */
+export function AccountOverrideSetting({ enabled }: { enabled: boolean }) {
+  const bookId = useBookId();
+  const canEdit = useCan("setup:write");
+  const [value, setValue] = useState(enabled);
+  const [pending, startTransition] = useTransition();
+
+  const change = (next: boolean) => {
+    setValue(next);
+    startTransition(async () => {
+      const res = await setAccountOverride(bookId, { enabled: next });
+      if (res.ok) {
+        toast(next ? "Transactions can pick their account" : "Transactions use their category's account", { status: "success" });
+      } else {
+        setValue(!next);
+        toast("Couldn't save", { status: "error", description: res.error });
+      }
+    });
+  };
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-body-medium text-text-primary">Let transactions override the account</span>
+        <span className="text-body-2-regular text-text-tertiary">
+          {value
+            ? "The transaction form has an account picker. Left alone, it uses the category's account."
+            : "Every expense and income goes to its category's account. The form shows it but can't change it."}
+        </span>
+      </div>
+      <Switch aria-label="Let transactions override the account" isSelected={value} onChange={change} isDisabled={!canEdit || pending} />
+    </div>
+  );
+}
 
 /**
  * Shortcut over a group: a drawer that moves every category in it to one

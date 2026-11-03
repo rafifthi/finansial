@@ -144,7 +144,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
           ) : (
             <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
               {expenseLines.map((l) => (
-                <BudgetBar key={l.category.id} name={l.category.name} actual={l.actual} budget={l.budget} money={money} />
+                <BudgetBar key={l.category.id} name={l.category.name} category={l.category} actual={l.actual} budget={l.budget} money={money} />
               ))}
             </div>
           )}

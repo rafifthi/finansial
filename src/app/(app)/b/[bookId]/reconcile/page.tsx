@@ -31,6 +31,8 @@ export default async function ReconcilePage({ params, searchParams }: PageProps<
       txn: t,
       categoryName: data.categoryById.get(t.category_id)?.name ?? "",
       group: data.categoryById.get(t.category_id)?.group ?? "",
+      categoryEmoji: data.categoryById.get(t.category_id)?.emoji ?? "",
+      categoryColor: data.categoryById.get(t.category_id)?.color ?? "",
       accountName: data.accountById.get(t.account_id)?.name ?? "",
       toAccountName: data.accountById.get(t.to_account_id)?.name ?? "",
     }));

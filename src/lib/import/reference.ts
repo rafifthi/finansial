@@ -99,8 +99,8 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
   const bankNames = column(g.setup, "Account [ Summary]");
   const assetNames = column(g.setup, "Account [Assets]");
   const accounts: Account[] = [
-    ...bankNames.map((name) => ({ id: `acc-${slug(name)}`, name, type: "bank" as const, opening_balance: 0, archived: false })),
-    ...assetNames.map((name) => ({ id: `acc-${slug(name)}`, name, type: "investment" as const, opening_balance: 0, archived: false })),
+    ...bankNames.map((name) => ({ id: `acc-${slug(name)}`, name, type: "bank" as const, opening_balance: 0, institution: "", archived: false })),
+    ...assetNames.map((name) => ({ id: `acc-${slug(name)}`, name, type: "investment" as const, opening_balance: 0, institution: "", archived: false })),
   ];
   const accountByName = new Map(accounts.map((a) => [a.name.toLowerCase(), a.id]));
 
@@ -123,6 +123,7 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
       default_account_id: defaultAccount.get(name.toLowerCase()) ?? "",
       goal_id: "",
       color: "",
+      emoji: "",
       archived: false,
     });
   };

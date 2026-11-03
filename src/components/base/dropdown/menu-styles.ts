@@ -10,6 +10,8 @@ export const MENU_POPOVER_SURFACE = [
   // Modal or Drawer render over it rather than behind its backdrop.
   "z-110 max-w-[calc(100vw-32px)] overflow-y-auto",
   "rounded-2xl border border-border-button-default bg-background-primary-default p-2.5 shadow-dropdown",
+  // Follows the app's glass setting (styles/app.css); solid where that CSS isn't loaded.
+  "glass glass-raised",
   "transition duration-150 ease-out",
   "data-[entering]:opacity-0 data-[entering]:scale-95 data-[entering]:blur-[2px]",
   "data-[exiting]:opacity-0 data-[exiting]:scale-95 data-[exiting]:blur-[2px]",

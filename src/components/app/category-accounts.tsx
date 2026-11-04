@@ -8,7 +8,7 @@ import { Switch } from "@/components/base/switch/switch";
 import { toast } from "@/components/base/toast/toast";
 import type { CategoryGroup } from "@/lib/finance/accounts";
 import { SelectField, type Option } from "./fields";
-import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
+import { DrawerForm, FormDrawer } from "./form-drawer";
 import { useBookId, useCan } from "./permissions";
 
 /**
@@ -107,12 +107,12 @@ function GroupAccountForm({
 
   return (
     <DrawerForm
+      error={error}
       title={`Account for all ${group}`}
       description="Only new transactions use it. Past transactions keep their account, so balances don't change."
       onSubmit={submit}
       footer={
         <>
-          <span className="hidden sm:block" />
           <Button type="submit" variant="primary" disabled={pending || moving.length === 0}>
             {pending ? "Saving…" : moving.length ? `Move ${moving.length} ${moving.length === 1 ? "category" : "categories"}` : "Nothing to change"}
           </Button>
@@ -137,7 +137,6 @@ function GroupAccountForm({
       ) : target ? (
         <p className="text-body-2-regular text-text-tertiary">Every {group} category already uses {nameOf(target)}.</p>
       ) : null}
-      <FormError>{error}</FormError>
     </DrawerForm>
   );
 }

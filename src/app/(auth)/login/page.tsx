@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="flex flex-1 items-center justify-center p-4">
       <section className="glass flex w-full max-w-sm flex-col items-center gap-6 rounded-3xl border border-border-button-default bg-background-primary-default p-8 shadow-sidebar">
-        <span className="flex size-12 items-center justify-center rounded-2xl bg-linear-to-b from-accent-500 to-accent-600 text-title-2-semibold text-white">
+        <span className="flex size-12 items-center justify-center rounded-2xl bg-linear-to-b from-accent-600 to-accent-700 text-title-2-semibold text-text-white">
           F
         </span>
         <div className="flex flex-col items-center gap-1 text-center">

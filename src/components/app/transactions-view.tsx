@@ -16,12 +16,12 @@ import {
 } from "@remixicon/react";
 import {
   deleteTransactions,
+  restoreTransactions,
   setVerified,
 } from "@/actions/transactions";
 import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/base/drawer/drawer";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -40,6 +40,7 @@ import { SelectField } from "./fields";
 import { isOutsideDrawer } from "./form-drawer";
 import { useBookId, useCan } from "./permissions";
 import { fromTransaction, TransactionDrawer } from "./transaction-form";
+import { undoToast } from "./undo";
 
 export interface TxnRow {
   txn: Transaction;
@@ -102,7 +103,6 @@ export function TransactionsView({
     setSelectMode(false);
   };
   const [editing, setEditing] = useState<TxnRow["txn"] | null>(null);
-  const [deleting, setDeleting] = useState<TxnRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -150,6 +150,16 @@ export function TransactionsView({
     });
 
   const ids = [...selected];
+
+  /** Deletes at once and offers Undo, for one row or a whole selection. */
+  const removeRows = (targets: string[], title: string) =>
+    startTransition(async () => {
+      const res = await deleteTransactions(bookId, { ids: targets });
+      if (!res.ok) return void toast("Couldn't delete", { status: "error", description: res.error });
+      const removed = res.data ?? [];
+      undoToast(title, () => restoreTransactions(bookId, { rows: removed }));
+      setSelected(new Set());
+    });
 
   const verifyOne = (id: string, verified: boolean) =>
     startTransition(async () => {
@@ -329,7 +339,10 @@ export function TransactionsView({
               variant="danger"
               leadingIcon={RiDeleteBinLine}
               disabled={pending}
-              onClick={() => bulk(() => deleteTransactions(bookId, { ids }), "Deleted")}
+              onClick={() => {
+                const total = rows.filter((r) => selected.has(r.txn.id)).reduce((sum, r) => sum + r.txn.amount, 0);
+                removeRows(ids, `Deleted ${ids.length} ${ids.length === 1 ? "transaction" : "transactions"} · ${money(total)}`);
+              }}
             >
               Delete
             </Button>
@@ -382,7 +395,7 @@ export function TransactionsView({
                       }
                     />
                   ) : null}
-                  <h3 className="text-body-medium text-text-secondary">{dayLabel(day, options.today)}</h3>
+                  <h2 className="text-body-medium text-text-secondary">{dayLabel(day, options.today)}</h2>
                   <span className="ms-auto flex gap-3 text-body-regular tabular-nums">
                     {dayFlow.income ? <span className="text-status-lime-text">+{money(dayFlow.income)}</span> : null}
                     {dayFlow.out ? <span className="text-text-secondary">−{money(dayFlow.out)}</span> : null}
@@ -398,7 +411,7 @@ export function TransactionsView({
                       selecting={selecting}
                       onToggle={canWrite ? () => toggle(r.txn.id) : undefined}
                       onOpen={canWrite ? () => (selecting ? toggle(r.txn.id) : setEditing(r.txn)) : undefined}
-                      onDelete={canWrite ? () => setDeleting(r) : undefined}
+                      onDelete={canWrite ? () => removeRows([r.txn.id], `Deleted ${r.txn.description || r.categoryName || "transaction"} · ${money(r.txn.amount)}`) : undefined}
                       onEdit={canWrite ? () => setEditing(r.txn) : undefined}
                       onVerify={canWrite ? () => verifyOne(r.txn.id, !r.txn.verified) : undefined}
                     />
@@ -410,44 +423,6 @@ export function TransactionsView({
         </div>
       )}
 
-      <Modal isOpen={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)} size="sm">
-        {deleting ? (
-          <div className="flex flex-col gap-4">
-            <ModalHeader
-              title="Delete transaction?"
-              description="It's removed from the sheet too, and can't be undone."
-            />
-            <ModalBody>
-              <p className="text-body-regular text-text-secondary">
-                <span className="text-text-primary">
-                  {deleting.txn.description || deleting.categoryName || "Transaction"}
-                </span>{" "}
-                · {money(deleting.txn.amount)} · {dayLabel(deleting.txn.date, options.today)}
-              </p>
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="secondary" onClick={() => setDeleting(null)} disabled={pending}>
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                leadingIcon={RiDeleteBinLine}
-                disabled={pending}
-                onClick={() =>
-                  startTransition(async () => {
-                    const res = await deleteTransactions(bookId, { ids: [deleting.txn.id] });
-                    if (!res.ok) return void toast("Couldn't delete", { status: "error", description: res.error });
-                    toast("Transaction deleted", { status: "success" });
-                    setDeleting(null);
-                  })
-                }
-              >
-                {pending ? "Deleting…" : "Delete"}
-              </Button>
-            </ModalFooter>
-          </div>
-        ) : null}
-      </Modal>
 
       <TransactionDrawer
         options={options}

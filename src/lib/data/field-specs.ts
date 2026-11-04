@@ -10,11 +10,12 @@ export function fieldSpecs(data: AppData) {
   const allCategories = data.categories.filter((c) => !c.archived).map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }));
 
   const accounts: FieldSpec[] = [
-    { name: "name", label: "Name", type: "text", placeholder: "Jago", required: true },
+    { name: "name", label: "Name", type: "text", placeholder: "e.g. Jago", required: true },
     {
       name: "type",
       label: "Type",
       type: "select",
+      required: true,
       options: [
         { id: "bank", label: "Bank" },
         { id: "ewallet", label: "E-wallet" },
@@ -29,12 +30,12 @@ export function fieldSpecs(data: AppData) {
   ];
 
   const categories: FieldSpec[] = [
-    { name: "name", label: "Name", type: "text", placeholder: "Meals", required: true },
+    { name: "name", label: "Name", type: "text", placeholder: "e.g. Meals", required: true },
     { name: "emoji", label: "Look", type: "identity" },
     {
       name: "group",
       label: "Group",
-      type: "select",
+      type: "segmented",
       options: ["Needs", "Wants", "Savings", "Income"].map((g) => ({ id: g, label: g })),
     },
     { name: "default_account_id", label: "Account (for new transactions)", type: "select", options: accountOptions, allowEmpty: "None" },
@@ -49,52 +50,48 @@ export function fieldSpecs(data: AppData) {
   ];
 
   const goals: FieldSpec[] = [
-    { name: "name", label: "Name", type: "text", placeholder: "Travel", required: true },
-    { name: "target_amount", label: "Target", type: "money" },
-    { name: "target_date", label: "Target date", type: "date" },
+    { name: "name", label: "Name", type: "text", placeholder: "e.g. Travel", required: true },
+    { name: "target_amount", label: "Target", type: "money", required: true },
+    { name: "target_date", label: "Target date", type: "date", hint: "Optional. Sets the monthly amount you need to save." },
     { name: "starting_amount", label: "Already saved before tracking", type: "money" },
     { name: "archived", label: "Archived", type: "checkbox" },
   ];
 
   const installments: FieldSpec[] = [
-    { name: "name", label: "Name", type: "text", placeholder: "Cicilan Mobil", required: true },
-    { name: "monthly_amount", label: "Per month", type: "money" },
-    { name: "tenor_months", label: "Tenor (months)", type: "number", min: 1, max: 120 },
-    { name: "start_month", label: "First instalment month", type: "month" },
-    { name: "total_amount", label: "Total (optional, defaults to per month × tenor)", type: "money" },
-    { name: "account_id", label: "Paid from / card", type: "select", options: accountOptions, allowEmpty: "None" },
+    { name: "name", label: "Name", type: "text", placeholder: "e.g. Cicilan Mobil", required: true },
+    { name: "monthly_amount", label: "Per month", type: "money", required: true },
+    { name: "tenor_months", label: "Number of months", type: "number", min: 1, max: 120, required: true },
+    { name: "start_month", label: "First payment", type: "month", required: true },
+    { name: "total_amount", label: "Total", type: "money", hint: "Leave empty to use per month × number of months." },
+    { name: "account_id", label: "Paid from or card", type: "select", options: accountOptions, allowEmpty: "None" },
     { name: "category_id", label: "Category", type: "select", options: expenseCategories, allowEmpty: "None" },
     { name: "note", label: "Note", type: "text" },
   ];
 
+  const notTransfer = { field: "type", in: ["expense", "income"] };
+  const transfer = { field: "type", in: ["transfer"] };
   const recurring: FieldSpec[] = [
-    { name: "description", label: "Description", type: "text", placeholder: "Wifi", required: true },
     {
       name: "type",
       label: "Type",
-      type: "select",
+      type: "segmented",
       options: [
         { id: "expense", label: "Expense" },
         { id: "income", label: "Income" },
         { id: "transfer", label: "Transfer" },
       ],
     },
-    { name: "amount", label: "Amount", type: "money" },
-    { name: "category_id", label: "Category", type: "select", options: allCategories, allowEmpty: "None" },
-    { name: "account_id", label: "Account", type: "select", options: accountOptions, allowEmpty: "Category default" },
-    { name: "to_account_id", label: "To account (transfers)", type: "select", options: accountOptions, allowEmpty: "None" },
-    {
-      name: "frequency",
-      label: "Repeats",
-      type: "select",
-      options: [
-        { id: "monthly", label: "Monthly" },
-        { id: "weekly", label: "Weekly" },
-      ],
-    },
-    { name: "day", label: "Day", type: "number", min: 0, max: 31, hint: "Monthly: day of month (31 = last day). Weekly: 0 = Sun … 6 = Sat." },
-    { name: "start_date", label: "Starts", type: "date" },
-    { name: "end_date", label: "Ends (optional)", type: "date" },
+    { name: "amount", label: "Amount", type: "money", required: true },
+    { name: "description", label: "Name", type: "text", placeholder: "e.g. Wifi", required: true },
+    { name: "category_id", label: "Category", type: "select", options: allCategories, allowEmpty: "None", showWhen: notTransfer, requiredWhen: notTransfer },
+    { name: "account_id", label: "Account", type: "select", options: accountOptions, allowEmpty: "Category's account", showWhen: notTransfer },
+    { name: "from_category_id", label: "From category", type: "select", options: allCategories, showWhen: transfer, required: true, hint: "Its account is where the money leaves." },
+    { name: "category_id", label: "To category", type: "select", options: allCategories, showWhen: transfer, required: true, hint: "Its account is where the money lands." },
+    { name: "schedule", label: "Schedule", type: "heading" },
+    { name: "frequency", label: "Repeats", type: "schedule" },
+    { name: "start_date", label: "Starts", type: "date", required: true },
+    { name: "end_date", label: "Ends", type: "date", hint: "Optional. Leave empty to keep it going." },
+    { name: "details", label: "Details", type: "heading" },
     { name: "member", label: "Member", type: "select", options: data.members.map((m) => ({ id: m, label: m })), allowEmpty: "Household" },
     {
       name: "installment_id",
@@ -102,6 +99,14 @@ export function fieldSpecs(data: AppData) {
       type: "select",
       options: data.installments.map((i) => ({ id: i.id, label: i.name })),
       allowEmpty: "None",
+      showWhen: { field: "type", in: ["expense"] },
+    },
+    {
+      name: "preview",
+      label: "Preview",
+      type: "recurring-preview",
+      categories: data.categories.map((c) => ({ id: c.id, label: c.name })),
+      accounts: data.accounts.map((a) => ({ id: a.id, label: a.name })),
     },
   ];
 

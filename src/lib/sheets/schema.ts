@@ -25,7 +25,10 @@ export const TransactionSchema = z.object({
   date,
   type: z.enum(TXN_TYPES),
   amount,
+  /** For a transfer, the destination category; otherwise the category. */
   category_id: optId,
+  /** Transfers only: the category the money leaves. Its account is the `account_id`. */
+  from_category_id: optId,
   account_id: optId,
   to_account_id: optId,
   member: z.string().default(""),
@@ -96,6 +99,8 @@ export const RecurringSchema = z.object({
   type: z.enum(TXN_TYPES),
   amount,
   category_id: optId,
+  /** Transfers only: the category the money leaves. */
+  from_category_id: optId,
   account_id: optId,
   to_account_id: optId,
   member: z.string().default(""),
@@ -148,6 +153,7 @@ export const TABLES = {
     type: "string",
     amount: "number",
     category_id: "string",
+    from_category_id: "string",
     account_id: "string",
     to_account_id: "string",
     member: "string",
@@ -209,6 +215,7 @@ export const TABLES = {
     type: "string",
     amount: "number",
     category_id: "string",
+    from_category_id: "string",
     account_id: "string",
     to_account_id: "string",
     member: "string",

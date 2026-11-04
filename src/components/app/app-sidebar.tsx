@@ -134,7 +134,7 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
                 className={cx(
                   "flex items-center justify-between rounded-2lg p-2 outline-none transition-colors",
                   "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-                  active ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected" : "hover:bg-background-secondary-hover",
+                  active ? "bg-linear-to-b from-accent-600 to-accent-700 shadow-nav-selected" : "hover:bg-background-secondary-hover",
                 )}
               >
                 <span className="flex items-center gap-2">
@@ -220,7 +220,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
     cx(
       "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-caption-1-medium outline-none",
       "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-      active ? "text-accent-600 dark:text-accent-400" : "text-text-tertiary",
+      active ? "text-button-ghost-foreground" : "text-text-tertiary",
     );
   const tabLink = (item: ResolvedNav) => (
     <Link key={item.href} href={item.href} className={tab(isActive(pathname, item))} aria-current={isActive(pathname, item) ? "page" : undefined}>
@@ -257,7 +257,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
                 type="button"
                 onClick={() => setAddOpen(true)}
                 aria-label="Add transaction"
-                className="-mt-5 flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-500 to-accent-600 text-white shadow-nav-selected outline-none ring-4 ring-background-full focus-visible:ring-border-focus-ring active:scale-95"
+                className="-mt-5 flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-600 to-accent-700 text-white shadow-nav-selected outline-none ring-4 ring-background-full focus-visible:ring-border-focus-ring active:scale-95"
               >
                 <RiAddLine className="size-7" aria-hidden />
               </button>

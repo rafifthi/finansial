@@ -7,7 +7,7 @@ import { Avatar } from "@/components/base/avatar/avatar";
 import { Chip } from "@/components/base/badges/chip";
 import { Button } from "@/components/base/buttons/button";
 import { IconButton } from "@/components/base/buttons/icon-button";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
+import { AlertDialog, Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
 import { Switch } from "@/components/base/switch/switch";
 import { toast } from "@/components/base/toast/toast";
 import { cx } from "@/utils/cx";
@@ -27,6 +27,18 @@ export function AdminUsers({ users, currentUserId }: { users: AdminUserRow[]; cu
   const [pending, startTransition] = useTransition();
   const [secret, setSecret] = useState<{ email: string; password: string } | null>(null);
   const [secretOpen, setSecretOpen] = useState(false);
+  const [resetting, setResetting] = useState<AdminUserRow | null>(null);
+  const reset = async () => {
+    if (!resetting) return;
+    const res = await resetUserPassword({ id: resetting.id });
+    if (!res.ok) {
+      toast("Couldn't reset", { status: "error", description: res.error });
+      throw new Error(res.error);
+    }
+    setSecret({ email: resetting.email, password: res.data!.password });
+    setResetting(null);
+    setSecretOpen(true);
+  };
 
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>, done: string) =>
     startTransition(async () => {
@@ -73,19 +85,22 @@ export function AdminUsers({ users, currentUserId }: { users: AdminUserRow[]; cu
                 icon={RiKeyLine}
                 aria-label={`Reset password for ${u.name}`}
                 disabled={pending}
-                onClick={() =>
-                  startTransition(async () => {
-                    const res = await resetUserPassword({ id: u.id });
-                    if (!res.ok) return void toast("Couldn't reset", { status: "error", description: res.error });
-                    setSecret({ email: u.email, password: res.data!.password });
-                    setSecretOpen(true);
-                  })
-                }
+                onClick={() => setResetting(u)}
               />
             </div>
           </li>
         ))}
       </ul>
+
+      <AlertDialog
+        isOpen={resetting !== null}
+        onOpenChange={(open) => !open && setResetting(null)}
+        title={`Reset ${resetting?.name ?? "this user"}'s password?`}
+        description="Their current password stops working at once. You'll get a temporary one to pass on."
+        confirmLabel="Reset password"
+        pendingLabel="Resetting…"
+        onConfirm={reset}
+      />
 
       <Modal isOpen={secretOpen} onOpenChange={setSecretOpen} size="sm">
         {secret ? (

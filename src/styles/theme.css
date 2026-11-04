@@ -176,11 +176,14 @@
 
   /* Text */
   --color-text-primary:         var(--color-neutral-950);
-  --color-text-secondary:       var(--color-neutral-500);
-  --color-text-tertiary:        var(--color-neutral-400);
+  /* Secondary/tertiary are darker than the Figma neutral-500/400 so helper
+   * text, descriptions and badges clear WCAG AA (4.5:1) on every surface,
+   * including the grey ones (#ebebeb). */
+  --color-text-secondary:       var(--color-neutral-600);
+  --color-text-tertiary:        color-mix(in srgb, var(--color-neutral-500) 60%, var(--color-neutral-600));
   --color-text-disabled:        var(--color-neutral-300);
   --color-text-disabled-danger: var(--color-red-300);
-  --color-text-placeholder:     var(--color-neutral-400);
+  --color-text-placeholder:     var(--color-neutral-500);
   --color-text-error-primary:   var(--color-red-500);
   --color-text-destructive: color-mix(in srgb, var(--color-red-700) 80%, var(--color-neutral-600));
   --color-input-disabled-text:  var(--color-neutral-300);
@@ -409,14 +412,16 @@
   --color-chart-agents-bar-active: var(--color-purple-400);
 
   /* Button gradients */
-  --gradient-button-primary-default:  linear-gradient(180deg, var(--color-accent-500)    0%, var(--color-accent-600)    100%);
-  --gradient-button-primary-hover:    linear-gradient(180deg, var(--color-accent-400)    0%, var(--color-accent-500)    100%);
-  --gradient-button-primary-active:   linear-gradient(180deg, var(--color-accent-600)    0%, var(--color-accent-700)    100%);
+  /* One step deeper than Figma's 500→600 so the white label clears 4.5:1
+   * at the light top stop too. */
+  --gradient-button-primary-default:  linear-gradient(180deg, var(--color-accent-600)    0%, var(--color-accent-700)    100%);
+  --gradient-button-primary-hover:    linear-gradient(180deg, var(--color-accent-600)    0%, var(--color-accent-600)    100%);
+  --gradient-button-primary-active:   linear-gradient(180deg, var(--color-accent-700)    0%, var(--color-accent-800)    100%);
   --gradient-button-primary-disabled: linear-gradient(180deg, var(--color-neutral-200) 0%, var(--color-neutral-300) 100%);
 
-  --gradient-button-danger-default:   linear-gradient(180deg, var(--color-red-500) 0%, var(--color-red-600) 100%);
-  --gradient-button-danger-hover:     linear-gradient(180deg, var(--color-red-400) 0%, var(--color-red-500) 100%);
-  --gradient-button-danger-active:    linear-gradient(180deg, var(--color-red-600) 0%, var(--color-red-700) 100%);
+  --gradient-button-danger-default:   linear-gradient(180deg, var(--color-red-600) 0%, var(--color-red-700) 100%);
+  --gradient-button-danger-hover:     linear-gradient(180deg, var(--color-red-600) 0%, var(--color-red-600) 100%);
+  --gradient-button-danger-active:    linear-gradient(180deg, var(--color-red-700) 0%, var(--color-red-800) 100%);
   --gradient-button-danger-disabled:  linear-gradient(180deg, var(--color-red-100) 0%, var(--color-red-200) 100%);
 }
 
@@ -437,7 +442,10 @@
 
   /* Text */
   --color-text-primary:  var(--color-neutral-50);
-  --color-text-tertiary: var(--color-neutral-600);
+  --color-text-secondary: var(--color-neutral-400);
+  /* ≥4.5:1 on the raised dark surface (neutral-800) as well as the ground. */
+  --color-text-tertiary: color-mix(in srgb, var(--color-neutral-400) 60%, var(--color-neutral-500));
+  --color-text-placeholder: color-mix(in srgb, var(--color-neutral-400) 60%, var(--color-neutral-500));
   --color-text-disabled: var(--color-neutral-800);
   --color-text-error-primary: var(--color-red-400);
   --color-text-destructive: color-mix(in srgb, var(--color-red-500) 80%, var(--color-neutral-500));

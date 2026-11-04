@@ -59,10 +59,10 @@ body::before {
 .glass-hover:hover {
   --glass-base: var(--color-background-primary-hover);
 }
-/* Floating, text-dense surfaces (menus, toasts) over busy content: same blur,
- * less see-through, so rows stay legible at any level. */
+/* Floating, text-dense surfaces (menus, listboxes, calendars, toasts) over
+ * busy content: same blur, almost opaque, so labels behind never read through. */
 .glass-raised {
-  --glass-clarity: 24%;
+  --glass-clarity: 8%;
 }
 /* Off means off: no backdrop pass at all (also no containing block for fixed children). */
 :root[data-glass="off"] :is(.glass, .glass-cards > section) {

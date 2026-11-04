@@ -138,13 +138,15 @@ const inputStyles = sortCx({
   field: [
     "relative flex w-full items-center",
     "rounded-2lg",
-    "bg-background-tertiary-default text-foreground-icon-tertiary",
-    "ring-2 ring-inset ring-transparent",
+    // Same raised field as Select and Date Picker triggers: surface, hairline
+    // edge, contact shadow. Text inputs used to be a filled grey well.
+    "bg-background-primary-default text-foreground-icon-tertiary shadow-xs",
+    "ring-1 ring-inset ring-border-button-default",
     "transition-[background-color,box-shadow,color] duration-[var(--input-transition-ms)] ease",
   ].join(" "),
 
   fieldSize: {
-    medium: "p-2",                // 8px all sides → h auto = 36
+    medium: "p-2 max-sm:min-h-11", // 8px all sides → h auto = 36; 44 on phones for thumbs
     small:  "h-8 px-1.5 py-2",    // 32 / 6 / 8
   },
 
@@ -160,8 +162,7 @@ const inputStyles = sortCx({
   input: [
     "min-w-0 flex-1 bg-transparent border-0 outline-none p-0 m-0",
     "font-sans text-body-regular text-text-primary",
-    "placeholder:text-text-tertiary",
-    "focus:placeholder:text-text-primary",
+    "placeholder:text-text-placeholder",
     "disabled:text-input-disabled-text disabled:placeholder:text-input-disabled-text",
     "disabled:cursor-not-allowed",
     "aria-invalid:placeholder:text-text-error-placeholder",
@@ -193,11 +194,12 @@ export function inputFieldClassName(
     // Hover: idle, no focus, no disabled, no invalid
     isHovered && !isFocusWithin && !isDisabled && !isInvalid && "ring-border-button-hover",
     // Focus wins over hover
-    isFocusWithin && !isDisabled && !isInvalid && "ring-border-button-active",
+    isFocusWithin && !isDisabled && !isInvalid && "ring-2 ring-border-focus-ring",
     // Disabled
-    isDisabled && "bg-input-disabled-background text-input-disabled-foreground",
+    isDisabled && "bg-input-disabled-background text-input-disabled-foreground shadow-none ring-transparent",
     // Invalid
-    isInvalid && "bg-background-tertiary-error text-foreground-icon-error",
+    isInvalid && "bg-background-tertiary-error text-foreground-icon-error ring-border-error-default",
+    isInvalid && isFocusWithin && "ring-2",
   );
 }
 

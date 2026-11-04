@@ -8,7 +8,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { AlertDialog } from "@/components/base/modal/modal";
 import { toast } from "@/components/base/toast/toast";
-import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
+import { DrawerForm, FormDrawer } from "./form-drawer";
 import { useBookId, useCan } from "./permissions";
 
 /** Book name + archive (owner). The kind can't change here: personal → family would expose a private book. */
@@ -35,6 +35,7 @@ export function BookDetails({ name, isOwner }: { name: string; isOwner: boolean 
       ) : null}
       <FormDrawer isOpen={open} onOpenChange={setOpen} aria-label="Rename book">
         <DrawerForm
+      error={error}
           title="Rename book"
           onSubmit={() =>
             startTransition(async () => {
@@ -46,7 +47,6 @@ export function BookDetails({ name, isOwner }: { name: string; isOwner: boolean 
           }
           footer={
             <>
-              <span className="hidden sm:block" />
               <Button type="submit" variant="primary" disabled={pending}>
                 {pending ? "Saving…" : "Save"}
               </Button>
@@ -54,7 +54,6 @@ export function BookDetails({ name, isOwner }: { name: string; isOwner: boolean 
           }
         >
           <Input label="Name" value={value} onChange={setValue} isRequired autoFocus maxLength={60} />
-          <FormError>{error}</FormError>
         </DrawerForm>
       </FormDrawer>
       <AlertDialog

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { bookAction } from "@/lib/data/action";
+import { bookAction, FieldErrors, fieldErrorsFrom } from "@/lib/data/action";
 import { runRecurring } from "@/lib/data/recurring-job";
 import { newId } from "@/lib/data/store";
 import { PermissionError } from "@/auth";
@@ -51,12 +51,34 @@ export const saveEntity = bookAction(
       await store.db.ensureSchema();
       store.invalidate();
     }
-    if ((table === "recurring" || table === "installments") && !values.account_id && values.category_id) {
+    if (table === "recurring") {
+      if (values.type === "transfer") {
+        // Transfers run category to category; the categories' accounts are where the money moves.
+        const categories = await store.rows("categories");
+        const pockets = pocketsOf(await store.settings());
+        const accountOf = (cid: unknown) => {
+          const c = categories.find((x) => x.id === cid);
+          return c ? accountOfCategory(c, pockets) : "";
+        };
+        const errors: Record<string, string> = {};
+        if (!values.from_category_id) errors.from_category_id = "Pick where the money comes from";
+        if (!values.category_id) errors.category_id = "Pick where the money goes";
+        else if (values.category_id === values.from_category_id) errors.category_id = "Pick two different categories";
+        if (Object.keys(errors).length) throw new FieldErrors(errors);
+        values.account_id = accountOf(values.from_category_id);
+        values.to_account_id = accountOf(values.category_id);
+        values.installment_id = "";
+      } else {
+        values.from_category_id = "";
+        values.to_account_id = "";
+      }
+    }
+    if ((table === "recurring" || table === "installments") && values.type !== "transfer" && !values.account_id && values.category_id) {
       const category = (await store.rows("categories")).find((c) => c.id === values.category_id);
       values.account_id = category ? accountOfCategory(category, pocketsOf(await store.settings())) : "";
     }
     const parsed = def.schema.safeParse({ ...values, id: id || newId() });
-    if (!parsed.success) throw new Error(parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
+    if (!parsed.success) throw new FieldErrors(fieldErrorsFrom(parsed.error.issues));
     if (id) await store.update(table, id, parsed.data as never);
     else await store.insert(table, [parsed.data as never]);
   },
@@ -75,8 +97,24 @@ export const deleteEntity = bookAction("data:write", z.object({ table: z.enum(ED
       );
     }
   }
+  const row = (await store.rows(table)).find((r) => r.id === id);
   await store.remove(table, [id]);
+  return row as Record<string, unknown> | undefined;
 });
+
+/** Undo for deleteEntity: puts the removed row back with its original id. */
+export const restoreEntity = bookAction(
+  "data:write",
+  z.object({ table: z.enum(EDITABLE), row: z.record(z.string(), z.unknown()) }),
+  async ({ table, row }, { membership, store }) => {
+    assertCanEdit(membership.role, table);
+    if (table === "accounts") throw new Error("Accounts can't be restored here.");
+    const parsed = TABLES[table].schema.safeParse(row);
+    if (!parsed.success) throw new Error("That item can't be restored.");
+    if ((await store.rows(table)).some((r) => r.id === parsed.data.id)) return;
+    await store.insert(table, [parsed.data as never]);
+  },
+);
 
 /**
  * Deletes a money account. When anything still points at it, everything is

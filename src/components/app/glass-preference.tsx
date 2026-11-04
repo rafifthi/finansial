@@ -90,7 +90,7 @@ export function GlassPreference() {
           <button
             type="button"
             onClick={() => store(DEFAULT_GLASS)}
-            className="rounded-md text-body-2-medium text-accent-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring dark:text-accent-400"
+            className="rounded-md text-body-2-medium text-button-ghost-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring"
           >
             Reset
           </button>

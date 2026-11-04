@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-04T08:30:00Z",
+  "title": "Design System: Finansial",
+  "extensions": {
+    "colorMeta": {
+      "accent-blue": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "canonical": "oklch(62.3% 0.214 259.815)",
+        "tonalRamp": [
+          "#162456",
+          "#1c398e",
+          "#193cb8",
+          "#1447e6",
+          "#155dfc",
+          "#2b7fff",
+          "#8ec5ff",
+          "#dbeafe"
+        ]
+      },
+      "accent-blue-deep": {
+        "role": "primary",
+        "displayName": "Deep Action Blue",
+        "canonical": "oklch(54.6% 0.245 262.881)",
+        "tonalRamp": [
+          "#162456",
+          "#1c398e",
+          "#193cb8",
+          "#1447e6",
+          "#155dfc",
+          "#2b7fff",
+          "#8ec5ff",
+          "#dbeafe"
+        ]
+      },
+      "accent-blue-bright": {
+        "role": "primary",
+        "displayName": "Bright Action Blue",
+        "canonical": "#3392ff",
+        "tonalRamp": [
+          "#162456",
+          "#1c398e",
+          "#193cb8",
+          "#155dfc",
+          "#3392ff",
+          "#8ec5ff",
+          "#bedbff",
+          "#eff6ff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(14.5% 0 0)",
+        "tonalRamp": [
+          "#0a0a0a",
+          "#171717",
+          "#262626",
+          "#404040",
+          "#737373",
+          "#a1a1a1",
+          "#ebebeb",
+          "#fafafa"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "oklch(43.9% 0 0)",
+        "tonalRamp": [
+          "#0a0a0a",
+          "#171717",
+          "#262626",
+          "#404040",
+          "#737373",
+          "#a1a1a1",
+          "#ebebeb",
+          "#fafafa"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "color-mix(in srgb, neutral-500 60%, neutral-600)"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff"
+      },
+      "paper-soft": {
+        "role": "neutral",
+        "displayName": "Soft Paper",
+        "canonical": "#f7f7f7"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#ebebeb"
+      },
+      "night-ground": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "#121212"
+      },
+      "night-panel": {
+        "role": "neutral",
+        "displayName": "Night Panel",
+        "canonical": "oklch(20.5% 0 0)"
+      },
+      "night-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "canonical": "oklch(26.9% 0 0)"
+      },
+      "night-hairline": {
+        "role": "neutral",
+        "displayName": "Night Hairline",
+        "canonical": "oklch(26.9% 0 0)"
+      },
+      "error-red": {
+        "role": "status",
+        "displayName": "Error Red",
+        "canonical": "oklch(63.7% 0.237 25.331)"
+      },
+      "warning-amber": {
+        "role": "status",
+        "displayName": "Warning Amber",
+        "canonical": "oklch(79.5% 0.184 86.047)"
+      },
+      "chart-teal": {
+        "role": "data",
+        "displayName": "Chart Teal",
+        "canonical": "oklch(77.7% 0.152 181.912)"
+      },
+      "chart-lime": {
+        "role": "data",
+        "displayName": "Chart Lime",
+        "canonical": "oklch(84.1% 0.238 128.85)"
+      },
+      "chart-pink": {
+        "role": "data",
+        "displayName": "Chart Pink",
+        "canonical": "oklch(71.8% 0.202 349.761)"
+      },
+      "chart-sky": {
+        "role": "data",
+        "displayName": "Chart Sky",
+        "canonical": "oklch(74.6% 0.16 232.661)"
+      },
+      "chart-purple": {
+        "role": "data",
+        "displayName": "Chart Purple",
+        "canonical": "oklch(71.4% 0.203 305.504)"
+      },
+      "placeholder": {
+        "role": "neutral",
+        "displayName": "Placeholder",
+        "canonical": "oklch(55.6% 0 0)"
+      }
+    },
+    "typographyMeta": {
+      "title-1": {
+        "displayName": "Title 1",
+        "purpose": "Page titles from sm up (text-title-1-medium)."
+      },
+      "title-2": {
+        "displayName": "Title 2",
+        "purpose": "Phone page titles and large figures (text-title-2-semibold)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Card titles (text-headline-semibold)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Rows, inputs, buttons (text-body-regular)."
+      },
+      "body-strong": {
+        "displayName": "Body Medium",
+        "purpose": "Names, nav labels, button labels (text-body-medium)."
+      },
+      "body-2": {
+        "displayName": "Body 2",
+        "purpose": "Descriptions and spent/budget amounts (text-body-2-regular)."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Meter sub-lines, badges (text-caption-1-medium)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 1px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Contact shadow for cards on the secondary surface (0.14 in dark)."
+      },
+      {
+        "name": "sidebar",
+        "value": "0 1px 0 0 rgb(0 0 0 / 0.0196), 0 1px 12px 0 rgb(0 0 0 / 0.0588), 0 0 1px 0 rgb(0 0 0 / 0.3216)",
+        "purpose": "Floating desktop sidebar."
+      },
+      {
+        "name": "nav-selected",
+        "value": "0 0 0 1px var(--color-accent-500), inset 0 1px 0 0 rgb(255 255 255 / 0.251)",
+        "purpose": "Active nav row and the phone tab-bar action button."
+      },
+      {
+        "name": "dropdown",
+        "value": "0 1px 1px 0 rgb(0 0 0 / 0.04), 0 4px 4px 0 rgb(0 0 0 / 0.02)",
+        "purpose": "Menus and popovers."
+      },
+      {
+        "name": "glass",
+        "value": "backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7))",
+        "purpose": "Frosted surfaces; --glass 0..1 per device, 0 = solid."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-sheet",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Float-in of bulk-action bar and sheets (200ms)."
+      },
+      {
+        "name": "menu",
+        "value": "150ms ease-out; opacity 0, scale 0.95, blur 2px",
+        "purpose": "Dropdown open/close."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action: accent gradient, white label.",
+      "html": "<button class=\"ds-btn-primary\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z\"/></svg>Add transaction</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 8px 12px; border: 0; border-radius: 10px; color: #fff; font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc) 0%, var(--color-accent-700, #1447e6) 100%); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; outline: none; } .ds-btn-primary:hover { background-image: linear-gradient(180deg, var(--color-accent-400, #3392ff) 0%, var(--color-accent-500, #2b7fff) 100%); } .ds-btn-primary:active { background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc) 0%, var(--color-accent-700, #1447e6) 100%); } .ds-btn-primary:focus-visible { box-shadow: 0 0 0 2px var(--color-accent-500, #2b7fff); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral action: surface, hairline border.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { height: 36px; padding: 8px 12px; border: 1px solid var(--color-border-button-default, #ebebeb); border-radius: 10px; background: var(--color-background-primary-default, #fff); color: var(--color-text-primary, #0a0a0a); font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; outline: none; } .ds-btn-secondary:hover { background: var(--color-background-primary-hover, #f7f7f7); border-color: var(--color-border-button-hover, #d4d4d4); } .ds-btn-secondary:focus-visible { box-shadow: 0 0 0 2px var(--color-accent-500, #2b7fff); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "36px field with an inset ring that strengthens on hover and focus.",
+      "html": "<label class=\"ds-field\"><input class=\"ds-input\" placeholder=\"Search transactions\" /></label>",
+      "css": ".ds-field { display: flex; height: 36px; padding: 8px; border-radius: 10px; background: var(--color-background-primary-default, #fff); box-shadow: inset 0 0 0 1px var(--color-border-button-default, #ebebeb); } .ds-field:hover { box-shadow: inset 0 0 0 2px var(--color-border-button-hover, #d4d4d4); } .ds-field:focus-within { box-shadow: inset 0 0 0 2px var(--color-border-focus-ring, #2b7fff); } .ds-input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--color-text-primary, #0a0a0a); font: 400 0.875rem/1.25rem Inter, system-ui, sans-serif; } .ds-input::placeholder { color: var(--color-text-placeholder, #a1a1a1); }"
+    },
+    {
+      "name": "Sidebar Nav",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Desktop sidebar rows; active row is filled with the accent gradient.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-active\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M19 21H5a1 1 0 0 1-1-1v-9H1l10.33-9.39a1 1 0 0 1 1.34 0L23 11h-3v9a1 1 0 0 1-1 1zm-6-2h5V9.16l-6-5.45-6 5.45V19h5v-6h2z\"/></svg>Dashboard</a><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M16.05 12.05 21 17l-4.95 4.95-1.41-1.41L17.17 18H4v-2h13.17l-2.53-2.54zm-8.1-10 1.41 1.41L6.83 6H20v2H6.83l2.53 2.54-1.41 1.41L3 7z\"/></svg>Transactions<span class=\"ds-badge\">4</span></a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 236px; padding: 12px; border-radius: 24px; background: var(--color-background-secondary-default, #f7f7f7); } .ds-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 10px; color: var(--color-text-secondary, #737373); font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; text-decoration: none; outline: none; transition: background-color 150ms; } .ds-nav-item:hover { background: var(--color-background-secondary-hover, #ebebeb); } .ds-nav-item:focus-visible { box-shadow: 0 0 0 2px var(--color-accent-500, #2b7fff); } .ds-nav-item.ds-active { color: #fff; background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc), var(--color-accent-700, #1447e6)); box-shadow: 0 0 0 1px var(--color-accent-500, #2b7fff), inset 0 1px 0 0 rgb(255 255 255 / 0.25); } .ds-badge { margin-inline-start: auto; padding: 0 6px; border-radius: 9999px; background: var(--color-background-tertiary-default, #ebebeb); color: var(--color-text-secondary, #737373); font: 500 0.75rem/1rem Inter, system-ui, sans-serif; }"
+    },
+    {
+      "name": "Glass Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "24px card with hairline border, frosted when glass is on.",
+      "html": "<section class=\"ds-card\"><header class=\"ds-card-head\"><div><h2 class=\"ds-card-title\">Spending this period</h2><p class=\"ds-card-desc\">1 – 24 Nov</p></div><a class=\"ds-card-link\" href=\"#\">View all</a></header><p class=\"ds-card-figure\">Rp 4.820.000</p></section>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; width: 320px; padding: 20px; border: 1px solid var(--color-border-button-default, #ebebeb); border-radius: 24px; background: color-mix(in oklab, var(--color-background-primary-default, #fff) 75%, transparent); backdrop-filter: blur(13px) saturate(1.4); } .ds-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; } .ds-card-title { margin: 0; color: var(--color-text-primary, #0a0a0a); font: 600 1rem/1.375rem Inter, system-ui, sans-serif; } .ds-card-desc { margin: 2px 0 0; color: var(--color-text-tertiary, #a1a1a1); font: 400 0.8125rem/1.125rem Inter, system-ui, sans-serif; } .ds-card-link { color: var(--color-accent-600, #155dfc); font: 500 0.8125rem/1.125rem Inter, system-ui, sans-serif; text-decoration: none; } .ds-card-link:hover { text-decoration: underline; } .ds-card-figure { margin: 0; color: var(--color-text-primary, #0a0a0a); font: 600 1.25rem/1.625rem Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Budget Bar",
+      "kind": "custom",
+      "refersTo": "category-tile",
+      "description": "Category tile, name, spent/budget, meter and remaining caption.",
+      "html": "<div class=\"ds-budget\"><span class=\"ds-tile\">🛒</span><div class=\"ds-budget-body\"><div class=\"ds-budget-row\"><span class=\"ds-budget-name\">Groceries</span><span class=\"ds-budget-amt\">Rp 2.160.000 / Rp 3.000.000</span></div><div class=\"ds-meter\"><span style=\"width:72%\"></span></div><span class=\"ds-budget-left\">Rp 840.000 left · 72%</span></div></div>",
+      "css": ".ds-budget { display: flex; align-items: center; gap: 12px; width: 360px; font-family: Inter, system-ui, sans-serif; } .ds-tile { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 12px; background: #dbeafe; font-size: 1rem; } .ds-budget-body { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6px; } .ds-budget-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; } .ds-budget-name { color: var(--color-text-primary, #0a0a0a); font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; } .ds-budget-amt, .ds-budget-left { color: var(--color-text-tertiary, #a1a1a1); font-variant-numeric: tabular-nums; } .ds-budget-amt { font: 400 0.8125rem/1.125rem Inter, system-ui, sans-serif; } .ds-budget-left { font: 500 0.75rem/1rem Inter, system-ui, sans-serif; letter-spacing: 0.15px; } .ds-meter { height: 6px; border-radius: 9999px; background: var(--color-chart-track, #ebebeb); overflow: hidden; } .ds-meter span { display: block; height: 100%; border-radius: inherit; background: var(--color-accent-500, #2b7fff); }"
+    },
+    {
+      "name": "Tab Bar Action",
+      "kind": "button",
+      "refersTo": "tab-bar-cta",
+      "description": "Raised 56px circle in the centre of the phone tab bar.",
+      "html": "<button class=\"ds-fab\" aria-label=\"Add\"><svg viewBox=\"0 0 24 24\" width=\"28\" height=\"28\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z\"/></svg></button>",
+      "css": ".ds-fab { display: grid; place-items: center; width: 56px; height: 56px; border: 0; border-radius: 9999px; color: #fff; background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc), var(--color-accent-700, #1447e6)); box-shadow: 0 0 0 4px var(--color-background-full, #fff), 0 0 0 5px var(--color-accent-500, #2b7fff), inset 0 1px 0 0 rgb(255 255 255 / 0.25); cursor: pointer; outline: none; transition: scale 120ms; } .ds-fab:active { scale: 0.95; } .ds-fab:focus-visible { box-shadow: 0 0 0 4px var(--color-accent-500, #2b7fff); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Dashboard",
+    "overview": "Finansial is a working tool that two people open several times a day, on a phone at the till and on a laptop at the end of the month. The interface stays quiet so the numbers can speak. Surfaces are neutral white and soft grey (near-black at night), type is Inter at small, even sizes, and color is held back. Blue appears only where you act or where something is selected. Data colors appear only in charts and category tiles.\n\nThe one atmospheric move is glass. Panels, the sidebar, the phone header and the tab bar are frosted over a faint wash of accent blue, purple and teal. A single per-device knob (--glass, 0 to 1, set in Settings → Appearance) controls blur, saturation and see-through together, and at 0 every surface renders exactly as its solid token. The system's Reduce Transparency setting overrides the knob. Glass is the signature, but it never costs legibility.\n\nComponents are soft and tactile: very round cards, gradient primary buttons with a light top highlight, and emoji category tiles that make every row recognizable at a glance. The tactility is in the shapes and the small details. Nothing is loud.",
+    "keyCharacteristics": [
+      "Neutral surfaces, with blue as the only accent and used only for action and selection.",
+      "Adjustable frosted glass over a soft color wash, solid at 0, honoring Reduce Transparency.",
+      "Large 24px card corners. Controls sit at 8–10px.",
+      "Small, even Inter type with tabular numbers for money.",
+      "Dark mode is first-class: every semantic token flips under .dark.",
+      "Category identity is an emoji on a tinted tile, defaulting by group (Needs blue, Wants orange, Savings purple, Income lime)."
+    ],
+    "rules": [
+      {
+        "name": "The One Voice Rule",
+        "body": "Blue means action or selection, and nothing else in the UI uses it. Content blues (charts, info chips) reference blue-* directly, never accent-*, so the accent can be re-tinted without recoloring data.",
+        "section": "colors"
+      },
+      {
+        "name": "The Token-Only Rule",
+        "body": "Every color is a BoardUI semantic token (text-text-*, bg-background-*, border-border-*, chart-*, accent-*). Raw palette classes and hex literals are banned, because the tokens are what make dark mode work.",
+        "section": "colors"
+      },
+      {
+        "name": "The AA Floor Rule",
+        "body": "Every text token clears 4.5:1 on every surface it sits on, in both themes, placeholders included. When a pair fails, change the token value, never a single component.",
+        "section": "colors"
+      },
+      {
+        "name": "The Composite Rule",
+        "body": "Type is set only with BoardUI composite utilities (text-title-1-medium, text-body-2-regular, …), which set size, weight, line-height and tracking together. Never stack text-sm font-medium leading-5.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Money Rule",
+        "body": "Every money figure uses tabular-nums so columns of amounts line up.",
+        "section": "typography"
+      },
+      {
+        "name": "The Solid-at-Zero Rule",
+        "body": "Every glass surface must look correct as its solid token when --glass is 0 or Reduce Transparency is on. At 0, no backdrop filter runs at all.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Contact-Not-Lift Rule",
+        "body": "Shadows only anchor surfaces in place. They are never large ambient drop shadows used to make cards float.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use BoardUI semantic color tokens and composite type utilities only. Pick a different token rather than writing a dark: override with a raw color.",
+      "Do check every surface in dark mode as well as light. Dark mode is first-class.",
+      "Do keep the primary accent for action and selection: primary buttons, the active nav row, the Catat/add button, focus and checked states.",
+      "Do make every glass surface correct at --glass: 0 and under Reduce Transparency, and use .glass-raised for floating text-dense layers.",
+      "Do use 24px corners and a hairline border on cards and panels, and 8–12px corners on controls and rows.",
+      "Do set money in tabular-nums and start category rows with the category tile.",
+      "Do give every touch target 44px on phones (fields, footer buttons, the drawer close button's hit area, checkbox rows).",
+      "Do offer Undo for deletes, and confirm only what can't be undone.",
+      "Do respect prefers-reduced-motion. Motion is short (150–200ms) with a cubic-bezier(0.32, 0.72, 0, 1) ease-out."
+    ],
+    "donts": [
+      "Don't use raw palette classes (text-gray-500, bg-white) or hex/oklch literals in components.",
+      "Don't use accent blue for data, decoration or non-interactive emphasis. Charts use the chart-* tokens.",
+      "Don't add large ambient drop shadows to make cards float. Depth comes from glass and tonal layering.",
+      "Don't hand-build a control that BoardUI already ships, and don't use raw <input>/<select>.",
+      "Don't blur whole content areas. Glass is for chrome and containers, and scroll regions use the ScrollFade recipe at the top edge."
+    ]
+  }
+}

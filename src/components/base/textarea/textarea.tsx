@@ -74,8 +74,10 @@ const textareaStyles = sortCx({
   field: [
     "relative flex w-full flex-col",
     "rounded-2lg",
-    "bg-background-tertiary-default text-foreground-icon-tertiary",
-    "ring-2 ring-inset ring-transparent",
+    // Same raised field as Select and Date Picker triggers: surface, hairline
+    // edge, contact shadow. Text inputs used to be a filled grey well.
+    "bg-background-primary-default text-foreground-icon-tertiary shadow-xs",
+    "ring-1 ring-inset ring-border-button-default",
     "transition-[background-color,box-shadow,color] duration-[var(--input-transition-ms)] ease",
   ].join(" "),
 
@@ -89,8 +91,7 @@ const textareaStyles = sortCx({
   textarea: [
     "block w-full min-w-0 bg-transparent border-0 outline-none m-0 p-0 px-1",
     "font-sans text-body-regular text-text-primary",
-    "placeholder:text-text-tertiary",
-    "focus:placeholder:text-text-primary",
+    "placeholder:text-text-placeholder",
     "disabled:text-input-disabled-text disabled:placeholder:text-input-disabled-text",
     "disabled:cursor-not-allowed",
     "aria-invalid:placeholder:text-text-error-placeholder",
@@ -175,12 +176,13 @@ export function TextareaBase({
           isFocusWithin &&
             !isDisabled &&
             !isInvalid &&
-            "ring-border-button-active",
+            "ring-2 ring-border-focus-ring",
           // Disabled
           isDisabled &&
-            "bg-input-disabled-background text-input-disabled-foreground",
+            "bg-input-disabled-background text-input-disabled-foreground shadow-none ring-transparent",
           // Invalid
-          isInvalid && "bg-background-tertiary-error text-foreground-icon-error",
+          isInvalid && "bg-background-tertiary-error text-foreground-icon-error ring-border-error-default",
+          isInvalid && isFocusWithin && "ring-2",
           ctx.fieldClassName,
           fieldClassName,
         )

@@ -28,7 +28,7 @@ export function BookIcon({ kind, className }: { kind: ShellBook["kind"]; classNa
     <span
       className={cx(
         "flex size-8 shrink-0 items-center justify-center rounded-xl bg-linear-to-b text-white",
-        kind === "personal" ? "from-purple-500 to-purple-600" : "from-accent-500 to-accent-600",
+        kind === "personal" ? "from-purple-600 to-purple-700" : "from-accent-600 to-accent-700",
         className,
       )}
     >
@@ -68,7 +68,7 @@ export function BookSwitcher({
         )}
       >
         {current ? <BookIcon kind={current.kind} className={compact ? "size-7" : undefined} /> : (
-          <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-b from-accent-500 to-accent-600 text-headline-semibold text-white">F</span>
+          <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-b from-accent-600 to-accent-700 text-headline-semibold text-white">F</span>
         )}
         <span className="flex min-w-0 flex-1 flex-col">
           <span className={cx("truncate text-text-primary", compact ? "text-headline-semibold" : "text-body-semibold")}>

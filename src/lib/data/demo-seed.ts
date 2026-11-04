@@ -163,6 +163,7 @@ export function demoSeed() {
     type: "expense",
     account_id: categories.find((x) => x.id === p.category_id)?.default_account_id ?? "jago",
     to_account_id: "",
+    from_category_id: "",
     member: "",
     description: "",
     verified: true,
@@ -198,10 +199,10 @@ export function demoSeed() {
     push(3, { amount: 333_000, category_id: "billing", description: "Wifi", recurring_id: "r-wifi" });
     push(3, { amount: 100_000, category_id: "billing", description: "IPL" });
     push(5, { amount: 2_000_000, category_id: "cicilan-mobil", description: "Cicilan Mobil", installment_id: "i-mobil" });
-    push(2, { type: "transfer", amount: 1_000_000, category_id: "travel", to_account_id: "bibit", description: "Tabungan Travel" });
-    push(2, { type: "transfer", amount: 1_400_000, category_id: "dana-darurat", to_account_id: "bibit", description: "Dana Darurat" });
-    push(2, { type: "transfer", amount: 342_000, category_id: "anak", to_account_id: "bibit", description: "Tabungan Anak" });
-    push(2, { type: "transfer", amount: 800_000, category_id: "rumah", to_account_id: "bibit", description: "Tabungan Rumah" });
+    push(2, { type: "transfer", amount: 1_000_000, category_id: "travel", to_account_id: "bibit", from_category_id: "", description: "Tabungan Travel" });
+    push(2, { type: "transfer", amount: 1_400_000, category_id: "dana-darurat", to_account_id: "bibit", from_category_id: "", description: "Dana Darurat" });
+    push(2, { type: "transfer", amount: 342_000, category_id: "anak", to_account_id: "bibit", from_category_id: "", description: "Tabungan Anak" });
+    push(2, { type: "transfer", amount: 800_000, category_id: "rumah", to_account_id: "bibit", from_category_id: "", description: "Tabungan Rumah" });
     push(10, { amount: 216_600, category_id: "infaq", description: "Infaq" });
     for (let d = 2; d <= 30; d += 1) {
       if (rnd() > 0.45) push(d, { amount: Math.round(10_000 + rnd() * 90_000), category_id: "meals", description: meals[d % meals.length] });
@@ -225,7 +226,7 @@ export function demoSeed() {
   ];
 
   const recurring: Recurring[] = [
-    { id: "r-wifi", type: "expense", amount: 333_000, category_id: "billing", account_id: "jenius", to_account_id: "", member: "", description: "Wifi", frequency: "monthly", day: 3, start_date: `${months[0]}-01`, end_date: "", last_run: now, installment_id: "" },
+    { id: "r-wifi", type: "expense", amount: 333_000, category_id: "billing", account_id: "jenius", to_account_id: "", from_category_id: "", member: "", description: "Wifi", frequency: "monthly", day: 3, start_date: `${months[0]}-01`, end_date: "", last_run: now, installment_id: "" },
   ];
 
   const settings: Setting[] = [
@@ -273,6 +274,7 @@ function demoPersonalSeed() {
     category_id,
     account_id: categories.find((x) => x.id === category_id)!.default_account_id,
     to_account_id: "",
+    from_category_id: "",
     member: "",
     description,
     verified: true,

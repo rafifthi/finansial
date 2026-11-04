@@ -8,12 +8,11 @@ import { Chip } from "@/components/base/badges/chip";
 import { Button } from "@/components/base/buttons/button";
 import { IconButton } from "@/components/base/buttons/icon-button";
 import { Input } from "@/components/base/input/input";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
+import { AlertDialog, Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
 import { toast } from "@/components/base/toast/toast";
 import { ROLE_INFO, type Role } from "@/lib/auth/roles";
-import { cx } from "@/utils/cx";
 import { SelectField } from "./fields";
-import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
+import { DrawerForm, FormDrawer } from "./form-drawer";
 import { useBookId } from "./permissions";
 
 export interface MemberRow {
@@ -177,13 +176,16 @@ function MemberForm({
       }
     });
 
-  const remove = () =>
-    startTransition(async () => {
-      const res = await removeMember(bookId, { userId: draft.userId! });
-      if (!res.ok) return setError(res.error);
-      toast(`${draft.name} was removed from this book`, { status: "success" });
-      onDone();
-    });
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const remove = async () => {
+    const res = await removeMember(bookId, { userId: draft.userId! });
+    if (!res.ok) {
+      setError(res.error);
+      throw new Error(res.error);
+    }
+    toast(`${draft.name} was removed from this book`, { status: "success" });
+    onDone();
+  };
 
   return (
     <DrawerForm
@@ -192,33 +194,43 @@ function MemberForm({
         isNew ? "If they don't have an account yet, one is created with a temporary password for you to pass on." : initial.email
       }
       onSubmit={submit}
-      footer={
-        <>
-          {!isNew && !isSelf ? (
-            <Button type="button" variant="danger" leadingIcon={RiUserMinusLine} onClick={remove} disabled={pending}>
-              Remove
-            </Button>
-          ) : (
-            <span className="hidden sm:block" />
-          )}
-          <Button type="submit" variant="primary" disabled={pending}>
-            {pending ? "Saving…" : isNew ? "Invite" : "Save"}
+      error={error}
+      destructive={
+        !isNew && !isSelf ? (
+          <Button type="button" variant="ghost" leadingIcon={RiUserMinusLine} onClick={() => setConfirmRemove(true)} disabled={pending} className="bg-transparent text-text-error-primary hover:bg-background-tertiary-error active:bg-background-tertiary-error">
+            Remove from book
           </Button>
-        </>
+        ) : null
+      }
+      footer={
+        <Button type="submit" variant="primary" disabled={pending}>
+          {pending ? "Saving…" : isNew ? "Invite" : "Save"}
+        </Button>
       }
     >
+      <AlertDialog
+        isOpen={confirmRemove}
+        onOpenChange={setConfirmRemove}
+        title={`Remove ${draft.name}?`}
+        description={`${draft.name} loses access to this book straight away. Their transactions stay. You can invite them again later.`}
+        confirmLabel="Remove"
+        pendingLabel="Removing…"
+        onConfirm={remove}
+      />
       {isNew ? (
         <>
           <Input label="Email" type="email" value={draft.email} onChange={(v) => set("email", v)} isRequired autoFocus />
           <Input label="Name" hint="Used if they're new to Finansial" value={draft.name} onChange={(v) => set("name", v)} />
         </>
       ) : null}
-      <div className={cx("flex flex-col gap-1", (isSelf || personal) && "opacity-60")}>
-        <SelectField label="Role in this book" value={draft.role} onChange={(v) => set("role", v as Role)} options={ROLE_OPTIONS} />
-        <p className="text-body-2-regular text-text-tertiary">
-          {isSelf ? "You can't change your own role." : ROLE_INFO[draft.role].description}
-        </p>
-      </div>
+      <SelectField
+        label="Role in this book"
+        value={draft.role}
+        onChange={(v) => set("role", v as Role)}
+        options={ROLE_OPTIONS}
+        isDisabled={isSelf || personal}
+        hint={isSelf ? "You can't change your own role." : personal ? "The owner of a personal book is always its admin." : ROLE_INFO[draft.role].description}
+      />
       {householdMembers.length ? (
         <SelectField
           label="Household member"
@@ -228,7 +240,6 @@ function MemberForm({
           allowEmpty="None"
         />
       ) : null}
-      <FormError>{error}</FormError>
     </DrawerForm>
   );
 }

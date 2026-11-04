@@ -41,6 +41,7 @@ export function dueTransactions(
       type: rule.type,
       amount: rule.amount,
       category_id: rule.category_id,
+      from_category_id: rule.from_category_id ?? "",
       account_id: rule.account_id,
       to_account_id: rule.to_account_id,
       member: rule.member,

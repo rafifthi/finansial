@@ -21,6 +21,7 @@ const draft = (p: Record<string, unknown>) => ({
   type: "expense",
   amount: 35000,
   category_id: "meals",
+  from_category_id: "",
   account_id: "jago",
   to_account_id: "",
   description: "Nasi Padang",
@@ -39,18 +40,18 @@ describe("sanitizeReply", () => {
     expect(d).toMatchObject({ category_id: "", account_id: "", member: "" });
   });
 
-  it("only allows Savings categories and two different accounts on transfers", () => {
-    const [ok, bad] = sanitizeReply(
+  it("runs transfers category to category and leaves the accounts to the server", () => {
+    const [ok, same] = sanitizeReply(
       {
         drafts: [
-          draft({ type: "transfer", category_id: "travel", account_id: "jago", to_account_id: "bibit" }),
-          draft({ type: "transfer", category_id: "meals", account_id: "jago", to_account_id: "jago" }),
+          draft({ type: "transfer", from_category_id: "meals", category_id: "travel", account_id: "jago", to_account_id: "bibit" }),
+          draft({ type: "transfer", from_category_id: "travel", category_id: "travel" }),
         ],
       },
       ctx,
     ).drafts;
-    expect(ok).toMatchObject({ category_id: "travel", to_account_id: "bibit" });
-    expect(bad).toMatchObject({ category_id: "", to_account_id: "" });
+    expect(ok).toMatchObject({ from_category_id: "meals", category_id: "travel", account_id: "", to_account_id: "" });
+    expect(same).toMatchObject({ from_category_id: "", category_id: "travel" });
   });
 
   it("fixes dates, types and amounts, and skips zero amounts", () => {
@@ -80,7 +81,7 @@ describe("buildPrompt", () => {
     const p = buildPrompt(
       ctx,
       [{ role: "user", text: "kopi 18rb" }],
-      [{ date: "2026-11-04", type: "expense", amount: 18000, category: "Meals", account: "", to_account: "", description: "Kopi", member: "" }],
+      [{ date: "2026-11-04", type: "expense", amount: 18000, category: "Meals", from_category: "", account: "", to_account: "", description: "Kopi", member: "" }],
       true,
     );
     expect(p).toContain('"id":"meals"');

@@ -6,9 +6,44 @@ import type { Permission } from "@/lib/auth/roles";
 import type { PublicUser } from "@/lib/auth/users";
 import { bookStore, type BookStore } from "./store";
 
-export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
+export type ActionResult<T = undefined> =
+  | { ok: true; data?: T }
+  | { ok: false; error: string; /** Per-field messages, keyed by input name, for forms to show inline. */ fieldErrors?: Record<string, string> };
 
-function failure(err: unknown): { ok: false; error: string } {
+/** Thrown inside an action when specific inputs are wrong; forms show each message next to its field. */
+export class FieldErrors extends Error {
+  constructor(readonly fields: Record<string, string>) {
+    super(Object.values(fields)[0] ?? "Check the highlighted fields.");
+  }
+}
+
+/** Plain-language messages for schema issues; Zod's defaults read like a stack trace. */
+export function fieldErrorsFrom(issues: z.core.$ZodIssue[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const issue of issues) {
+    const key = String(issue.path[0] ?? "");
+    if (!key || out[key]) continue;
+    const generic = /^Invalid (input|option)|^Too (small|big)|^Expected/i.test(issue.message);
+    out[key] = !generic
+      ? issue.message
+      : issue.code === "invalid_type" && (issue.message.includes("undefined") || issue.message.includes("NaN"))
+        ? "This is required."
+        : issue.code === "too_small"
+          ? "This is too small."
+          : issue.code === "too_big"
+            ? "This is too big."
+            : "Check this value.";
+  }
+  return out;
+}
+
+function invalid(error: z.ZodError): { ok: false; error: string; fieldErrors: Record<string, string> } {
+  const fieldErrors = fieldErrorsFrom(error.issues);
+  return { ok: false, error: Object.values(fieldErrors)[0] ?? "Check the highlighted fields.", fieldErrors };
+}
+
+function failure(err: unknown): { ok: false; error: string; fieldErrors?: Record<string, string> } {
+  if (err instanceof FieldErrors) return { ok: false, error: err.message, fieldErrors: err.fields };
   if (err instanceof PermissionError) return { ok: false, error: err.message };
   console.error(err);
   return { ok: false, error: err instanceof Error ? err.message : "Something went wrong." };
@@ -31,7 +66,7 @@ export function userAction<S extends z.ZodType, T = undefined>(
       return failure(err);
     }
     const parsed = schema.safeParse(raw);
-    if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => i.message).join("; ") };
+    if (!parsed.success) return invalid(parsed.error);
     try {
       const data = await fn(parsed.data, user);
       refresh();
@@ -66,7 +101,7 @@ export function bookAction<S extends z.ZodType, T = undefined>(
       return failure(err);
     }
     const parsed = schema.safeParse(raw);
-    if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => i.message).join("; ") };
+    if (!parsed.success) return invalid(parsed.error);
     try {
       const data = await fn(parsed.data, ctx);
       refresh();

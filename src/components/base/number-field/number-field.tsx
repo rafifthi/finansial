@@ -42,6 +42,8 @@ export interface NumberFieldProps extends Omit<AriaNumberFieldProps, "className"
   hideSteppers?: boolean;
   className?: string;
   fieldClassName?: string;
+  /** Classes for the <input> itself (e.g. a larger display size). */
+  inputClassName?: string;
 }
 
 const STEPPER = [
@@ -62,6 +64,7 @@ export function NumberField({
   "aria-label": ariaLabel,
   className,
   fieldClassName,
+  inputClassName,
   ...props
 }: NumberFieldProps) {
   const stepper = cx(STEPPER, size === "small" ? "size-5" : "size-6");
@@ -84,7 +87,7 @@ export function NumberField({
             placeholder={placeholder}
             leadingIcon={leadingIcon}
             fieldClassName={fieldClassName}
-            className="tabular-nums"
+            className={cx("tabular-nums", inputClassName)}
             trailingAddon={
               hideSteppers ? undefined : (
                 <span className="-my-1 -me-1 flex shrink-0 items-center gap-0.5">

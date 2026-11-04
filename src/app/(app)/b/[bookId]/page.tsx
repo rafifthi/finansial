@@ -68,7 +68,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
     },
     {
       key: "unallocated",
-      label: "Non-allocated",
+      label: "Left to assign",
       value: fmt(bm.nonAllocated),
       delta: formatPercent(bm.allocationRatio, money.locale),
       deltaColor: bm.nonAllocated < 0 ? "rose" : "neutral",

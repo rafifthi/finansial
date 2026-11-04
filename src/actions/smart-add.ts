@@ -32,6 +32,7 @@ export const draftWithAI = bookAction(
           type: z.string(),
           amount: z.number(),
           category: z.string(),
+          from_category: z.string().default(""),
           account: z.string(),
           to_account: z.string(),
           description: z.string(),

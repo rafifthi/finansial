@@ -9,7 +9,7 @@ import { Input } from "@/components/base/input/input";
 import { toast } from "@/components/base/toast/toast";
 import { END_OF_MONTH, periodOf, periodRange } from "@/lib/finance/period";
 import { SelectField } from "./fields";
-import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
+import { DrawerForm, FormDrawer } from "./form-drawer";
 import { monthLabelClient, shortDateClient } from "./format";
 import { useBookId, useCan } from "./permissions";
 
@@ -64,6 +64,26 @@ export function HouseholdSettings({ initial, today }: { initial: Values; today: 
   );
 }
 
+const CURRENCIES = [
+  { id: "IDR", label: "IDR · Rupiah" },
+  { id: "USD", label: "USD · US dollar" },
+  { id: "SGD", label: "SGD · Singapore dollar" },
+  { id: "MYR", label: "MYR · Ringgit" },
+  { id: "EUR", label: "EUR · Euro" },
+  { id: "AUD", label: "AUD · Australian dollar" },
+  { id: "JPY", label: "JPY · Yen" },
+];
+
+const LOCALES = [
+  { id: "id-ID", label: "1.234.567,89" },
+  { id: "en-US", label: "1,234,567.89" },
+  { id: "de-CH", label: "1’234’567.89" },
+];
+
+/** Keeps a value typed into the sheet by hand selectable. */
+const withCurrent = (options: { id: string; label: string }[], current: string) =>
+  !current || options.some((o) => o.id === current) ? options : [{ id: current, label: current }, ...options];
+
 function SettingsForm({ initial, today, onDone }: { initial: Values; today: string; onDone: () => void }) {
   const bookId = useBookId();
   const [values, setValues] = useState(initial);
@@ -73,6 +93,7 @@ function SettingsForm({ initial, today, onDone }: { initial: Values; today: stri
 
   return (
     <DrawerForm
+      error={error}
       title="Household"
       description="Applies to everyone in the household."
       onSubmit={() =>
@@ -86,7 +107,6 @@ function SettingsForm({ initial, today, onDone }: { initial: Values; today: stri
       }
       footer={
         <>
-          <span className="hidden sm:block" />
           <Button type="submit" variant="primary" disabled={pending}>
             {pending ? "Saving…" : "Save settings"}
           </Button>
@@ -94,23 +114,17 @@ function SettingsForm({ initial, today, onDone }: { initial: Values; today: stri
       }
     >
       <Input label="Members" hint="Comma-separated, e.g. Kanza, Rafif" value={values.members} onChange={(v) => set("members", v)} />
-      <div className="flex flex-col gap-1">
-        <SelectField
-          label="Cut-off day"
-          value={String(values.cutoff_day)}
-          onChange={(v) => set("cutoff_day", Number(v) || END_OF_MONTH)}
-          options={CUTOFF_OPTIONS}
-        />
-        <p className="text-body-2-regular text-text-tertiary">
-          The last day of each budget period; the next day starts a new one, named after the month it ends in. Use the day
-          before payday so each salary funds one period. Now: {describeCutoff(values.cutoff_day, today)}.
-        </p>
-      </div>
+      <SelectField
+        label="Cut-off day"
+        value={String(values.cutoff_day)}
+        onChange={(v) => set("cutoff_day", Number(v) || END_OF_MONTH)}
+        options={CUTOFF_OPTIONS}
+        hint={`The last day of each budget period; the next day starts a new one, named after the month it ends in. Use the day before payday so each salary funds one period. Now: ${describeCutoff(values.cutoff_day, today)}.`}
+      />
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Currency" value={values.currency} onChange={(v) => set("currency", v.toUpperCase())} maxLength={3} />
-        <Input label="Number format" value={values.locale} onChange={(v) => set("locale", v)} />
+        <SelectField label="Currency" value={values.currency} onChange={(v) => set("currency", v)} options={withCurrent(CURRENCIES, values.currency)} />
+        <SelectField label="Number format" value={values.locale} onChange={(v) => set("locale", v)} options={withCurrent(LOCALES, values.locale)} />
       </div>
-      <FormError>{error}</FormError>
     </DrawerForm>
   );
 }

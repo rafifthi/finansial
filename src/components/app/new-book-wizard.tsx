@@ -233,8 +233,23 @@ export function NewBookWizard({
     );
   }
 
+  // Enter (or the phone keyboard's Go) runs the step's primary action.
+  const primary = () => {
+    if (step < 3) {
+      if (canContinue) setStep((s) => s + 1);
+    } else if (provision && !provision.ok) retry();
+    else create();
+  };
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+    <form
+      noValidate
+      className="mx-auto flex w-full max-w-2xl flex-col gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!busy) primary();
+      }}
+    >
       {!resume ? (
         <ol className="flex items-center gap-2" aria-label="Steps">
           {STEPS.map((label, i) => (
@@ -243,7 +258,7 @@ export function NewBookWizard({
                 aria-current={i === step ? "step" : undefined}
                 className={cx(
                   "flex size-7 shrink-0 items-center justify-center rounded-full text-caption-1-semibold",
-                  i < step ? "bg-linear-to-b from-accent-500 to-accent-600 text-white" : i === step ? "border-2 border-accent-500 text-accent-600" : "border border-border-button-default text-text-tertiary",
+                  i < step ? "bg-linear-to-b from-accent-600 to-accent-700 text-white" : i === step ? "border-2 border-accent-500 text-accent-600" : "border border-border-button-default text-text-tertiary",
                 )}
               >
                 {i < step ? "✓" : i + 1}
@@ -276,7 +291,7 @@ export function NewBookWizard({
                   href="https://sheets.new"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 self-start rounded-md text-body-2-medium text-accent-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring dark:text-accent-400"
+                  className="inline-flex items-center gap-1 self-start rounded-md text-body-2-medium text-button-ghost-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring"
                 >
                   Open sheets.new <RiExternalLinkLine className="size-4" aria-hidden />
                 </a>
@@ -408,20 +423,20 @@ export function NewBookWizard({
           </Link>
         )}
         {step < 3 ? (
-          <Button variant="primary" trailingIcon={RiArrowRightLine} onClick={() => setStep((s) => s + 1)} disabled={!canContinue}>
+          <Button type="submit" variant="primary" trailingIcon={RiArrowRightLine} disabled={!canContinue}>
             Continue
           </Button>
         ) : provision && !provision.ok ? (
-          <Button variant="primary" leadingIcon={RiRefreshLine} onClick={retry} disabled={busy}>
+          <Button type="submit" variant="primary" leadingIcon={RiRefreshLine} disabled={busy}>
             {busy ? "Retrying…" : `Retry from “${PROVISION_STEPS.find((s) => s.id === provision.failedStep)?.label}”`}
           </Button>
         ) : (
-          <Button variant="primary" onClick={create} disabled={busy}>
+          <Button type="submit" variant="primary" disabled={busy}>
             {busy ? "Setting up…" : resume ? "Retry setup" : "Create book"}
           </Button>
         )}
       </div>
-    </div>
+    </form>
   );
 }
 

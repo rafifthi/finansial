@@ -50,6 +50,13 @@ export interface DatePickerProps {
   isDisabled?: boolean;
   className?: string;
   "aria-label"?: string;
+  /** Wires the trigger to an outside label, hint or error message. */
+  id?: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+  isInvalid?: boolean;
+  /** Replaces the trigger's date text (e.g. "Today"). */
+  formatValue?: (value: CalendarDate) => string;
   /** Anchor the popover to an external element instead of DatePicker's own
    *  trigger button (which is hidden when this is provided). Pair with
    *  `isOpen`/`onOpenChange` for full external control. */
@@ -68,6 +75,11 @@ export function DatePicker({
   triggerRef: externalTriggerRef,
   isOpen: controlledIsOpen,
   onOpenChange: controlledOnOpenChange,
+  id,
+  "aria-labelledby": labelledBy,
+  "aria-describedby": describedBy,
+  isInvalid,
+  formatValue,
 }: DatePickerProps) {
   const localize = useTemplateCopy();
   const { locale } = useLocale();
@@ -126,11 +138,17 @@ export function DatePicker({
           type="button"
           disabled={isDisabled}
           onClick={() => openChange(!isOpen)}
-          className={cx(triggerButtonClassName, className)}
+          id={id}
+          aria-labelledby={labelledBy}
+          aria-describedby={describedBy}
+          data-invalid={isInvalid || undefined}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          className={cx(triggerButtonClassName, isInvalid && "border-border-error-default", className)}
         >
           <RiCalendarLine className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
           <span className="flex items-center justify-center whitespace-nowrap px-1 text-body-medium text-text-primary">
-            {committedValue ? formatTriggerDate(committedValue, locale) : "Select date"}
+            {committedValue ? (formatValue ? formatValue(committedValue) : formatTriggerDate(committedValue, locale)) : "Select date"}
           </span>
         </button>
       )}

@@ -53,6 +53,16 @@ export function monthParam(value: string | string[] | undefined, fallback = peri
   return typeof value === "string" && /^\d{4}-\d{2}$/.test(value) ? value : fallback;
 }
 
+/** Transactions per category over the last 90 days. */
+function recentCategoryUse(transactions: { date: string; category_id: string }[], todayIso: string): Record<string, number> {
+  const since = new Date(`${todayIso}T00:00:00Z`);
+  since.setUTCDate(since.getUTCDate() - 90);
+  const from = since.toISOString().slice(0, 10);
+  const use: Record<string, number> = {};
+  for (const t of transactions) if (t.category_id && t.date >= from) use[t.category_id] = (use[t.category_id] ?? 0) + 1;
+  return use;
+}
+
 /** Lightweight option lists for client forms (no Maps, serialisable). */
 export function formOptions(data: AppData) {
   return {
@@ -68,6 +78,8 @@ export function formOptions(data: AppData) {
         color: c.color,
         default_account_id: accountOfCategory(c, data.pockets),
       })),
+    /** How often each category was used lately, so quick capture can put the usual ones first. */
+    categoryUse: recentCategoryUse(data.transactions, data.today),
     installments: data.installments.map((i) => ({ id: i.id, name: i.name, monthly_amount: i.monthly_amount })),
     members: data.members,
     accountOverride: data.accountOverride,

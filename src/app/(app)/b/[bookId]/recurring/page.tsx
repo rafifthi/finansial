@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireBookPage } from "@/auth";
 import { Card, EmptyState } from "@/components/app/card";
 import { EntityFormButton } from "@/components/app/entity-form";
+import { ordinal } from "@/lib/ordinal";
 import { PageHeader } from "@/components/app/page-header";
 import { RunRecurringButton } from "@/components/app/run-recurring";
 import { Chip } from "@/components/base/badges/chip";
@@ -57,9 +58,13 @@ export default async function RecurringPage({ params }: PageProps<"/b/[bookId]/r
                       {cat ? <Chip variant="caption" color="neutral">{cat.name}</Chip> : null}
                     </div>
                     <span className="text-body-2-regular text-text-tertiary">
-                      {r.frequency === "monthly" ? `Monthly on day ${r.day}` : `Weekly on ${WEEKDAYS[r.day] ?? r.day}`}
+                      {r.frequency === "monthly"
+                        ? r.day >= 31
+                          ? "Monthly on the last day"
+                          : `Monthly on the ${ordinal(r.day)}`
+                        : `Weekly on ${WEEKDAYS[r.day] ?? r.day}`}
                       {data.accountById.get(r.account_id) ? ` · ${data.accountById.get(r.account_id)?.name}` : ""}
-                      {ended ? " · ended" : next ? ` · next ${next}` : ""}
+                      {ended ? " · ended" : next ? ` · next ${shortDate(next)}` : ""}
                     </span>
                   </div>
                   <span className="text-body-semibold text-text-primary tabular-nums">{fmt(r.amount)}</span>
@@ -72,4 +77,9 @@ export default async function RecurringPage({ params }: PageProps<"/b/[bookId]/r
       </Card>
     </>
   );
+}
+
+function shortDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(Date.UTC(y, m - 1, d)));
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { RiArrowRightSLine, RiFileCopyLine, RiPriceTag3Line, RiSave3Line } from "@remixicon/react";
+import { RiArrowGoBackLine, RiArrowRightLine, RiArrowRightSLine, RiFileCopyLine, RiPriceTag3Line, RiSave3Line } from "@remixicon/react";
 import { copyPreviousMonth, saveBudgets } from "@/actions/budget";
 import { Chip } from "@/components/base/badges/chip";
 import { Button, ButtonLink } from "@/components/base/buttons/button";
 import { Meter } from "@/components/base/meter/meter";
+import { AlertDialog } from "@/components/base/modal/modal";
 import { toast } from "@/components/base/toast/toast";
 import {
   formatMoney,
@@ -19,6 +20,7 @@ import { AccountLogo } from "./account-logo";
 import { usageTone } from "./budget-bar";
 import { CategoryIcon } from "./category-icon";
 import { MoneyField } from "./fields";
+import { undoToast } from "./undo";
 import { useBookHref, useBookId, useCan } from "./permissions";
 
 export interface EditorLine {
@@ -96,25 +98,58 @@ export function BudgetEditor({
     };
   }, [lines, values]);
 
-  const save = () =>
-    startTransition(async () => {
-      const res = await saveBudgets(bookId, {
-        month,
-        items: lines.map((l) => ({
-          category_id: l.categoryId,
-          amount: values[l.categoryId] ?? 0,
-        })),
-      });
-      if (res.ok) toast("Budget saved", { status: "success" });
-      else
-        toast("Couldn't save budget", {
-          status: "error",
-          description: res.error,
-        });
+  /** What a save would change, in sheet order. */
+  const changes = lines
+    .filter((l) => (values[l.categoryId] ?? 0) !== l.budget)
+    .map((l) => ({ id: l.categoryId, name: l.name, from: l.budget, to: values[l.categoryId] ?? 0 }));
+
+  const [confirmSave, setConfirmSave] = useState(false);
+  const askSave = () => {
+    if (dirty && !pending) setConfirmSave(true);
+  };
+  // Enter commits the field's value in the same keystroke, so the check reads it after that render lands.
+  const dirtyRef = useRef(dirty);
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+  // Resolves when saved (closing the dialog); rejects on failure so it stays open.
+  const save = async () => {
+    const res = await saveBudgets(bookId, {
+      month,
+      items: lines.map((l) => ({
+        category_id: l.categoryId,
+        amount: values[l.categoryId] ?? 0,
+      })),
     });
+    if (!res.ok) {
+      toast("Couldn't save budget", { status: "error", description: res.error });
+      throw new Error(res.error);
+    }
+    toast("Budget saved", { status: "success" });
+  };
+
+  /** Back to the saved figures; Undo brings the typed ones back. */
+  const revert = () => {
+    const typed = values;
+    setValues(Object.fromEntries(lines.map((l) => [l.categoryId, l.budget])));
+    undoToast(`Reverted ${changes.length} ${changes.length === 1 ? "change" : "changes"}`, async () => {
+      setValues(typed);
+      return { ok: true };
+    });
+  };
 
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name;
 
+  // Unsaved figures survive neither a reload nor closing the tab without a warning.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const [confirmCopy, setConfirmCopy] = useState(false);
+  const askCopy = () => (dirty ? setConfirmCopy(true) : copy());
   const copy = () =>
     startTransition(async () => {
       const res = await copyPreviousMonth(bookId, { month });
@@ -128,12 +163,63 @@ export function BudgetEditor({
     });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className="flex flex-col gap-4"
+      // Enter in any amount asks to save, like a form. Capture phase: React Aria's
+      // number field stops Enter from bubbling once it commits the value.
+      onKeyDownCapture={(e) => {
+        if (e.key === "Enter" && e.target instanceof HTMLInputElement && !pending) {
+          setTimeout(() => {
+            if (dirtyRef.current) setConfirmSave(true);
+          }, 0);
+        }
+      }}
+    >
+      <AlertDialog
+        isOpen={confirmSave}
+        onOpenChange={setConfirmSave}
+        variant="default"
+        icon={RiSave3Line}
+        title={`Save ${changes.length} budget ${changes.length === 1 ? "change" : "changes"}?`}
+        description={`This updates the ${periodName(month)} budget in your sheet for everyone in the book.`}
+        confirmLabel="Save budget"
+        pendingLabel="Saving…"
+        onConfirm={save}
+      >
+        <ul className="flex max-h-64 flex-col divide-y divide-separator-border overflow-y-auto rounded-xl border border-border-button-default">
+          {changes.map((c) => (
+            <li key={c.id} className="flex items-center justify-between gap-3 px-3 py-2">
+              <span className="truncate text-body-medium text-text-primary">{c.name}</span>
+              <span className="flex shrink-0 items-center gap-1.5 text-body-2-regular tabular-nums">
+                <span className="text-text-tertiary line-through">{fmt(c.from)}</span>
+                <RiArrowRightLine className="size-3.5 text-foreground-icon-tertiary" aria-label="to" />
+                <span className="text-body-2-medium text-text-primary">{fmt(c.to)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 flex justify-between text-body-2-regular text-text-secondary">
+          <span>Left to assign after saving</span>
+          <span className={cx("tabular-nums text-body-2-medium", summary.rest < 0 ? "text-text-error-primary" : "text-text-primary")}>{fmt(summary.rest)}</span>
+        </p>
+      </AlertDialog>
+      <AlertDialog
+        isOpen={confirmCopy}
+        onOpenChange={setConfirmCopy}
+        title="Replace your unsaved changes?"
+        description="Copying last month's budget overwrites the amounts you've typed here and haven't saved."
+        confirmLabel="Copy last month"
+        variant="default"
+        onConfirm={() => {
+          setConfirmCopy(false);
+          copy();
+        }}
+      />
       <div className="grid grid-cols-2 items-center gap-x-6 gap-y-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:flex sm:flex-wrap lg:sticky lg:top-3 lg:z-10 lg:shadow-sidebar">
         <Figure label="Planned income" value={fmt(summary.income)} />
         <Figure label="Allocated" value={fmt(summary.allocated)} />
         <Figure
-          label="Non-allocated"
+          label="Left to assign"
           value={fmt(summary.rest)}
           className={summary.rest < 0 ? "text-text-error-primary" : undefined}
         />
@@ -156,11 +242,16 @@ export function BudgetEditor({
           ) : null}
           {canWrite ? (
             <>
-              <Button variant="secondary" leadingIcon={RiFileCopyLine} onClick={copy} disabled={pending}>
+              <Button variant="secondary" leadingIcon={RiFileCopyLine} onClick={askCopy} disabled={pending}>
                 Copy last month
               </Button>
-              <Button variant="primary" leadingIcon={RiSave3Line} onClick={save} disabled={pending || !dirty} className="hidden lg:inline-flex">
-                {pending ? "Saving…" : "Save"}
+              {dirty ? (
+                <Button variant="secondary" leadingIcon={RiArrowGoBackLine} onClick={revert} disabled={pending} className="hidden lg:inline-flex">
+                  Revert
+                </Button>
+              ) : null}
+              <Button variant="primary" leadingIcon={RiSave3Line} onClick={askSave} disabled={pending || !dirty} className="hidden lg:inline-flex">
+                {dirty ? `Save ${changes.length} ${changes.length === 1 ? "change" : "changes"}` : "Save"}
               </Button>
             </>
           ) : null}
@@ -178,10 +269,17 @@ export function BudgetEditor({
       {/* Below lg: a save bar floats above the tab bar once something changed */}
       {canWrite && dirty ? (
         <div className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-3 rounded-2xl border border-border-button-default bg-background-primary-default p-2 ps-4 shadow-sidebar lg:hidden">
-          <span className="text-body-2-medium text-text-secondary">Unsaved changes</span>
-          <Button variant="primary" leadingIcon={RiSave3Line} onClick={save} disabled={pending}>
-            {pending ? "Saving…" : "Save budget"}
-          </Button>
+          <span className="text-body-2-medium text-text-secondary">
+            {changes.length} unsaved {changes.length === 1 ? "change" : "changes"}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" leadingIcon={RiArrowGoBackLine} onClick={revert} disabled={pending} className="max-sm:h-11">
+              Revert
+            </Button>
+            <Button variant="primary" leadingIcon={RiSave3Line} onClick={askSave} disabled={pending} className="max-sm:h-11">
+              Save
+            </Button>
+          </div>
         </div>
       ) : null}
 
@@ -262,7 +360,7 @@ export function BudgetEditor({
                             setValues((s) => ({ ...s, [l.categoryId]: v ?? 0 }))
                           }
                           money={money}
-                          label={undefined}
+                          aria-label={`${l.name} budget`}
                           className="w-full"
                         />
                       ) : (
@@ -370,7 +468,7 @@ function PocketPlan({
               ) : (
                 <span className="text-body-2-regular text-text-secondary">
                   {settingsHref ? (
-                    <Link href={settingsHref} className="text-accent-600 hover:underline dark:text-accent-400">
+                    <Link href={settingsHref} className="text-button-ghost-foreground hover:underline">
                       Set these categories&apos; accounts
                     </Link>
                   ) : (
@@ -408,4 +506,10 @@ function Figure({
       </span>
     </div>
   );
+}
+
+/** "2026-11" → "November 2026". */
+function periodName(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(new Date(Date.UTC(y, m - 1, 1)));
 }

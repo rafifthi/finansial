@@ -39,7 +39,7 @@ export function Card({
           {href ? (
             <Link
               href={href}
-              className="shrink-0 rounded-md text-body-2-medium text-accent-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring dark:text-accent-400"
+              className="shrink-0 rounded-md text-body-2-medium text-button-ghost-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring"
             >
               View all
             </Link>

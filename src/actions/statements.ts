@@ -72,6 +72,7 @@ async function insertTxnForLine(
     category_id: categoryId,
     account_id: accountId || accountOfCategory(category, pockets),
     to_account_id: "",
+    from_category_id: "",
     member: "",
     description: line.description,
     verified: true,

@@ -11,6 +11,7 @@ const txn = (id: string, p: Partial<Transaction>): Transaction => ({
   category_id: "",
   account_id: "",
   to_account_id: "",
+  from_category_id: "",
   member: "",
   description: "",
   verified: false,

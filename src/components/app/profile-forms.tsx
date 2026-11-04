@@ -7,7 +7,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { toast } from "@/components/base/toast/toast";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/constants";
-import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
+import { DrawerForm, FormDrawer, summarizeErrors } from "./form-drawer";
 
 export function ProfileCard({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
@@ -33,6 +33,7 @@ function ProfileForm({ name, onDone }: { name: string; onDone: () => void }) {
   const [pending, startTransition] = useTransition();
   return (
     <DrawerForm
+      error={error}
       title="Edit profile"
       onSubmit={() =>
         startTransition(async () => {
@@ -45,7 +46,6 @@ function ProfileForm({ name, onDone }: { name: string; onDone: () => void }) {
       }
       footer={
         <>
-          <span className="hidden sm:block" />
           <Button type="submit" variant="primary" disabled={pending}>
             {pending ? "Saving…" : "Save profile"}
           </Button>
@@ -53,7 +53,6 @@ function ProfileForm({ name, onDone }: { name: string; onDone: () => void }) {
       }
     >
       <Input label="Name" value={value} onChange={setValue} isRequired autoFocus />
-      <FormError>{error}</FormError>
     </DrawerForm>
   );
 }
@@ -77,13 +76,23 @@ function PasswordForm({ onDone }: { onDone: () => void }) {
   const [values, setValues] = useState({ current: "", next: "", confirm: "" });
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const set = (k: keyof typeof values) => (v: string) => setValues((s) => ({ ...s, [k]: v }));
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof typeof values, string>>>({});
+  const set = (k: keyof typeof values) => (v: string) => {
+    setValues((s) => ({ ...s, [k]: v }));
+    setFieldErrors((e) => ({ ...e, [k]: undefined }));
+  };
   return (
     <DrawerForm
+      error={summarizeErrors(fieldErrors) ?? error}
       title="Change password"
       onSubmit={() => {
         setError(null);
-        if (values.next !== values.confirm) return setError("The new passwords don't match.");
+        const found: typeof fieldErrors = {};
+        if (!values.current) found.current = "Enter your current password";
+        if (values.next.length < MIN_PASSWORD_LENGTH) found.next = `Use at least ${MIN_PASSWORD_LENGTH} characters`;
+        if (values.confirm !== values.next) found.confirm = "This doesn't match the new password";
+        setFieldErrors(found);
+        if (Object.keys(found).length) return;
         startTransition(async () => {
           const res = await changePassword({ current: values.current, next: values.next });
           if (!res.ok) return setError(res.error);
@@ -93,14 +102,13 @@ function PasswordForm({ onDone }: { onDone: () => void }) {
       }}
       footer={
         <>
-          <span className="hidden sm:block" />
           <Button type="submit" variant="primary" disabled={pending}>
             {pending ? "Changing…" : "Change password"}
           </Button>
         </>
       }
     >
-      <Input label="Current password" type="password" autoComplete="current-password" value={values.current} onChange={set("current")} isRequired autoFocus />
+      <Input label="Current password" type="password" autoComplete="current-password" value={values.current} onChange={set("current")} isRequired autoFocus isInvalid={Boolean(fieldErrors.current)} errorMessage={fieldErrors.current} />
       <Input
         label="New password"
         type="password"
@@ -109,9 +117,10 @@ function PasswordForm({ onDone }: { onDone: () => void }) {
         value={values.next}
         onChange={set("next")}
         isRequired
+        isInvalid={Boolean(fieldErrors.next)}
+        errorMessage={fieldErrors.next}
       />
-      <Input label="Repeat new password" type="password" autoComplete="new-password" value={values.confirm} onChange={set("confirm")} isRequired />
-      <FormError>{error}</FormError>
+      <Input label="Repeat new password" type="password" autoComplete="new-password" value={values.confirm} onChange={set("confirm")} isRequired isInvalid={Boolean(fieldErrors.confirm)} errorMessage={fieldErrors.confirm} />
     </DrawerForm>
   );
 }

@@ -268,7 +268,13 @@ export function ModalHeader({
         {children}
       </div>
       {showCloseButton ? (
-        <CloseButton size="sm" aria-label={closeLabel} onClick={close} className="-me-1 shrink-0" />
+        <CloseButton
+          size="sm"
+          aria-label={closeLabel}
+          onClick={close}
+          // 44px hit area around the small glyph, for thumbs.
+          className="relative -me-1 shrink-0 after:absolute after:-inset-2.5 after:content-['']"
+        />
       ) : null}
     </div>
   );

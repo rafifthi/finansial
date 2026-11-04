@@ -133,7 +133,7 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
             onClick={onNavigate}
             aria-current={onCatat ? "page" : undefined}
             className={cx(
-              "flex items-center justify-center gap-2 rounded-xl bg-linear-to-b from-accent-500 to-accent-600 px-3 py-2.5 text-white shadow-nav-selected outline-none transition",
+              "flex items-center justify-center gap-2 rounded-xl bg-linear-to-b from-accent-600 to-accent-700 px-3 py-2.5 text-white shadow-nav-selected outline-none transition",
               "hover:from-accent-400 hover:to-accent-500 focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-[0.98]",
               onCatat && "ring-2 ring-accent-300 ring-offset-2 ring-offset-background-secondary-default",
             )}
@@ -159,7 +159,7 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
                 )}
               >
                 <span className="flex items-center gap-2">
-                  <item.icon className={cx("size-5 shrink-0", active ? "text-accent-600 dark:text-accent-400" : "text-foreground-icon-secondary")} aria-hidden />
+                  <item.icon className={cx("size-5 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
                   <span className={cx(active ? "text-body-semibold text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
                 </span>
                 {item.badge ? <Badge color="neutral">{item.badge}</Badge> : null}
@@ -242,7 +242,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
     cx(
       "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-caption-1-medium outline-none",
       "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-      active ? "text-accent-600 dark:text-accent-400" : "text-text-primary",
+      active ? "text-button-ghost-foreground" : "text-text-primary",
     );
   const tabLink = (item: ResolvedNav) => (
     <Link key={item.href} href={item.href} className={tab(isActive(pathname, item))} aria-current={isActive(pathname, item) ? "page" : undefined}>
@@ -280,10 +280,10 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
                 aria-current={onCatat ? "page" : undefined}
                 className="-mt-5 flex flex-col items-center gap-0.5 rounded-full pb-1.5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
-                <span className="flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-500 to-accent-600 text-white shadow-nav-selected ring-4 ring-background-full active:scale-95">
+                <span className="flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-600 to-accent-700 text-white shadow-nav-selected ring-4 ring-background-full active:scale-95">
                   <RiSparkling2Fill className="size-7" aria-hidden />
                 </span>
-                <span className="text-caption-1-medium text-accent-600 dark:text-accent-400">Catat</span>
+                <span className="text-caption-1-medium text-button-ghost-foreground">Catat</span>
               </Link>
             </div>
           ) : null}

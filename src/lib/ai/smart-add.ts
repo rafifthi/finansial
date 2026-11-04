@@ -6,7 +6,10 @@ export interface Draft {
   date: string;
   type: Transaction["type"];
   amount: number;
+  /** For a transfer: the category the money goes to. */
   category_id: string;
+  /** Transfers only: the category the money comes from. */
+  from_category_id: string;
   account_id: string;
   to_account_id: string;
   description: string;
@@ -33,6 +36,7 @@ export interface DraftForPrompt {
   type: string;
   amount: number;
   category: string;
+  from_category: string;
   account: string;
   to_account: string;
   description: string;
@@ -48,8 +52,9 @@ Reading amounts:
 Reading dates (relative to today): "tadi", "hari ini" = today; "kemarin" = yesterday; "lusa kemarin" = 2 days ago; a weekday means the most recent one. No date given means today.
 
 Choosing fields:
-- type: expense for spending, income for money coming in (gaji, refund, cashback), transfer for moving money between the user's own accounts.
+- type: expense for spending, income for money coming in (gaji, refund, cashback), transfer for moving money from one of the user's categories to another (e.g. salary into a savings category).
 - category_id and account_id must be ids from the lists given, or "" when unsure. Never invent ids.
+- A transfer goes category to category: from_category_id is where the money comes from, category_id is where it goes. Leave account_id and to_account_id "" for transfers; each category's account is used.
 - Payment words map to accounts: "pakai jago", "via gopay", "cash/tunai", "kartu kredit/cc", "jenius".
 - member: a household member's name when the text says who spent it, else "".
 - description: short and specific, like the merchant or item ("Nasi Padang", "Grab ke kantor").
@@ -63,7 +68,7 @@ Follow-ups: when current drafts are given, the message usually corrects them ("y
 
 The reply is one short sentence in the user's language about what you drafted or changed. Nothing is saved until the user confirms, so never say it was recorded or saved ("dicatat", "disimpan"); say it's ready to check instead.
 
-Reply with only JSON: {"reply": "<that sentence>", "drafts": [{"date":"YYYY-MM-DD","type":"expense","amount":35000,"category_id":"","account_id":"","to_account_id":"","description":"","member":""}]}
+Reply with only JSON: {"reply": "<that sentence>", "drafts": [{"date":"YYYY-MM-DD","type":"expense","amount":35000,"category_id":"","from_category_id":"","account_id":"","to_account_id":"","description":"","member":""}]}
 If the message isn't about money at all, return no drafts and say what you can help with.`;
 
 export function buildPrompt(ctx: BookContext, turns: Turn[], drafts: DraftForPrompt[], remap: boolean): string {
@@ -93,6 +98,7 @@ const RawReply = z.object({
         type: z.string().catch("expense"),
         amount: z.coerce.number().catch(0),
         category_id: z.string().catch(""),
+        from_category_id: z.string().catch(""),
         account_id: z.string().catch(""),
         to_account_id: z.string().catch(""),
         description: z.string().catch(""),
@@ -121,16 +127,18 @@ export function sanitizeReply(raw: unknown, ctx: BookContext): { reply: string; 
     if (!amount) return [];
     const type = (TXN_TYPES as readonly string[]).includes(d.type) ? (d.type as Draft["type"]) : "expense";
     const category = categories.get(d.category_id);
-    const categoryOk =
-      category && (type === "transfer" ? category.group === "Savings" : category.kind === (type === "income" ? "income" : "expense"));
-    const account_id = accounts.has(d.account_id) ? d.account_id : "";
-    const to_account_id = type === "transfer" && accounts.has(d.to_account_id) && d.to_account_id !== account_id ? d.to_account_id : "";
+    const categoryOk = category && (type === "transfer" || category.kind === (type === "income" ? "income" : "expense"));
+    // Transfers run category to category; the server takes each category's account.
+    const fromOk = type === "transfer" && categories.has(d.from_category_id) && d.from_category_id !== d.category_id;
+    const account_id = type !== "transfer" && accounts.has(d.account_id) ? d.account_id : "";
+    const to_account_id = "";
     return [
       {
         date: ISO.test(d.date) && d.date <= ctx.today ? d.date : ctx.today,
         type,
         amount,
         category_id: categoryOk ? d.category_id : "",
+        from_category_id: fromOk ? d.from_category_id : "",
         account_id,
         to_account_id,
         description: d.description.trim().slice(0, 200),

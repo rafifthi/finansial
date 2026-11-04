@@ -52,8 +52,11 @@ const TYPE_OPTIONS = [
 /** What a row is missing before it can be saved, or null. */
 function problem(r: Row): string | null {
   if (!r.amount) return "Enter an amount";
-  if (r.type === "transfer") return r.account_id && r.to_account_id && r.account_id !== r.to_account_id ? null : "Pick both accounts";
-  return r.category_id ? null : "Pick a category";
+  if (r.type === "transfer") {
+    if (!r.from_category_id || !r.category_id) return "Pick both categories";
+    if (r.from_category_id === r.category_id) return "Pick two different categories";
+  } else if (!r.category_id) return "Pick a category";
+  return r.description.trim() ? null : "Enter a description";
 }
 
 const noopSubscribe = () => () => {};
@@ -103,6 +106,7 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
       type: r.type,
       amount: r.amount,
       category: opts.categories.find((c) => c.id === r.category_id)?.name ?? "",
+      from_category: opts.categories.find((c) => c.id === r.from_category_id)?.name ?? "",
       account: opts.accounts.find((a) => a.id === r.account_id)?.name ?? "",
       to_account: opts.accounts.find((a) => a.id === r.to_account_id)?.name ?? "",
       description: r.description,
@@ -173,8 +177,9 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
           type: r.type,
           amount: r.amount,
           category_id: r.category_id,
-          account_id: r.account_id,
-          to_account_id: r.to_account_id,
+          from_category_id: r.type === "transfer" ? r.from_category_id : "",
+          account_id: r.type === "transfer" ? "" : r.account_id,
+          to_account_id: "",
           member: r.member,
           description: r.description,
           verified: false,
@@ -330,7 +335,7 @@ function DraftRow({
   const kind = row.type === "income" ? "income" : "expense";
   const categoryOptions =
     row.type === "transfer"
-      ? options.categories.filter((c) => c.group === "Savings").map((c) => ({ id: c.id, label: c.name }))
+      ? options.categories.map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }))
       : options.categories.filter((c) => c.kind === kind).map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }));
   const accountOptions = options.accounts.map((a) => ({ id: a.id, label: a.name }));
   const issue = problem(row);
@@ -360,40 +365,54 @@ function DraftRow({
         <SelectField
           aria-label="Type"
           value={row.type}
-          onChange={(v) => onChange({ type: (v || "expense") as Row["type"], category_id: "" })}
+          onChange={(v) => onChange({ type: (v || "expense") as Row["type"], category_id: "", from_category_id: "" })}
           options={TYPE_OPTIONS}
           size="sm"
         />
+        {row.type === "transfer" ? (
+          <SelectField
+            aria-label="From category"
+            value={row.from_category_id ?? ""}
+            onChange={(v) => onChange({ from_category_id: v })}
+            options={categoryOptions}
+            placeholder="From category"
+            size="sm"
+            searchable
+          />
+        ) : null}
         <SelectField
-          aria-label={row.type === "transfer" ? "Savings category" : "Category"}
+          aria-label={row.type === "transfer" ? "To category" : "Category"}
           value={row.category_id}
           onChange={(v) => onChange({ category_id: v })}
           options={categoryOptions}
-          placeholder={row.type === "transfer" ? "No category" : "Category"}
-          allowEmpty={row.type === "transfer" ? "No category" : undefined}
+          placeholder={row.type === "transfer" ? "To category" : "Category"}
           size="sm"
           searchable
         />
-        <SelectField
-          aria-label={row.type === "transfer" ? "From account" : "Account"}
-          value={row.account_id}
-          onChange={(v) => onChange({ account_id: v })}
-          options={accountOptions}
-          allowEmpty={row.type === "transfer" ? undefined : "Category default"}
-          placeholder="From account"
-          size="sm"
-          className="col-span-2 sm:col-span-2"
-        />
-        {row.type === "transfer" ? (
+        {row.type === "transfer" ? null : (
           <SelectField
-            aria-label="To account"
-            value={row.to_account_id}
-            onChange={(v) => onChange({ to_account_id: v })}
+            aria-label="Account"
+            value={row.account_id}
+            onChange={(v) => onChange({ account_id: v })}
             options={accountOptions}
-            placeholder="To account"
+            allowEmpty="Category default"
+            placeholder="Account"
             size="sm"
-            className="col-span-2"
+            className="col-span-2 sm:col-span-2"
           />
+        )}
+        {row.type === "transfer" ? (
+          options.members.length ? (
+            <SelectField
+              aria-label="Member"
+              value={row.member}
+              onChange={(v) => onChange({ member: v })}
+              options={options.members.map((m) => ({ id: m, label: m }))}
+              allowEmpty="Household"
+              size="sm"
+              className="col-span-2"
+            />
+          ) : null
         ) : options.members.length ? (
           <SelectField
             aria-label="Member"

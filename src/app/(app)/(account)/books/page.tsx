@@ -55,7 +55,7 @@ export default async function BooksPage() {
             <li key={book.id}>
               <Link
                 href={ready ? `/b/${book.id}` : `/books/new?resume=${book.id}`}
-                className="glass flex items-center gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                className="glass glass-hover flex items-center gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
                 <BookIcon kind={book.kind} className="size-10" />
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">

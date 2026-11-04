@@ -20,6 +20,8 @@ export default async function BudgetPage({ params: route, searchParams }: PagePr
     categoryId: l.category.id,
     name: l.category.name,
     group: l.category.group,
+    emoji: l.category.emoji,
+    color: l.category.color,
     budget: l.budget,
     actual: l.actual,
     accountId: accountOfCategory(l.category, data.pockets),
@@ -27,7 +29,7 @@ export default async function BudgetPage({ params: route, searchParams }: PagePr
   const balances = accountBalances(data.accounts, data.transactions);
   const accounts = data.accounts
     .filter((a) => !a.archived)
-    .map((a) => ({ id: a.id, name: a.name, balance: balances.get(a.id) ?? 0 }));
+    .map((a) => ({ id: a.id, name: a.name, type: a.type, institution: a.institution, balance: balances.get(a.id) ?? 0 }));
   // Re-mount the editor whenever saved figures change so it never shows stale drafts.
   const version = bm.month + lines.map((l) => l.budget).join(",");
 

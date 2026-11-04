@@ -12,7 +12,8 @@
     "db:import": "tsx scripts/import-reference.ts",
     "user:add": "tsx scripts/add-user.ts",
     "registry:init": "tsx scripts/init-db.ts",
-    "migrate:multibook": "tsx scripts/migrate-multibook.ts"
+    "migrate:multibook": "tsx scripts/migrate-multibook.ts",
+    "logos:fetch": "tsx scripts/fetch-logos.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -27,6 +28,7 @@
     "nanoid": "^6.0.2",
     "next": "16.4.3",
     "next-auth": "5.0.0-beta.32",
+    "radix-ui": "^1.8.1",
     "react": "19.3.0",
     "react-aria-components": "^1.22.1",
     "react-dom": "19.3.0",

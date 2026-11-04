@@ -162,16 +162,18 @@ export function SmartComposer({
 
       <div className="flex items-center gap-1">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button aria-label="Add images" className="rounded-full" size="icon-lg" type="button" variant="ghost" />}>
-            <RiAddLine className="size-5 text-muted-foreground" />
+          <DropdownMenuTrigger asChild>
+            <Button aria-label="Add images" className="rounded-full" size="icon-lg" type="button" variant="ghost">
+              <RiAddLine className="size-5 text-muted-foreground" />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 rounded-2xl p-1.5">
             <DropdownMenuGroup className="space-y-1">
-              <DropdownMenuItem className="rounded-xl px-2.5 py-2" onClick={() => fileRef.current?.click()}>
+              <DropdownMenuItem className="rounded-xl px-2.5 py-2" onSelect={() => fileRef.current?.click()}>
                 <RiImageAddLine className="opacity-60" />
                 Receipt or screenshot
               </DropdownMenuItem>
-              <DropdownMenuItem className="rounded-xl px-2.5 py-2" onClick={() => cameraRef.current?.click()}>
+              <DropdownMenuItem className="rounded-xl px-2.5 py-2" onSelect={() => cameraRef.current?.click()}>
                 <RiCameraLine className="opacity-60" />
                 Take a photo
               </DropdownMenuItem>

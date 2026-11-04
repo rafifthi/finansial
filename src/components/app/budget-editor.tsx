@@ -14,7 +14,10 @@ import {
   type MoneyFormat,
 } from "@/lib/finance/money";
 import { cx } from "@/utils/cx";
+import type { Account } from "@/lib/sheets/schema";
+import { AccountLogo } from "./account-logo";
 import { usageTone } from "./budget-bar";
+import { CategoryIcon } from "./category-icon";
 import { MoneyField } from "./fields";
 import { useBookHref, useBookId, useCan } from "./permissions";
 
@@ -22,6 +25,8 @@ export interface EditorLine {
   categoryId: string;
   name: string;
   group: "Needs" | "Wants" | "Savings" | "Income";
+  emoji: string;
+  color: string;
   budget: number;
   actual: number;
   /** Account the category's money is kept in (its own default, else the group's pocket). */
@@ -31,6 +36,8 @@ export interface EditorLine {
 export interface PocketAccount {
   id: string;
   name: string;
+  type: Account["type"];
+  institution: string;
   balance: number;
 }
 
@@ -226,30 +233,27 @@ export function BudgetEditor({
                       key={l.categoryId}
                       className="flex flex-col gap-2 py-3 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,11rem)] sm:items-center sm:gap-3 sm:py-2.5"
                     >
-                      <div className="flex min-w-0 flex-col gap-1.5">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span className="flex min-w-0 items-baseline gap-1.5">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <CategoryIcon name={l.name} emoji={l.emoji} color={l.color} group={l.group} />
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                          <div className="flex min-w-0 flex-col">
                             <span className="truncate text-body-medium text-text-primary">
                               {l.name}
                             </span>
-                            {l.accountId ? (
-                              <span className="shrink-0 text-caption-1-medium text-text-tertiary">
-                                {accountName(l.accountId)}
-                              </span>
-                            ) : null}
-                          </span>
-                          <span className="shrink-0 text-body-2-regular text-text-tertiary tabular-nums">
-                            {fmt(l.actual)}
-                          </span>
+                            <span className="flex min-w-0 justify-between gap-2 text-caption-1-medium text-text-tertiary">
+                              <span className="truncate">{l.accountId ? accountName(l.accountId) : null}</span>
+                              <span className="shrink-0 tabular-nums">{fmt(l.actual)}</span>
+                            </span>
+                          </div>
+                          {section.group !== "Income" ? (
+                            <Meter
+                              aria-label={`${l.name} usage`}
+                              value={Math.min(usage, 1) * 100}
+                              tone={usageTone(usage, section.group === "Savings")}
+                              size="sm"
+                            />
+                          ) : null}
                         </div>
-                        {section.group !== "Income" ? (
-                          <Meter
-                            aria-label={`${l.name} usage`}
-                            value={Math.min(usage, 1) * 100}
-                            tone={usageTone(usage, section.group === "Savings")}
-                            size="sm"
-                          />
-                        ) : null}
                       </div>
                       {canWrite ? (
                         <MoneyField
@@ -340,9 +344,12 @@ function PocketPlan({
           const short = account ? row.remaining - account.balance : 0;
           return (
             <li key={id || "none"} className="flex flex-col gap-1 rounded-2xl bg-background-secondary-default p-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className={cx("truncate text-body-medium", account ? "text-text-primary" : "text-text-tertiary")}>
-                  {account?.name ?? "No account set"}
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-2">
+                  {account ? <AccountLogo account={account} size="sm" /> : null}
+                  <span className={cx("truncate text-body-medium", account ? "text-text-primary" : "text-text-tertiary")}>
+                    {account?.name ?? "No account set"}
+                  </span>
                 </span>
                 <span className="shrink-0 text-body-semibold text-text-primary tabular-nums">{fmt(row.planned)}</span>
               </div>

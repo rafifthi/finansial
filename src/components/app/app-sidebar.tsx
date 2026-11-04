@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   type RemixiconComponentType,
   RiArrowLeftRightLine,
@@ -10,6 +10,7 @@ import {
   RiBookShelfLine,
   RiCalendarScheduleLine,
   RiCheckDoubleLine,
+  RiExpandUpDownLine,
   RiFlagLine,
   RiGroupLine,
   RiHomeLine,
@@ -20,15 +21,23 @@ import {
   RiSettings4Line,
   RiShieldUserLine,
   RiSparkling2Fill,
+  RiUserLine,
   RiWallet3Line,
 } from "@remixicon/react";
 import { ThemeToggle } from "@/components/application/theme/theme-toggle";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { Badge } from "@/components/base/badges/badge";
-import { Chip } from "@/components/base/badges/chip";
-import { IconButton } from "@/components/base/buttons/icon-button";
 import { Drawer } from "@/components/base/drawer/drawer";
-import { ROLE_INFO, type Role } from "@/lib/auth/roles";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PortalContainer } from "@/components/ui/portal-container";
+import { ROLE_INFO } from "@/lib/auth/roles";
 import type { FormOptions } from "@/lib/data/app-data";
 import { cx } from "@/utils/cx";
 import { BookSwitcher, type ShellBook } from "./book-switcher";
@@ -160,38 +169,55 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
         </nav>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <ThemeToggle />
-        <div className="flex items-center gap-2 rounded-2xl p-2">
-          <Link
-            href={accountHref(current)}
-            onClick={onNavigate}
-            title="Account settings"
-            className="-m-1 flex min-w-0 flex-1 items-center gap-2 rounded-xl p-1 outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
-          >
-            <Avatar size="md" initials={initials} />
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="flex items-center gap-1.5">
-                <span className="truncate text-body-medium text-text-primary">{user.name}</span>
-                {current ? <RoleChip role={current.role} /> : null}
-              </span>
-              <span className="truncate text-body-2-regular text-text-tertiary">{user.email}</span>
-            </span>
-          </Link>
-          <form action={signOutAction}>
-            <IconButton type="submit" icon={RiLogoutBoxRLine} aria-label="Sign out" />
-          </form>
-        </div>
+      {/* Footer: one account row (menu behind it) and a quiet theme icon. */}
+      <div className="flex items-center gap-1">
+        <AccountMenu user={user} current={current} initials={initials} signOutAction={signOutAction} onNavigate={onNavigate} />
+        <ThemeToggle collapsed />
       </div>
     </div>
   );
 }
 
-function RoleChip({ role }: { role: Role }) {
+function AccountMenu({
+  user,
+  current,
+  initials,
+  signOutAction,
+  onNavigate,
+}: Pick<ShellProps, "user" | "current" | "signOutAction"> & { initials: string; onNavigate?: () => void }) {
+  const [signingOut, startSignOut] = useTransition();
   return (
-    <Chip variant="caption" color={role === "admin" ? "blue" : "neutral"}>
-      {ROLE_INFO[role].label}
-    </Chip>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Account menu"
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-2lg p-1.5 text-start outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring data-[state=open]:bg-background-secondary-hover"
+      >
+        <Avatar size="md" initials={initials} />
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-body-medium text-text-primary">{user.name}</span>
+          <span className="truncate text-body-2-regular text-text-tertiary">{user.email}</span>
+        </span>
+        <RiExpandUpDownLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="start" className="w-56">
+        {current ? (
+          <DropdownMenuLabel>
+            {ROLE_INFO[current.role].label} in {current.name}
+          </DropdownMenuLabel>
+        ) : null}
+        <DropdownMenuItem asChild>
+          <Link href={accountHref(current)} onClick={onNavigate}>
+            <RiUserLine aria-hidden />
+            Account settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => startSignOut(() => signOutAction())}>
+          <RiLogoutBoxRLine aria-hidden />
+          {signingOut ? "Signing out…" : "Sign out"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -200,6 +226,7 @@ const TAB_PATHS = ["", "/transactions", "/budget"];
 
 export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: FormOptions }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sheet, setSheet] = useState<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const canAdd = useCan("data:write") && Boolean(quickAdd && props.current);
   const nav = navFor(props);
@@ -272,8 +299,11 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
       </nav>
 
       <Drawer isOpen={menuOpen} onOpenChange={setMenuOpen} placement="bottom" aria-label="Menu" overlayClassName="p-0 pt-10">
-        <div className="glass glass-secondary max-h-full overflow-y-auto rounded-t-3xl bg-background-secondary-default p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <SidebarPanel {...props} onNavigate={() => setMenuOpen(false)} />
+        <div ref={setSheet} className="glass glass-secondary max-h-full overflow-y-auto rounded-t-3xl bg-background-secondary-default p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {/* Menus opened from the sheet render inside it: the Drawer makes everything else inert. */}
+          <PortalContainer value={sheet}>
+            <SidebarPanel {...props} onNavigate={() => setMenuOpen(false)} />
+          </PortalContainer>
         </div>
       </Drawer>
     </>

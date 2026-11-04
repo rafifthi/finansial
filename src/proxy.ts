@@ -7,6 +7,6 @@ const { auth } = NextAuth(authConfig);
 export default auth;
 
 export const config = {
-  // Everything except auth endpoints, the cron hook, the login page and static assets.
-  matcher: ["/((?!api/auth|api/cron|login|_next/static|_next/image|favicon.ico|manifest.webmanifest|icon).*)"],
+  // Everything except auth endpoints, the cron hook, the login page and static assets (public/logos too: the image optimizer fetches them without a session).
+  matcher: ["/((?!api/auth|api/cron|login|_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|logos/).*)"],
 };

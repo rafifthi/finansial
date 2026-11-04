@@ -1,29 +1,41 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   RiAddLine,
+  RiArrowLeftRightLine,
+  RiCheckboxCircleFill,
+  RiCheckboxMultipleLine,
+  RiCloseCircleLine,
   RiCheckDoubleLine,
   RiDeleteBinLine,
   RiFilter3Line,
   RiInboxLine,
+  RiPencilLine,
 } from "@remixicon/react";
 import {
   deleteTransactions,
   setVerified,
 } from "@/actions/transactions";
 import { Button } from "@/components/base/buttons/button";
-import { Chip, type ChipColor } from "@/components/base/badges/chip";
-import { StatusDot } from "@/components/base/badges/status-dot";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "@/components/base/drawer/drawer";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { SearchField } from "@/components/base/search-field/search-field";
 import { toast } from "@/components/base/toast/toast";
 import type { FormOptions } from "@/lib/data/app-data";
 import { formatMoney } from "@/lib/finance/money";
 import type { Transaction } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
+import { CategoryIcon } from "./category-icon";
 import { SelectField } from "./fields";
 import { isOutsideDrawer } from "./form-drawer";
 import { useBookId, useCan } from "./permissions";
@@ -33,25 +45,34 @@ export interface TxnRow {
   txn: Transaction;
   categoryName: string;
   group: string;
+  categoryEmoji: string;
+  categoryColor: string;
   accountName: string;
   toAccountName: string;
 }
 
-export const GROUP_CHIP: Record<string, ChipColor> = {
-  Needs: "blue",
-  Wants: "orange",
-  Savings: "purple",
-  Income: "lime",
+const utc = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
 };
 
-function dayLabel(iso: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  }).format(Date.UTC(y, m - 1, d));
+/** "Today", "Yesterday", else "Mon 2 Nov". */
+function dayLabel(iso: string, today: string) {
+  const days = Math.round((utc(today) - utc(iso)) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(utc(iso));
+}
+
+/** Money in and out over some rows; savings transfers count as out, like the budget. */
+function flows(rows: TxnRow[]) {
+  let income = 0;
+  let out = 0;
+  for (const { txn, group } of rows) {
+    if (txn.type === "income") income += txn.amount;
+    else if (txn.type === "expense" || group === "Savings") out += txn.amount;
+  }
+  return { income, out };
 }
 
 export function TransactionsView({
@@ -70,7 +91,18 @@ export function TransactionsView({
   const pathname = usePathname();
   const search = useSearchParams();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Bulk actions stay out of sight until a selection starts: "Select", the row context menu
+  // (right-click / long-press → Select), or Cmd/Ctrl/Shift-click. While anything is
+  // selected, every row shows its checkbox and a tap toggles instead of opening the editor.
+  // Reconcile is all about selecting, so it starts there.
+  const [selectMode, setSelectMode] = useState(false);
+  const selecting = compact || selectMode || selected.size > 0;
+  const stopSelecting = () => {
+    setSelected(new Set());
+    setSelectMode(false);
+  };
   const [editing, setEditing] = useState<TxnRow["txn"] | null>(null);
+  const [deleting, setDeleting] = useState<TxnRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -92,19 +124,7 @@ export function TransactionsView({
     return [...map.entries()];
   }, [rows]);
 
-  const totals = useMemo(() => {
-    let income = 0;
-    let out = 0;
-    for (const { txn, group } of rows) {
-      if (txn.type === "income") income += txn.amount;
-      else if (txn.type === "expense" || group === "Savings") out += txn.amount;
-    }
-    return {
-      income,
-      out,
-      unverified: rows.filter((r) => !r.txn.verified).length,
-    };
-  }, [rows]);
+  const totals = useMemo(() => flows(rows), [rows]);
 
   const toggle = (id: string) =>
     setSelected((s) => {
@@ -130,6 +150,13 @@ export function TransactionsView({
     });
 
   const ids = [...selected];
+
+  const verifyOne = (id: string, verified: boolean) =>
+    startTransition(async () => {
+      const res = await setVerified(bookId, { ids: [id], verified });
+      if (!res.ok) return void toast("Couldn't save", { status: "error", description: res.error });
+      toast(verified ? "Marked as verified" : "Marked as unverified", { status: "success" });
+    });
 
   const FILTER_KEYS = ["type", "category", "account", "member", "verified"] as const;
   const activeFilters = filters ? FILTER_KEYS.filter((k) => filters[k]).length : 0;
@@ -239,12 +266,19 @@ export function TransactionsView({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2 text-body-2-medium text-text-secondary">
-        <Chip color="lime">In {money(totals.income)}</Chip>
-        <Chip color="rose">Out {money(totals.out)}</Chip>
-        <Chip color="neutral">{rows.length} transactions</Chip>
-        {totals.unverified ? (
-          <Chip color="yellow">{totals.unverified} unverified</Chip>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-body-regular text-text-secondary">
+          {/* Income shows per day; unverified rows carry their own dot. */}
+          {rows.length} {rows.length === 1 ? "transaction" : "transactions"} · out {money(totals.out)}
+        </p>
+        {canWrite && !compact && rows.length ? (
+          <Button
+            size="small"
+            variant="ghost"
+            onClick={() => (selecting ? stopSelecting() : setSelectMode(true))}
+          >
+            {selecting ? "Done" : "Select"}
+          </Button>
         ) : null}
       </div>
 
@@ -304,10 +338,10 @@ export function TransactionsView({
           <Button
             size="small"
             variant="ghost"
-            onClick={() => setSelected(new Set())}
+            onClick={stopSelecting}
             className="ms-auto"
           >
-            Clear
+            Done
           </Button>
         </div>
       ) : null}
@@ -328,20 +362,15 @@ export function TransactionsView({
         <div className="flex flex-col gap-4">
           {byDay.map(([day, items]) => {
             const allSelected = items.every((r) => selected.has(r.txn.id));
+            const dayFlow = flows(items);
             return (
-              <div
-                key={day}
-                className="glass overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default"
-              >
-                <div className="flex items-center gap-3 border-b border-separator-border bg-background-secondary-default px-4 py-2">
-                  {canWrite ? (
+              <div key={day} className="flex flex-col gap-2">
+                <div className="flex items-center gap-3 px-1">
+                  {canWrite && selecting ? (
                     <Checkbox
                       aria-label={`Select all on ${day}`}
                       isSelected={allSelected}
-                      isIndeterminate={
-                        !allSelected &&
-                        items.some((r) => selected.has(r.txn.id))
-                      }
+                      isIndeterminate={!allSelected && items.some((r) => selected.has(r.txn.id))}
                       onChange={(v) =>
                         setSelected((s) => {
                           const next = new Set(s);
@@ -354,19 +383,25 @@ export function TransactionsView({
                       }
                     />
                   ) : null}
-                  <span className="text-body-2-semibold text-text-secondary">
-                    {dayLabel(day)}
+                  <h3 className="text-body-medium text-text-secondary">{dayLabel(day, options.today)}</h3>
+                  <span className="ms-auto flex gap-3 text-body-regular tabular-nums">
+                    {dayFlow.income ? <span className="text-status-lime-text">+{money(dayFlow.income)}</span> : null}
+                    {dayFlow.out ? <span className="text-text-secondary">−{money(dayFlow.out)}</span> : null}
                   </span>
                 </div>
-                <ul className="divide-y divide-separator-border">
+                <ul className="glass divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
                   {items.map((r) => (
                     <TxnListItem
                       key={r.txn.id}
                       row={r}
                       money={money}
                       selected={selected.has(r.txn.id)}
+                      selecting={selecting}
                       onToggle={canWrite ? () => toggle(r.txn.id) : undefined}
-                      onOpen={canWrite ? () => setEditing(r.txn) : undefined}
+                      onOpen={canWrite ? () => (selecting ? toggle(r.txn.id) : setEditing(r.txn)) : undefined}
+                      onDelete={canWrite ? () => setDeleting(r) : undefined}
+                      onEdit={canWrite ? () => setEditing(r.txn) : undefined}
+                      onVerify={canWrite ? () => verifyOne(r.txn.id, !r.txn.verified) : undefined}
                     />
                   ))}
                 </ul>
@@ -375,6 +410,45 @@ export function TransactionsView({
           })}
         </div>
       )}
+
+      <Modal isOpen={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)} size="sm">
+        {deleting ? (
+          <div className="flex flex-col gap-4">
+            <ModalHeader
+              title="Delete transaction?"
+              description="It's removed from the sheet too, and can't be undone."
+            />
+            <ModalBody>
+              <p className="text-body-regular text-text-secondary">
+                <span className="text-text-primary">
+                  {deleting.txn.description || deleting.categoryName || "Transaction"}
+                </span>{" "}
+                · {money(deleting.txn.amount)} · {dayLabel(deleting.txn.date, options.today)}
+              </p>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="secondary" onClick={() => setDeleting(null)} disabled={pending}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                leadingIcon={RiDeleteBinLine}
+                disabled={pending}
+                onClick={() =>
+                  startTransition(async () => {
+                    const res = await deleteTransactions(bookId, { ids: [deleting.txn.id] });
+                    if (!res.ok) return void toast("Couldn't delete", { status: "error", description: res.error });
+                    toast("Transaction deleted", { status: "success" });
+                    setDeleting(null);
+                  })
+                }
+              >
+                {pending ? "Deleting…" : "Delete"}
+              </Button>
+            </ModalFooter>
+          </div>
+        ) : null}
+      </Modal>
 
       <TransactionDrawer
         options={options}
@@ -395,85 +469,145 @@ function TxnListItem({
   row,
   money,
   selected,
+  selecting,
   onToggle,
   onOpen,
+  onDelete,
+  onEdit,
+  onVerify,
 }: {
   row: TxnRow;
   money: (n: number) => string;
   selected: boolean;
+  /** A selection is under way: show the checkbox instead of the tile. */
+  selecting: boolean;
   /** Omitted for read-only users. */
   onToggle?: () => void;
+  /** Omitted for read-only users. */
   onOpen?: () => void;
+  /** Trailing delete button (asks first); omitted for read-only users. Tapping the row edits. */
+  onDelete?: () => void;
+  /** Context-menu actions (right-click / long-press); omitted for read-only users. */
+  onEdit?: () => void;
+  onVerify?: () => void;
 }) {
   const { txn } = row;
   const sign = txn.type === "income" ? "+" : txn.type === "expense" ? "−" : "";
-  const subtitle =
-    txn.type === "transfer"
-      ? `${row.accountName || "?"} → ${row.toAccountName || "?"}`
-      : [row.accountName, txn.member].filter(Boolean).join(" · ");
-  return (
+  const title = txn.description || row.categoryName || (txn.type === "transfer" ? "Transfer" : "Untitled");
+  // The tile carries the category, so the subtitle only names it when the title doesn't.
+  const subtitle = [
+    txn.description && row.categoryName,
+    txn.type === "transfer" ? `${row.accountName || "?"} → ${row.toAccountName || "?"}` : row.accountName,
+    txn.member,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  // A long-press opens the context menu; the tap that ends it must not also open the editor.
+  const menuOpenedAt = useRef(0);
+
+  const tile = (
+    <span className="relative flex shrink-0">
+      {row.categoryName ? (
+        <CategoryIcon name={row.categoryName} emoji={row.categoryEmoji} color={row.categoryColor} group={row.group} className="size-10 rounded-full" />
+      ) : (
+        <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background-tertiary-default text-foreground-icon-secondary">
+          {txn.type === "transfer" ? <RiArrowLeftRightLine className="size-4" /> : <span className="text-body-medium">?</span>}
+        </span>
+      )}
+      {/* Verified against the bank statement: a check badge on the tile's corner. */}
+      {txn.verified ? (
+        <span title="Verified" className="absolute -end-0.5 -bottom-0.5 flex rounded-full bg-background-primary-default">
+          <RiCheckboxCircleFill className="size-4 text-status-lime-text" aria-hidden />
+          <span className="sr-only">Verified</span>
+        </span>
+      ) : null}
+    </span>
+  );
+
+  const item = (
     <li
       className={cx(
-        "flex items-center gap-3 px-4 py-3",
+        "flex items-center gap-1 ps-4 pe-2 data-[state=open]:bg-background-secondary-default",
         selected && "bg-background-secondary-default",
       )}
     >
-      {onToggle ? (
-        <Checkbox
-          aria-label="Select transaction"
-          isSelected={selected}
-          onChange={onToggle}
-        />
+      {/* While selecting, the checkbox takes the tile's place. */}
+      {onToggle && selecting ? (
+        <div className="flex size-10 shrink-0 items-center justify-center">
+          <Checkbox aria-label={`Select ${title}`} isSelected={selected} onChange={onToggle} />
+        </div>
       ) : null}
       <button
         type="button"
-        onClick={onOpen}
+        onClick={(e) => {
+          if (Date.now() - menuOpenedAt.current < 600) return;
+          if (onToggle && (e.metaKey || e.ctrlKey || e.shiftKey)) return onToggle();
+          onOpen?.();
+        }}
         disabled={!onOpen}
-        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg text-start outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring disabled:cursor-default"
+        className={cx(
+          "flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl py-3 text-start",
+          onDelete && !selecting ? "pe-1" : "pe-2",
+          "outline-none select-none [-webkit-touch-callout:none] focus-visible:ring-2 focus-visible:ring-border-focus-ring focus-visible:ring-inset disabled:cursor-default",
+        )}
       >
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-body-medium text-text-primary">
-              {txn.description ||
-                row.categoryName ||
-                (txn.type === "transfer" ? "Transfer" : "Untitled")}
-            </span>
-            {row.categoryName ? (
-              <Chip
-                variant="caption"
-                color={GROUP_CHIP[row.group] ?? "neutral"}
-              >
-                {row.categoryName}
-              </Chip>
-            ) : null}
-          </div>
-          <span className="truncate text-body-2-regular text-text-tertiary">
-            {subtitle}
-          </span>
+        {selecting && onToggle ? null : tile}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-headline-medium text-text-primary">{title}</span>
+          {subtitle ? <span className="truncate text-body-2-regular text-text-secondary">{subtitle}</span> : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span
             className={cx(
-              "text-body-semibold tabular-nums",
-              txn.type === "income"
-                ? "text-status-lime-text"
-                : "text-text-primary",
+              "text-headline-medium tabular-nums",
+              txn.type === "income" ? "text-status-lime-text" : "text-text-primary",
             )}
           >
             {sign}
             {money(txn.amount)}
           </span>
-          <span
-            title={txn.verified ? "Verified" : "Not verified yet"}
-            className="flex"
-          >
-            <StatusDot
-              color={txn.verified ? "green" : "yellow"}
-              aria-label={txn.verified ? "Verified" : "Unverified"}
-            />
-          </span>
         </div>
       </button>
+      {onDelete && !selecting ? (
+        <button
+          type="button"
+          aria-label={`Delete ${title}`}
+          title="Delete"
+          onClick={onDelete}
+          className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-foreground-icon-tertiary outline-none hover:bg-background-secondary-hover hover:text-text-error-primary focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+        >
+          <RiDeleteBinLine className="size-4" aria-hidden />
+        </button>
+      ) : null}
     </li>
+  );
+
+  if (!onEdit || !onVerify || !onToggle || !onDelete) return item;
+  return (
+    <ContextMenu onOpenChange={(open) => open && (menuOpenedAt.current = Date.now())}>
+      <ContextMenuTrigger asChild disabled={selecting}>
+        {item}
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-52">
+        <ContextMenuItem onSelect={onEdit}>
+          <RiPencilLine aria-hidden />
+          Edit
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={onVerify}>
+          {txn.verified ? <RiCloseCircleLine aria-hidden /> : <RiCheckDoubleLine aria-hidden />}
+          {txn.verified ? "Mark unverified" : "Mark verified"}
+        </ContextMenuItem>
+        <ContextMenuItem onSelect={onToggle}>
+          <RiCheckboxMultipleLine aria-hidden />
+          Select
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem variant="destructive" onSelect={onDelete}>
+          <RiDeleteBinLine aria-hidden />
+          Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

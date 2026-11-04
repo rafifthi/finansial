@@ -23,12 +23,14 @@ export function fieldSpecs(data: AppData) {
         { id: "investment", label: "Investment" },
       ],
     },
+    { name: "institution", label: "Bank or app (for its logo)", type: "institution" },
     { name: "opening_balance", label: "Opening balance", type: "money" },
     { name: "archived", label: "Archived (hide from forms)", type: "checkbox" },
   ];
 
   const categories: FieldSpec[] = [
     { name: "name", label: "Name", type: "text", placeholder: "Meals", required: true },
+    { name: "emoji", label: "Look", type: "identity" },
     {
       name: "group",
       label: "Group",

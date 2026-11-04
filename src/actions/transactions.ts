@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { accountOfCategory, pocketsOf } from "@/lib/finance/accounts";
+import { accountOfCategory, overridesAllowed, pocketsOf } from "@/lib/finance/accounts";
 import { bookAction } from "@/lib/data/action";
 import { newId } from "@/lib/data/store";
 import { TXN_TYPES } from "@/lib/sheets/schema";
@@ -30,10 +30,17 @@ export type TxnInput = z.input<typeof TxnInput>;
 
 export const saveTransaction = bookAction("data:write", TxnInput, async ({ id, ...input }, { user, store }) => {
   const now = new Date().toISOString();
+  const settings = await store.settings();
   let account_id = input.account_id;
+  if (input.type !== "transfer" && !overridesAllowed(settings)) {
+    // The category decides the account. An edit that keeps its category keeps its account,
+    // so balances of past transactions don't shift when the category's account changes later.
+    const existing = id ? (await store.rows("transactions")).find((t) => t.id === id) : undefined;
+    account_id = existing && existing.type !== "transfer" && existing.category_id === input.category_id ? existing.account_id : "";
+  }
   if (!account_id && input.category_id) {
     const category = (await store.rows("categories")).find((c) => c.id === input.category_id);
-    account_id = category ? accountOfCategory(category, pocketsOf(await store.settings())) : "";
+    account_id = category ? accountOfCategory(category, pocketsOf(settings)) : "";
   }
   const values = { ...input, account_id, to_account_id: input.type === "transfer" ? input.to_account_id : "" };
   if (id) {

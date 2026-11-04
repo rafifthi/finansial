@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Account, Category, Installment, Recurring, Transaction } from "@/lib/sheets/schema";
 import { accountOfCategory, accountUsage, isUsed, planAccountMerge, pocketsOf } from "./accounts";
 
-const account = (id: string, opening_balance = 0): Account => ({ id, name: id, type: "bank", opening_balance, archived: false });
+const account = (id: string, opening_balance = 0): Account => ({ id, name: id, type: "bank", opening_balance, institution: "", archived: false });
 const txn = (id: string, p: Partial<Transaction>): Transaction => ({
   id,
   date: "2026-10-01",
@@ -30,6 +30,7 @@ const category = (id: string, group: Category["group"], default_account_id = "")
   default_account_id,
   goal_id: "",
   color: "",
+  emoji: "",
   archived: false,
 });
 

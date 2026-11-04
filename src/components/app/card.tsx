@@ -25,7 +25,7 @@ export function Card({
     <section
       id={id}
       className={cx(
-        "glass flex min-w-0 scroll-mt-20 flex-col gap-4 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-5",
+        "flex min-w-0 scroll-mt-20 flex-col gap-4 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-5",
         className,
       )}
     >

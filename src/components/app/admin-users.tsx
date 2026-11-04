@@ -36,7 +36,7 @@ export function AdminUsers({ users, currentUserId }: { users: AdminUserRow[]; cu
 
   return (
     <>
-      <ul className="glass flex flex-col divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
+      <ul className="flex flex-col divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
         {users.map((u) => (
           <li key={u.id} className={cx("flex flex-wrap items-center gap-3 px-4 py-3", u.disabled && "opacity-60")}>
             <Avatar size="md" initials={u.name.slice(0, 1).toUpperCase()} />

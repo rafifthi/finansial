@@ -389,7 +389,7 @@ export function TransactionsView({
                     {dayFlow.out ? <span className="text-text-secondary">−{money(dayFlow.out)}</span> : null}
                   </span>
                 </div>
-                <ul className="glass divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
+                <ul className="divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
                   {items.map((r) => (
                     <TxnListItem
                       key={r.txn.id}

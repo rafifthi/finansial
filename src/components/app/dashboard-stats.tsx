@@ -45,7 +45,7 @@ export function DashboardStats({ stats }: { stats: DashboardStat[] }) {
         {stats.map(({ key, label, value, delta, deltaColor, caption, tone }) => {
           const Icon = ICONS[key];
           return (
-            <section key={key} className="glass glass-secondary flex min-w-0 flex-col gap-2 rounded-2xl bg-background-secondary-default p-3">
+            <section key={key} className="flex min-w-0 flex-col gap-2 rounded-2xl bg-background-secondary-default p-3">
               <div className="flex items-center justify-between gap-2">
                 <span className={cx("flex size-7 items-center justify-center rounded-lg bg-linear-to-b", TONE_BG[tone])}>
                   <Icon className="size-4 text-white" aria-hidden />
@@ -61,7 +61,7 @@ export function DashboardStats({ stats }: { stats: DashboardStat[] }) {
           );
         })}
       </div>
-      <StatCards variant="footer" columns={2} className="glass-cards hidden sm:grid 2xl:grid-cols-4" stats={stats.map(({ key, ...s }) => ({ ...s, icon: ICONS[key] }))} />
+      <StatCards variant="footer" columns={2} className="hidden sm:grid 2xl:grid-cols-4" stats={stats.map(({ key, ...s }) => ({ ...s, icon: ICONS[key] }))} />
     </>
   );
 }

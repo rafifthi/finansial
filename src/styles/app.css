@@ -6,6 +6,10 @@
  * data-glass="off" at 0). Every glass surface derives from the three values
  * below, so the slider moves all of them together. At 0 a surface renders
  * exactly like its solid BoardUI token.
+ *
+ * Glass is for what floats over content: the phone top/tab bars, sheets and
+ * drawers, menus, toasts, the bulk-action bar. Cards, lists and panels are
+ * content and stay solid; a blur with nothing scrolling behind it only costs.
  * --------------------------------------------------------------------------*/
 :root {
   --glass: 0.6; /* lib/glass.ts DEFAULT_GLASS; the boot script overrides it before paint */
@@ -40,24 +44,17 @@ body::before {
 
 /* Unlayered on purpose: it must beat the bg-* utility on the same element.
  * Tint by setting --glass-base (the solid token the surface stands for). */
-.glass,
-.glass-cards > section {
+.glass {
   --glass-base: var(--color-background-primary-default);
   background-color: color-mix(in oklab, var(--glass-base) calc(100% - var(--glass) * var(--glass-clarity)), transparent);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
-/* BoardUI stat cards render their own <section>s; glaze them from the grid. */
-.glass-secondary,
-.glass-cards > section {
+.glass-secondary {
   --glass-base: var(--color-background-secondary-default);
 }
 .glass-full {
   --glass-base: var(--color-background-full);
-}
-/* hover:bg-* can't reach past .glass; links and buttons opt in here instead. */
-.glass-hover:hover {
-  --glass-base: var(--color-background-primary-hover);
 }
 /* Floating, text-dense surfaces (menus, toasts) over busy content: same blur,
  * less see-through, so rows stay legible at any level. */
@@ -65,12 +62,12 @@ body::before {
   --glass-clarity: 24%;
 }
 /* Off means off: no backdrop pass at all (also no containing block for fixed children). */
-:root[data-glass="off"] :is(.glass, .glass-cards > section) {
+:root[data-glass="off"] .glass {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 @media (prefers-reduced-transparency: reduce) {
-  :is(.glass, .glass-cards > section) {
+  .glass {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }

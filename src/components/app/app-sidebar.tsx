@@ -242,7 +242,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
     cx(
       "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-caption-1-medium outline-none",
       "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-      active ? "text-accent-600 dark:text-accent-400" : "text-text-tertiary",
+      active ? "text-accent-600 dark:text-accent-400" : "text-text-primary",
     );
   const tabLink = (item: ResolvedNav) => (
     <Link key={item.href} href={item.href} className={tab(isActive(pathname, item))} aria-current={isActive(pathname, item) ? "page" : undefined}>
@@ -253,7 +253,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
 
   return (
     <>
-      <aside className="glass glass-secondary sticky top-3 hidden h-[calc(100dvh-24px)] w-[260px] shrink-0 overflow-y-auto rounded-3xl border border-border-button-white bg-background-secondary-default p-3 shadow-sidebar lg:block">
+      <aside className="sticky top-3 hidden h-[calc(100dvh-24px)] w-[260px] shrink-0 overflow-y-auto rounded-3xl border border-border-button-white bg-background-secondary-default p-3 shadow-sidebar lg:block">
         <SidebarPanel {...props} />
       </aside>
 

@@ -232,6 +232,77 @@ export const TABLES = {
   meta: table("_meta", SettingSchema, { key: "string", value: "string" }, "key"),
 } as const;
 
+/* ---- Bill check: verifying a card bill against the records ---- */
+
+export const STATEMENT_STATUSES = ["open", "closed"] as const;
+export const LINE_KINDS = ["charge", "installment", "fee", "interest", "payment", "refund"] as const;
+export const LINE_STATUSES = ["unmatched", "matched", "ignored"] as const;
+
+export const StatementSchema = z.object({
+  id,
+  name: z.string().min(1),
+  /** The statement's print date; also anchors the matching window. */
+  statement_date: date,
+  /** The bank's billed total, typed by the user; "" falls back to the lines' sum. */
+  total_amount: z.number().nullable().default(null),
+  status: z.enum(STATEMENT_STATUSES).default("open"),
+  note: z.string().default(""),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+});
+
+export const StatementLineSchema = z.object({
+  id,
+  statement_id: id,
+  position: z.number().int().default(0),
+  /** Transaction date from the statement, when it had one. */
+  date: z.union([date, z.literal("")]).default(""),
+  description: z.string().default(""),
+  amount,
+  kind: z.enum(LINE_KINDS).default("charge"),
+  status: z.enum(LINE_STATUSES).default("unmatched"),
+  /** The recorded transaction this line was matched to (or created as). */
+  transaction_id: optId,
+  /** Book holding that transaction; "" is the bill's own book. */
+  transaction_book_id: optId,
+});
+
+export type Statement = z.infer<typeof StatementSchema>;
+export type StatementLine = z.infer<typeof StatementLineSchema>;
+export type LineKind = (typeof LINE_KINDS)[number];
+
+/**
+ * Statement tabs live beside the book tables but are served by their own
+ * SheetDb, so books created before this module keep loading; the tabs are
+ * added the first time a book opens Bill check.
+ */
+export const STATEMENT_TABLES = {
+  statements: table("Bills", StatementSchema, {
+    id: "string",
+    name: "string",
+    statement_date: "date",
+    total_amount: "number",
+    status: "string",
+    note: "string",
+    created_at: "string",
+    created_by: "string",
+  }),
+  statement_lines: table("BillLines", StatementLineSchema, {
+    id: "string",
+    statement_id: "string",
+    position: "number",
+    date: "date",
+    description: "string",
+    amount: "number",
+    kind: "string",
+    status: "string",
+    transaction_id: "string",
+    transaction_book_id: "string",
+  }),
+} as const;
+
+export type StatementTables = typeof STATEMENT_TABLES;
+
 /** Any set of tables a SheetDb can serve (book sheet or registry sheet). */
 export type TableSet = Record<string, TableDef>;
 export type Tables = typeof TABLES;

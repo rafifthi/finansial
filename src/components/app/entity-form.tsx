@@ -43,7 +43,7 @@ export type FieldSpec =
   | (Base & { type: "number"; min?: number; max?: number })
   | (Base & { type: "date" })
   | (Base & { type: "month" })
-  | (Base & { type: "select"; options: Option[]; allowEmpty?: string })
+  | (Base & { type: "select"; options: Option[]; allowEmpty?: string; searchable?: boolean })
   /** A short choice shown all at once (2–4 options). */
   | (Base & { type: "segmented"; options: Option[] })
   | (Base & { type: "checkbox" })
@@ -276,6 +276,7 @@ function EntityFormBody({
                 placeholder={`Pick ${f.label.toLowerCase()}`}
                 isRequired={isRequired}
                 error={error}
+                searchable={f.searchable}
               />
             );
           case "segmented":

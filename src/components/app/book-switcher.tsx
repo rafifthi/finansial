@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Role } from "@/lib/auth/roles";
 import { cx } from "@/utils/cx";
+import { Logo } from "./logo";
 
 export interface ShellBook {
   id: string;
@@ -68,7 +69,7 @@ export function BookSwitcher({
         )}
       >
         {current ? <BookIcon kind={current.kind} className={compact ? "size-7" : undefined} /> : (
-          <span className="flex size-8 items-center justify-center rounded-xl bg-linear-to-b from-accent-600 to-accent-700 text-headline-semibold text-white">F</span>
+          <Logo />
         )}
         <span className="flex min-w-0 flex-1 flex-col">
           <span className={cx("truncate text-text-primary", compact ? "text-headline-semibold" : "text-body-semibold")}>

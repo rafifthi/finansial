@@ -45,7 +45,7 @@ const STEPS = ["About", "Spreadsheet", "History", "Create"] as const;
 
 function Panel({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="glass flex flex-col gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-5 sm:p-6">
+    <section className="flex flex-col gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-5 sm:p-6">
       <header className="flex flex-col gap-1">
         <h2 className="text-title-3-semibold text-text-primary">{title}</h2>
         {description ? <p className="text-body-regular text-text-secondary">{description}</p> : null}
@@ -209,7 +209,7 @@ export function NewBookWizard({
   /* Success */
   if (provision?.ok && bookId) {
     return (
-      <section className="glass mx-auto flex w-full max-w-xl flex-col items-center gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-8 text-center">
+      <section className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-8 text-center">
         <RiCheckboxCircleFill className="size-12 text-status-lime-text" aria-hidden />
         <div className="flex flex-col gap-1">
           <h2 className="text-title-2-semibold text-text-primary">{name || resume?.name} is ready</h2>

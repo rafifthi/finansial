@@ -64,7 +64,7 @@ export function fieldSpecs(data: AppData) {
     { name: "start_month", label: "First payment", type: "month", required: true },
     { name: "total_amount", label: "Total", type: "money", hint: "Leave empty to use per month × number of months." },
     { name: "account_id", label: "Paid from or card", type: "select", options: accountOptions, allowEmpty: "None" },
-    { name: "category_id", label: "Category", type: "select", options: expenseCategories, allowEmpty: "None" },
+    { name: "category_id", label: "Category", type: "select", options: expenseCategories, allowEmpty: "None", searchable: true },
     { name: "note", label: "Note", type: "text" },
   ];
 
@@ -83,10 +83,10 @@ export function fieldSpecs(data: AppData) {
     },
     { name: "amount", label: "Amount", type: "money", required: true },
     { name: "description", label: "Name", type: "text", placeholder: "e.g. Wifi", required: true },
-    { name: "category_id", label: "Category", type: "select", options: allCategories, allowEmpty: "None", showWhen: notTransfer, requiredWhen: notTransfer },
+    { name: "category_id", label: "Category", type: "select", options: allCategories, allowEmpty: "None", searchable: true, showWhen: notTransfer, requiredWhen: notTransfer },
     { name: "account_id", label: "Account", type: "select", options: accountOptions, allowEmpty: "Category's account", showWhen: notTransfer },
-    { name: "from_category_id", label: "From category", type: "select", options: allCategories, showWhen: transfer, required: true, hint: "Its account is where the money leaves." },
-    { name: "category_id", label: "To category", type: "select", options: allCategories, showWhen: transfer, required: true, hint: "Its account is where the money lands." },
+    { name: "from_category_id", label: "From category", type: "select", options: allCategories, searchable: true, showWhen: transfer, required: true, hint: "Its account is where the money leaves." },
+    { name: "category_id", label: "To category", type: "select", options: allCategories, searchable: true, showWhen: transfer, required: true, hint: "Its account is where the money lands." },
     { name: "schedule", label: "Schedule", type: "heading" },
     { name: "frequency", label: "Repeats", type: "schedule" },
     { name: "start_date", label: "Starts", type: "date", required: true },

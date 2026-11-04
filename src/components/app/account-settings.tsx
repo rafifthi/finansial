@@ -7,6 +7,7 @@ import { booksOf } from "@/lib/data/registry";
 import { BookIcon, KIND_LABEL } from "./book-switcher";
 import { Card, EmptyState } from "./card";
 import { GlassPreference } from "./glass-preference";
+import { StartPagePreference } from "./start-page-preference";
 import { PasswordCard, ProfileCard } from "./profile-forms";
 import type { SettingsSection } from "./settings-tabs";
 
@@ -66,6 +67,9 @@ export async function personalSections(me: PublicUser): Promise<SettingsSection[
           <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <GlassPreference />
             <ThemeToggle appearance="segmented" />
+          </div>
+          <div className="max-w-sm">
+            <StartPagePreference />
           </div>
         </Card>
       ),

@@ -3,6 +3,7 @@
 import { parseDate, type CalendarDate } from "@internationalized/date";
 import { useId, type ReactNode } from "react";
 import { I18nProvider } from "react-aria-components";
+import { ComboBox, ComboBoxItem } from "@/components/base/combobox/combobox";
 import { DatePicker } from "@/components/base/date-picker/date-picker";
 import { Label } from "@/components/base/input/label";
 import { NumberField } from "@/components/base/number-field/number-field";
@@ -47,6 +48,7 @@ export function SelectField({
   isRequired,
   isDisabled,
   "aria-label": ariaLabel,
+  searchable,
 }: {
   label?: ReactNode;
   value: string;
@@ -65,10 +67,38 @@ export function SelectField({
   isDisabled?: boolean;
   /** Accessible name when there's no visible label. */
   "aria-label"?: string;
+  /** Type to filter the options (a combobox) instead of a plain picker. */
+  searchable?: boolean;
 }) {
   const messageId = useId();
   const items = allowEmpty ? [{ id: "__none", label: allowEmpty }, ...options] : options;
   const isInvalid = Boolean(error) || Boolean(invalid);
+  if (searchable) {
+    return (
+      <div className={cx("flex w-full flex-col gap-1", className)}>
+      <ComboBox
+        label={label}
+        isInvalid={isInvalid}
+        isRequired={isRequired}
+        aria-describedby={error || hint ? messageId : undefined}
+        aria-label={ariaLabel ?? (typeof label === "string" ? label : placeholder)}
+        placeholder={placeholder === "Select…" ? "Search…" : placeholder}
+        menuTrigger="focus"
+        selectedKey={value || (allowEmpty ? "__none" : null)}
+        onSelectionChange={(k) => onChange(k === "__none" || k == null ? "" : String(k))}
+        className="w-full"
+        size={size === "sm" ? "small" : undefined}
+      >
+        {items.map((o) => (
+          <ComboBoxItem key={o.id} id={o.id} textValue={o.label}>
+            {o.label}
+          </ComboBoxItem>
+        ))}
+      </ComboBox>
+      <FieldMessage id={messageId} error={error} hint={hint} />
+      </div>
+    );
+  }
   return (
     <div className={cx("flex w-full flex-col gap-1", className)}>
       <Select
@@ -111,6 +141,8 @@ export function MoneyField({
   "aria-label": ariaLabel,
 }: {
   label?: ReactNode;
+  /** Accessible name when there's no visible label. */
+  "aria-label"?: string;
   value: number | null;
   onChange: (value: number | null) => void;
   money: MoneyFormat;
@@ -121,8 +153,6 @@ export function MoneyField({
   error?: string | null;
   hint?: ReactNode;
   isRequired?: boolean;
-  /** Required when there's no visible label (e.g. one row of a list). */
-  "aria-label"?: string;
 }) {
   return (
     <I18nProvider locale={money.locale}>

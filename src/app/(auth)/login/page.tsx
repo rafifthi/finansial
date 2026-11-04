@@ -4,6 +4,7 @@ import { currentUser } from "@/auth";
 import { DEMO_PASSWORD, DEMO_USERS } from "@/lib/data/demo-seed";
 import { registry, registryConfigured } from "@/lib/data/registry";
 import { usingDemoDb } from "@/lib/data/store";
+import { Logo } from "@/components/app/logo";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -24,10 +25,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <main className="flex flex-1 items-center justify-center p-4">
-      <section className="glass flex w-full max-w-sm flex-col items-center gap-6 rounded-3xl border border-border-button-default bg-background-primary-default p-8 shadow-sidebar">
-        <span className="flex size-12 items-center justify-center rounded-2xl bg-linear-to-b from-accent-600 to-accent-700 text-title-2-semibold text-text-white">
-          F
-        </span>
+      <section className="flex w-full max-w-sm flex-col items-center gap-6 rounded-3xl border border-border-button-default bg-background-primary-default p-8 shadow-sidebar">
+        <Logo className="size-12 rounded-2xl" />
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-title-2-semibold text-text-primary">Finansial</h1>
           <p className="text-body-regular text-text-tertiary">Sign in to your household.</p>

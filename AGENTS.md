@@ -19,6 +19,13 @@ This project uses BoardUI (React + Tailwind CSS v4, source-owned components unde
 - Missing a component? Install it (BoardUI MCP `install_components`, or `npx boardui@latest add <name>`) instead of writing a lookalike.
 - Import through the `@/` alias, e.g. `import { Button } from "@/components/base/buttons/button"`.
 
+## Exception: AI components (shadcn/ui + blocks.so)
+
+- The AI input (Catat, `/b/<book>/catat`) is built from blocks.so blocks on shadcn/ui (`base-nova`, Base UI): primitives in `src/components/ui/`, adapted blocks in `src/components/ai/`. Use them only for AI surfaces; everything else stays BoardUI.
+- Add more with `pnpm dlx shadcn@latest add https://blocks.so/r/<block>.json`, then fix the CLI's `import { cn } from "cn"` to `@/lib/utils`, and remove any `cn` npm package it installs.
+- `src/styles/shadcn.css` points shadcn's variables (`--background`, `--primary`, `--border`, …) at BoardUI tokens. Never give them literal colours, and don't override `--radius-*`.
+- `cn` (`@/lib/utils`) is a clsx-style adapter over `cx`. Swap blocks' Tabler/Lucide icons for `@remixicon/react`.
+
 ## Color: semantic tokens only
 
 - Never use raw palette classes (`text-gray-500`, `bg-white`, `border-neutral-200`) or hex/oklch literals. Every color rides a BoardUI semantic token, which also makes dark mode automatic.

@@ -215,7 +215,7 @@ export function BudgetEditor({
           copy();
         }}
       />
-      <div className="glass grid grid-cols-2 items-center gap-x-6 gap-y-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:flex sm:flex-wrap lg:sticky lg:top-3 lg:z-10 lg:shadow-sidebar">
+      <div className="grid grid-cols-2 items-center gap-x-6 gap-y-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:flex sm:flex-wrap lg:sticky lg:top-3 lg:z-10 lg:shadow-sidebar">
         <Figure label="Planned income" value={fmt(summary.income)} />
         <Figure label="Allocated" value={fmt(summary.allocated)} />
         <Figure
@@ -295,7 +295,7 @@ export function BudgetEditor({
           return (
             <section
               key={section.group}
-              className="glass flex flex-col gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-5"
+              className="flex flex-col gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-5"
             >
               <header className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5">
@@ -429,7 +429,7 @@ function PocketPlan({
   const ordered = [...rows.entries()].sort(([a], [b]) => (a ? (b ? 0 : -1) : 1));
 
   return (
-    <section className="glass flex flex-col gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-5">
+    <section className="flex flex-col gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-5">
       <div className="flex flex-col gap-0.5">
         <h2 className="text-headline-semibold text-text-primary">Pockets</h2>
         <p className="text-body-2-regular text-text-tertiary">

@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   type RemixiconComponentType,
-  RiAddLine,
   RiArrowLeftRightLine,
+  RiBankCard2Line,
   RiBookShelfLine,
   RiCalendarScheduleLine,
   RiCheckDoubleLine,
@@ -19,6 +19,7 @@ import {
   RiRepeatLine,
   RiSettings4Line,
   RiShieldUserLine,
+  RiSparkling2Fill,
   RiWallet3Line,
 } from "@remixicon/react";
 import { ThemeToggle } from "@/components/application/theme/theme-toggle";
@@ -32,7 +33,6 @@ import type { FormOptions } from "@/lib/data/app-data";
 import { cx } from "@/utils/cx";
 import { BookSwitcher, type ShellBook } from "./book-switcher";
 import { useCan } from "./permissions";
-import { TransactionDrawer } from "./transaction-form";
 
 interface NavEntry {
   path: string;
@@ -48,6 +48,7 @@ const BOOK_NAV: NavEntry[] = [
   { path: "", label: "Dashboard", icon: RiHomeLine },
   { path: "/transactions", label: "Transactions", icon: RiArrowLeftRightLine },
   { path: "/reconcile", label: "Reconcile", icon: RiCheckDoubleLine, badgeKey: "unverified" },
+  { path: "/bill-check", label: "Bill check", icon: RiBankCard2Line },
   { path: "/budget", label: "Budget", icon: RiPieChartLine },
   { path: "/goals", label: "Goals", icon: RiFlagLine },
   { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine },
@@ -108,11 +109,30 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
   const pathname = usePathname();
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
   const nav = navFor(props);
+  const canCatat = useCan("data:write") && Boolean(current);
+  const catatHref = current ? `/b/${current.id}/catat` : "";
+  const onCatat = pathname === catatHref;
 
   return (
     <div className="flex h-full flex-col justify-between gap-6">
       <div className="flex flex-col gap-4">
         <BookSwitcher books={books} current={current} onNavigate={onNavigate} />
+        {canCatat ? (
+          // The main action: record a transaction with AI, above everything else.
+          <Link
+            href={catatHref}
+            onClick={onNavigate}
+            aria-current={onCatat ? "page" : undefined}
+            className={cx(
+              "flex items-center justify-center gap-2 rounded-xl bg-linear-to-b from-accent-500 to-accent-600 px-3 py-2.5 text-white shadow-nav-selected outline-none transition",
+              "hover:from-accent-400 hover:to-accent-500 focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-[0.98]",
+              onCatat && "ring-2 ring-accent-300 ring-offset-2 ring-offset-background-secondary-default",
+            )}
+          >
+            <RiSparkling2Fill className="size-5 shrink-0" aria-hidden />
+            <span className="text-body-semibold">Catat</span>
+          </Link>
+        ) : null}
         <nav aria-label="Main" className="flex flex-col gap-0.5">
           {nav.map((item) => {
             const active = isActive(pathname, item);
@@ -125,14 +145,15 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
                 className={cx(
                   "flex items-center justify-between rounded-2lg p-2 outline-none transition-colors",
                   "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-                  active ? "bg-linear-to-b from-accent-500 to-accent-600 shadow-nav-selected" : "hover:bg-background-secondary-hover",
+                  // Soft raised pill: the solid blue is kept for the Catat call to action.
+                  active ? "bg-background-primary-default shadow-xs" : "hover:bg-background-secondary-hover",
                 )}
               >
                 <span className="flex items-center gap-2">
-                  <item.icon className={cx("size-5 shrink-0", active ? "text-white" : "text-foreground-icon-secondary")} aria-hidden />
-                  <span className={cx("text-body-medium", active ? "text-white" : "text-text-secondary")}>{item.label}</span>
+                  <item.icon className={cx("size-5 shrink-0", active ? "text-accent-600 dark:text-accent-400" : "text-foreground-icon-secondary")} aria-hidden />
+                  <span className={cx(active ? "text-body-semibold text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
                 </span>
-                {item.badge ? <Badge color={active ? "primary" : "neutral"}>{item.badge}</Badge> : null}
+                {item.badge ? <Badge color="neutral">{item.badge}</Badge> : null}
               </Link>
             );
           })}
@@ -179,14 +200,15 @@ const TAB_PATHS = ["", "/transactions", "/budget"];
 
 export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: FormOptions }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
   const pathname = usePathname();
-  const canAdd = useCan("data:write") && Boolean(quickAdd);
+  const canAdd = useCan("data:write") && Boolean(quickAdd && props.current);
   const nav = navFor(props);
   const tabs = props.current
     ? TAB_PATHS.map((p) => nav.find((n) => n.href === `/b/${props.current!.id}${p}`)).filter((n): n is ResolvedNav => Boolean(n))
     : nav.slice(0, 2);
-  const inMore = !tabs.some((t) => isActive(pathname, t));
+  const catatHref = props.current ? `/b/${props.current.id}/catat` : "";
+  const onCatat = Boolean(catatHref) && pathname === catatHref;
+  const inMore = !onCatat && !tabs.some((t) => isActive(pathname, t));
   const initials = (props.user.name || props.user.email).slice(0, 1).toUpperCase();
 
   const tab = (active: boolean) =>
@@ -226,14 +248,16 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
           {tabs.slice(0, 2).map(tabLink)}
           {canAdd ? (
             <div className="flex flex-1 justify-center">
-              <button
-                type="button"
-                onClick={() => setAddOpen(true)}
-                aria-label="Add transaction"
-                className="-mt-5 flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-500 to-accent-600 text-white shadow-nav-selected outline-none ring-4 ring-background-full focus-visible:ring-border-focus-ring active:scale-95"
+              <Link
+                href={catatHref}
+                aria-current={onCatat ? "page" : undefined}
+                className="-mt-5 flex flex-col items-center gap-0.5 rounded-full pb-1.5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
-                <RiAddLine className="size-7" aria-hidden />
-              </button>
+                <span className="flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-500 to-accent-600 text-white shadow-nav-selected ring-4 ring-background-full active:scale-95">
+                  <RiSparkling2Fill className="size-7" aria-hidden />
+                </span>
+                <span className="text-caption-1-medium text-accent-600 dark:text-accent-400">Catat</span>
+              </Link>
             </div>
           ) : null}
           {tabs.slice(2).map(tabLink)}
@@ -252,7 +276,6 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
           <SidebarPanel {...props} onNavigate={() => setMenuOpen(false)} />
         </div>
       </Drawer>
-      {quickAdd ? <TransactionDrawer options={quickAdd} isOpen={addOpen} onOpenChange={setAddOpen} /> : null}
     </>
   );
 }

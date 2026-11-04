@@ -1,0 +1,49 @@
+/*
+ * shadcn/ui + blocks.so (used for the AI components) on top of BoardUI.
+ * shadcn's variables point at BoardUI's semantic tokens, so these
+ * components follow the app's palette and dark mode with no colours of
+ * their own. Radii stay on BoardUI's scale (no --radius-* overrides).
+ */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: var(--color-background-primary-default);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-background-primary-default);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-background-primary-default);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-accent-600);
+  --primary-foreground: var(--color-text-white);
+  --secondary: var(--color-background-secondary-default);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-background-secondary-default);
+  --muted-foreground: var(--color-text-tertiary);
+  --accent: var(--color-background-secondary-hover);
+  --accent-foreground: var(--color-text-primary);
+  --destructive: var(--color-text-error-primary);
+  --border: var(--color-border-button-default);
+  --input: var(--color-border-button-default);
+  --ring: var(--color-border-focus-ring);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}

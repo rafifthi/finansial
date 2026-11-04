@@ -168,11 +168,12 @@ function TransactionFormBody({
               onChange={onCategory}
               options={options.categories.filter((c) => c.group === "Savings").map((c) => ({ id: c.id, label: c.name }))}
               allowEmpty="None (plain transfer)"
+              searchable
             />
           </>
         ) : (
           <>
-            <SelectField label="Category" value={draft.category_id ?? ""} onChange={onCategory} options={categoryOptions} />
+            <SelectField label="Category" value={draft.category_id ?? ""} onChange={onCategory} options={categoryOptions} searchable />
             <SelectField label="Account" value={draft.account_id ?? ""} onChange={(v) => set("account_id", v)} options={accountOptions} allowEmpty="Category default" />
           </>
         )}

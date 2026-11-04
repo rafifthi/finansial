@@ -3,6 +3,7 @@
 import { parseDate, type CalendarDate } from "@internationalized/date";
 import type { ReactNode } from "react";
 import { I18nProvider } from "react-aria-components";
+import { ComboBox, ComboBoxItem } from "@/components/base/combobox/combobox";
 import { DatePicker } from "@/components/base/date-picker/date-picker";
 import { Label } from "@/components/base/input/label";
 import { NumberField } from "@/components/base/number-field/number-field";
@@ -26,6 +27,7 @@ export function SelectField({
   className,
   size,
   "aria-label": ariaLabel,
+  searchable,
 }: {
   label?: ReactNode;
   value: string;
@@ -38,8 +40,30 @@ export function SelectField({
   size?: "sm" | "md";
   /** Accessible name when there's no visible label. */
   "aria-label"?: string;
+  /** Type to filter the options (a combobox) instead of a plain picker. */
+  searchable?: boolean;
 }) {
   const items = allowEmpty ? [{ id: "__none", label: allowEmpty }, ...options] : options;
+  if (searchable) {
+    return (
+      <ComboBox
+        label={label}
+        aria-label={ariaLabel ?? (typeof label === "string" ? label : placeholder)}
+        placeholder={placeholder === "Select…" ? "Search…" : placeholder}
+        menuTrigger="focus"
+        selectedKey={value || (allowEmpty ? "__none" : null)}
+        onSelectionChange={(k) => onChange(k === "__none" || k == null ? "" : String(k))}
+        className={cx("w-full", className)}
+        size={size === "sm" ? "small" : undefined}
+      >
+        {items.map((o) => (
+          <ComboBoxItem key={o.id} id={o.id} textValue={o.label}>
+            {o.label}
+          </ComboBoxItem>
+        ))}
+      </ComboBox>
+    );
+  }
   return (
     <Select
       label={label}
@@ -67,8 +91,11 @@ export function MoneyField({
   money,
   className,
   autoFocus,
+  "aria-label": ariaLabel,
 }: {
   label?: ReactNode;
+  /** Accessible name when there's no visible label. */
+  "aria-label"?: string;
   value: number | null;
   onChange: (value: number | null) => void;
   money: MoneyFormat;
@@ -79,7 +106,7 @@ export function MoneyField({
     <I18nProvider locale={money.locale}>
       <NumberField
         label={label}
-        aria-label={typeof label === "string" ? label : "Amount"}
+        aria-label={ariaLabel ?? (typeof label === "string" ? label : "Amount")}
         value={value ?? Number.NaN}
         onChange={(v) => onChange(Number.isNaN(v) ? null : v)}
         minValue={0}

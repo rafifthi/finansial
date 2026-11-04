@@ -186,6 +186,7 @@ export function TransactionsView({
         onChange={(v) => setFilter("category", v)}
         allowEmpty="All categories"
         options={options.categories.map((c) => ({ id: c.id, label: c.name }))}
+        searchable
       />
       <SelectField
         className="sm:w-40"

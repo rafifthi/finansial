@@ -16,7 +16,7 @@ async function signOutAction() {
 
 /**
  * Sidebar + content frame. Inside a book (`current`) it adds the book's nav,
- * the reconcile badge, the phone "+" button and the role context for client
+ * the reconcile badge, the Catat button and the role context for client
  * components; on account pages it shows account navigation only.
  */
 export async function AppShell({ user, current, children }: { user: PublicUser; current?: BookContext; children: ReactNode }) {

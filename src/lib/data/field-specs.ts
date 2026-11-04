@@ -63,7 +63,7 @@ export function fieldSpecs(data: AppData) {
     { name: "start_month", label: "First instalment month", type: "month" },
     { name: "total_amount", label: "Total (optional, defaults to per month × tenor)", type: "money" },
     { name: "account_id", label: "Paid from / card", type: "select", options: accountOptions, allowEmpty: "None" },
-    { name: "category_id", label: "Category", type: "select", options: expenseCategories, allowEmpty: "None" },
+    { name: "category_id", label: "Category", type: "select", options: expenseCategories, allowEmpty: "None", searchable: true },
     { name: "note", label: "Note", type: "text" },
   ];
 
@@ -80,7 +80,7 @@ export function fieldSpecs(data: AppData) {
       ],
     },
     { name: "amount", label: "Amount", type: "money" },
-    { name: "category_id", label: "Category", type: "select", options: allCategories, allowEmpty: "None" },
+    { name: "category_id", label: "Category", type: "select", options: allCategories, allowEmpty: "None", searchable: true },
     { name: "account_id", label: "Account", type: "select", options: accountOptions, allowEmpty: "Category default" },
     { name: "to_account_id", label: "To account (transfers)", type: "select", options: accountOptions, allowEmpty: "None" },
     {

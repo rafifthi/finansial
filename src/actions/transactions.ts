@@ -52,6 +52,39 @@ export const saveTransaction = bookAction("data:write", TxnInput, async ({ id, .
   }
 });
 
+/** Saves several new transactions at once (Catat's confirmed drafts). */
+export const saveTransactions = bookAction(
+  "data:write",
+  z.object({ transactions: z.array(TxnInput).min(1, "Nothing to save").max(200) }),
+  async ({ transactions }, { user, store }) => {
+    const now = new Date().toISOString();
+    const [categories, settings] = await Promise.all([store.rows("categories"), store.settings()]);
+    const pockets = pocketsOf(settings);
+    await store.insert(
+      "transactions",
+      transactions.map((input) => {
+        let account_id = input.account_id;
+        if (!account_id && input.category_id) {
+          const category = categories.find((c) => c.id === input.category_id);
+          account_id = category ? accountOfCategory(category, pockets) : "";
+        }
+        return {
+          ...input,
+          id: newId(),
+          account_id,
+          to_account_id: input.type === "transfer" ? input.to_account_id : "",
+          recurring_id: "",
+          created_at: now,
+          updated_at: now,
+          created_by: user.email,
+          updated_by: user.email,
+        };
+      }),
+    );
+    return { count: transactions.length };
+  },
+);
+
 export const deleteTransactions = bookAction("data:write", z.object({ ids: z.array(z.string()).min(1) }), ({ ids }, { store }) =>
   store.remove("transactions", ids),
 );

@@ -25,7 +25,7 @@ export type FieldSpec =
   | { name: string; label: string; type: "number"; min?: number; max?: number; hint?: string }
   | { name: string; label: string; type: "date" }
   | { name: string; label: string; type: "month" }
-  | { name: string; label: string; type: "select"; options: Option[]; allowEmpty?: string }
+  | { name: string; label: string; type: "select"; options: Option[]; allowEmpty?: string; searchable?: boolean }
   | { name: string; label: string; type: "checkbox" }
   /** Category emoji + colour (writes the `emoji` and `color` columns). */
   | { name: string; label: string; type: "identity" }
@@ -204,6 +204,7 @@ function EntityFormBody({
                   onChange={(x) => set(f.name, x)}
                   options={f.options}
                   allowEmpty={f.allowEmpty}
+                  searchable={f.searchable}
                 />
               );
             case "identity":

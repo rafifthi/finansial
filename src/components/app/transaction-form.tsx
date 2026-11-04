@@ -173,11 +173,12 @@ function TransactionFormBody({
               onChange={(v) => set("category_id", v)}
               options={options.categories.filter((c) => c.group === "Savings").map((c) => ({ id: c.id, label: label(c) }))}
               allowEmpty="None (plain transfer)"
+              searchable
             />
           </>
         ) : (
           <>
-            <SelectField label="Category" value={draft.category_id ?? ""} onChange={onCategory} options={categoryOptions} />
+            <SelectField label="Category" value={draft.category_id ?? ""} onChange={onCategory} options={categoryOptions} searchable />
             {options.accountOverride ? (
               <SelectField
                 label={draft.type === "income" ? "Received into" : "Paid from"}

@@ -41,53 +41,53 @@ colors:
 typography:
   title-1:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "1.75rem"
+    fontSize: "1.25rem"
     fontWeight: 500
-    lineHeight: "2.125rem"
-    letterSpacing: "-0.021em"
+    lineHeight: "1.625rem"
+    letterSpacing: "-0.014em"
   title-2:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "1.375rem"
+    fontSize: "1.0625rem"
     fontWeight: 600
-    lineHeight: "1.75rem"
-    letterSpacing: "-0.018em"
+    lineHeight: "1.5rem"
+    letterSpacing: "-0.011em"
   title-3:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "1.25rem"
+    fontSize: "0.9375rem"
     fontWeight: 600
-    lineHeight: "1.625rem"
-    letterSpacing: "-0.01em"
+    lineHeight: "1.25rem"
+    letterSpacing: "-0.008em"
   stat-value:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "2rem"
+    fontSize: "1.5rem"
     fontWeight: 500
-    lineHeight: "2.375rem"
-    letterSpacing: "-0.022em"
+    lineHeight: "1.875rem"
+    letterSpacing: "-0.018em"
     fontFeature: "tnum"
   headline:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "1rem"
+    fontSize: "0.875rem"
     fontWeight: 600
-    lineHeight: "1.375rem"
-    letterSpacing: "-0.011em"
+    lineHeight: "1.25rem"
+    letterSpacing: "-0.006em"
   body:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "0.9375rem"
+    fontSize: "0.8125rem"
     fontWeight: 400
-    lineHeight: "1.375rem"
-    letterSpacing: "-0.006em"
-  body-2:
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 500
     lineHeight: "1.25rem"
     letterSpacing: "-0.003em"
-  caption:
+  body-2:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 500
     lineHeight: "1rem"
     letterSpacing: "0em"
+  caption:
+    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontSize: "0.6875rem"
+    fontWeight: 500
+    lineHeight: "0.875rem"
+    letterSpacing: "0.005em"
 rounded:
   small: "6px"
   control: "8px"
@@ -104,10 +104,10 @@ components:
   button-primary:
     backgroundColor: "{colors.forest}"
     textColor: "{colors.card-white}"
-    typography: "{typography.body-2}"
-    rounded: "{rounded.control}"
-    padding: "0 12px"
-    height: "36px"
+    typography: "{typography.body}"
+    rounded: "{rounded.small}"
+    padding: "0 10px"
+    height: "28px"
   button-primary-hover:
     backgroundColor: "{colors.forest-hover}"
   button-primary-active:
@@ -115,51 +115,51 @@ components:
   button-primary-night:
     backgroundColor: "{colors.lime}"
     textColor: "{colors.on-lime}"
-    typography: "{typography.body-2}"
-    rounded: "{rounded.control}"
-    padding: "0 12px"
-    height: "36px"
+    typography: "{typography.body}"
+    rounded: "{rounded.small}"
+    padding: "0 10px"
+    height: "28px"
   button-primary-night-hover:
     backgroundColor: "{colors.lime-hover}"
   button-secondary:
     backgroundColor: "{colors.card-white}"
     textColor: "{colors.ink}"
-    typography: "{typography.body-2}"
-    rounded: "{rounded.control}"
-    padding: "0 12px"
-    height: "36px"
+    typography: "{typography.body}"
+    rounded: "{rounded.small}"
+    padding: "0 10px"
+    height: "28px"
   button-secondary-hover:
     backgroundColor: "{colors.mist}"
   button-secondary-night:
     backgroundColor: "{colors.surface-1}"
     textColor: "{colors.moonlight}"
-    rounded: "{rounded.control}"
-    height: "36px"
+    rounded: "{rounded.small}"
+    height: "28px"
   button-ghost:
     textColor: "{colors.link-green}"
-    rounded: "{rounded.control}"
-    height: "36px"
+    rounded: "{rounded.small}"
+    height: "28px"
   button-ghost-hover:
     backgroundColor: "{colors.selection-tint}"
   icon-button:
     textColor: "{colors.slate}"
     rounded: "{rounded.control}"
-    size: "36px"
+    size: "28px"
   icon-button-hover:
     backgroundColor: "{colors.cloud}"
     textColor: "{colors.ink}"
   input:
     backgroundColor: "{colors.card-white}"
     textColor: "{colors.ink}"
-    typography: "{typography.body-2}"
+    typography: "{typography.body}"
     rounded: "{rounded.control}"
-    padding: "6px 10px"
-    height: "36px"
+    padding: "6px 8px"
+    height: "32px"
   input-night:
     backgroundColor: "{colors.surface-1}"
     textColor: "{colors.moonlight}"
     rounded: "{rounded.control}"
-    height: "36px"
+    height: "32px"
   card:
     backgroundColor: "{colors.card-white}"
     textColor: "{colors.ink}"
@@ -183,18 +183,18 @@ components:
 
 **Creative North Star: "The Night Ledger"**
 
-Finansial wears Linear's precise, dark-led workspace, adapted for a two-person household that checks its money on phone and laptop, often at night. The source is the shadcn.io "Linear" DESIGN.md (Dov Azencot's packaging of Linear's marketing system), pinned by the user. From it the app takes the near-black surface ladder, hairlines in place of shadows, tightly tracked sans type, 8px controls, 12px cards and the discipline of a single chromatic accent. Dark is the default; light is a full peer theme for daytime.
+Finansial wears Linear's precise, dark-led workspace, adapted for a two-person household that checks its money on phone and laptop, often at night. The source is the shadcn.io "Linear" DESIGN.md (Dov Azencot's packaging of Linear's marketing system), pinned by the user. From it the app takes the near-black surface ladder, hairlines in place of shadows, tightly tracked sans type, small controls, 12px cards and the discipline of a single chromatic accent. Dark is the default; light is a full peer theme for daytime.
 
 Four translations separate this build from the source file. **The accent:** Linear's lavender-blue became one green from the user's finance-app reference, forest (#0f3d33) as the fill in light and lime (#b8e08a) as the fill in dark, on a shared ramp. **Light mode:** the marketing file is dark only, so the light theme follows Linear's own app light theme: a pale grey page, white cards and grey hairlines. **Type:** Linear Display, Linear Text and Linear Mono are proprietary, so Inter (with its optical-size axis) stands in for all three. **Glass:** Linear has no frosted chrome, but the functional bars (the phone top and tab bars, the sidebar, sheets, menus and toasts) stay glass, a choice the user made before this world. One build divergence from the source: the dark canvas ships at #08090a, a step above Linear's #010102.
 
-Density is compact. The type is a size smaller than a consumer app's, controls are 36px on desktop and the app grows them to 44px on phones. Hierarchy comes from surface steps and hairlines, never from shadow or colour. Green means "you can act here" or "this is selected", and the Spent series is the only data that wears it.
+Density is Linear's own app scale: 13px body, 28px buttons and 32px fields on desktop, with phones growing the main buttons and fields to 44px for thumbs. Hierarchy comes from surface steps and hairlines, never from shadow or colour. Green means "you can act here" or "this is selected", and the Spent series is the only data that wears it.
 
 **Key Characteristics:**
 - Dark-led: a #08090a canvas with a four-step surface ladder; light mode is a pale page with white cards.
 - One green, flipping per theme: forest fills in light, lime fills in dark.
 - Hairlines, not shadows; the only shadow belongs to floating menus.
 - Inter with tracking that tightens as size grows, and weight 500 for labels and controls.
-- 8px controls, 12px cards, pills only for chips and the phone Catat button.
+- 6px buttons, 8px fields and icon controls, 12px cards, pills only for chips and the phone Catat button.
 - Glass on the bars only; content stays solid.
 
 ## Colors
@@ -239,17 +239,19 @@ A near-neutral grey ladder in both themes, with a single green that is used only
 **Body Font:** Inter
 **Label/Mono Font:** Inter, with tabular numerals for money
 
-**Character:** One neutral sans set tight, standing in for Linear's proprietary family. Tracking tightens as size grows, from 0 at 12px to −0.021em at 28px, so titles feel engineered rather than loud.
+**Character:** One neutral sans set tight, standing in for Linear's proprietary family. Tracking tightens as size grows, from 0 at 12px to −0.014em at 20px, so titles feel engineered rather than loud. Captions below 12px open slightly (+0.005em at 11px).
 
 ### Hierarchy
-- **Title 1** (500, 28px, 34px): page titles from small screens up.
-- **Title 2** (600, 22px, 28px): page titles on phones; drawer and sheet titles.
-- **Title 3** (600, 20px, 26px): section titles inside wide surfaces.
-- **Stat Value** (500, 32px, 38px, tabular): the headline number on dashboard stat cards.
-- **Headline** (600, 16px, 22px): card titles.
-- **Body** (400, 15px, 22px): running text, list rows, stat labels (at 500).
-- **Body 2** (500, 14px, 20px): buttons, fields, selects, nav labels and card descriptions (at 400).
-- **Caption** (500, 12px, 16px): tab-bar labels, chart ticks, helper text and field errors.
+- **Title 1** (500, 20px, 26px): page titles, at every width.
+- **Title 2** (600, 17px, 24px): sheet and section titles.
+- **Title 3** (600, 15px, 20px): drawer and modal titles.
+- **Stat Value** (500, 24px, 30px, tabular): the headline number on dashboard stat cards.
+- **Headline** (600, 14px, 20px): card titles.
+- **Body** (400, 13px, 20px): running text, list rows and fields; buttons, nav labels and stat labels at 500, Catat at 600.
+- **Body 2** (500, 12px, 16px): small buttons, deltas (at 600) and card descriptions (at 400).
+- **Caption** (500, 11px, 14px): tab-bar labels, chart ticks, helper text and field errors.
+
+On phones, text inputs, selects and textareas render at 16px regardless of token so iOS never zooms on focus; display-size fields keep their own size.
 
 ### Named Rules
 **The Tabular Money Rule.** Every amount, total, delta and count is set in tabular numerals so columns align and figures don't jitter as they update.
@@ -258,7 +260,7 @@ A near-neutral grey ladder in both themes, with a single green that is used only
 
 ## Layout
 
-Desktop is a floating 260px sidebar inset 12px from the viewport, beside a content column. From the large breakpoint down, the sidebar gives way to a frosted top bar and a frosted bottom tab bar with Catat raised in its centre. Spacing stays on the 4px Tailwind scale with flex and grid gaps rather than margins. Cards pad 16px, 20px from small screens up, with 16px gaps between and inside them. Dashboard stat cards run one per row on phones, two up from small screens and four up at the widest. Page headers stack on phones and put actions on the end side from small screens up. Controls are 36px tall on desktop and 44px on phones; the phone value is the touch target, and icon buttons extend their hit area to 44px on phones even when the visible square is smaller. Layout uses logical properties throughout so it mirrors in RTL.
+Desktop is a floating 232px sidebar with 8px padding, inset 8px from the viewport, beside a content column with 20px side padding and a 16px gap. From the large breakpoint down, the sidebar gives way to a frosted top bar and a frosted bottom tab bar with Catat raised in its centre, and the column pads 16px. Spacing stays on the 4px Tailwind scale with flex and grid gaps rather than margins. Cards pad 12px on phones and 16px from small screens up. Drawers and modals pad 16px on every side and stack fields 12px apart. Dashboard stat cards run one per row on phones, two up from small screens and four up at the widest. Page headers stack on phones and put actions on the end side from small screens up. On desktop, buttons are 28px tall, fields 32px and the segmented control 24px. On phones, every button size, field and segment grows to 44px, the touch target, and icon buttons grow to 40px with a hit area extended 6px past the square. Layout uses logical properties throughout so it mirrors in RTL.
 
 ## Elevation & Depth
 
@@ -277,13 +279,13 @@ Glass is functional, not atmospheric. The phone bars, the desktop sidebar, sheet
 
 ## Shapes
 
-Precise, small corners. Cards and panels are 12px, the sidebar included. Buttons, fields, selects, date triggers, icon buttons and nav rows are 8px; small and extra-small buttons are 6px. Pills are for chips, filter toggles, progress tracks and the 56px phone Catat circle only; Catat chat bubbles take the card radius. Edges are 1px: hairlines on cards and secondary controls, and a 1px inset field edge on text inputs. Bars in charts have 4px top corners.
+Precise, small corners. Cards and panels are 12px, the sidebar included. Fields, selects, date triggers and icon buttons are 8px; buttons at every size, nav rows and segments are 6px. Pills are for chips, filter toggles, progress tracks and the 56px phone Catat circle only; Catat chat bubbles take the card radius. Edges are 1px: hairlines on cards and secondary controls, and a 1px inset field edge on text inputs. Bars in charts have 4px top corners.
 
 ## Components
 
 ### Buttons
 Linear controls: small, square-shouldered, quiet until they're the action.
-- **Shape:** gently rounded (8px); medium 36px tall (44px on phones) with 12px side padding and Body 2 type; small 32px and extra-small 24px at 6px.
+- **Shape:** gently rounded (6px); medium 28px tall (44px on phones) with 10px side padding, 500-weight Body type and 16px icons; small 24px with Body 2; extra-small 20px. Every size grows to 44px on phones.
 - **Primary:** the theme fill: Forest with white text in light, Lime with On-Lime text in dark. Hover and press step along the fill. Disabled is a Cloud (Surface 3 in dark) fill with muted text.
 - **Secondary:** Card White (Surface 1 in dark) with a 1px Control Edge; hover steps to Mist and strengthens the edge.
 - **Ghost:** green text on transparent, with a Selection Tint hover.
@@ -291,21 +293,21 @@ Linear controls: small, square-shouldered, quiet until they're the action.
 - **Focus:** a 2px ring in the focus green on every interactive element.
 
 ### Icon Buttons
-A ghost square: transparent with a Slate (Steel in dark) icon, 8px corners. Hover shows a surface and darkens the icon to Ink; press scales to 98%. On phones the hit area extends 6px past the square.
+A ghost square: 28px (40px on phones), transparent with a 16px Slate (Steel in dark) icon, 8px corners. Hover shows a surface and darkens the icon to Ink; press scales to 98%. On phones the hit area extends 6px past the square.
 
 ### Cards / Containers
 - **Corner Style:** 12px.
 - **Background:** Card White in light, Surface 1 in dark; always solid.
 - **Shadow Strategy:** none; see Elevation & Depth.
 - **Border:** 1px hairline.
-- **Internal Padding:** 16px, 20px from small screens up, 16px gap.
+- **Internal Padding:** 12px on phones, 16px from small screens up, 16px gap.
 - **Header:** a Headline title, an optional Body 2 description in Slate, and an optional green "View all" link.
 
 ### Stat Cards (signature)
-A hairline card with a 40px neutral icon disc and an Ink icon, the label in Graphite Body, the value in tabular Stat Value, then a footnote row under a hairline: the comparison caption on the start side and the change on the end side as a direction arrow plus semibold tabular Body 2 in Positive, Negative or Graphite. No tinted pill behind the change.
+A hairline card with a 28px neutral icon disc and a 16px Ink icon, the label in 500-weight Graphite Body, the value in tabular Stat Value, then a footnote row under a hairline: the comparison caption on the start side and the change on the end side as a direction arrow plus semibold tabular Body 2 in Positive, Negative or Graphite. No tinted pill behind the change.
 
 ### Inputs / Fields
-- **Text inputs and textareas:** Card White (Surface 1 in dark), 8px radius, 36px tall (44px on phones), a 1px inset Field Edge so the control clears 3:1.
+- **Text inputs and textareas:** Card White (Surface 1 in dark), 8px radius, 32px tall (44px on phones) with Body type and 16px icons, a 1px inset Field Edge so the control clears 3:1.
 - **Selects and date triggers:** the same size and radius with a 1px Control Edge that strengthens on hover.
 - **Focus:** a 2px focus-green ring.
 - **Error:** the field takes the red error surface and edge, and the message sits directly under it in Caption. Required fields carry a red asterisk on the label.
@@ -316,7 +318,7 @@ A hairline card with a 40px neutral icon disc and an Ink icon, the label in Grap
 Checkboxes, radios, switches and slider fills use the theme fill when on, with the on-fill colour for the tick and the radio dot. The off switch is a Cloud track with a 1px inset Field Edge ring so it still reads as a control.
 
 ### Navigation
-- **Desktop sidebar:** the frosted 260px panel with a 12px radius. The Catat button sits on top: a 36px fill-colour control with a semibold Body label. Nav rows are 8px rows with a 20px Slate icon and a Graphite Body label; the active row is a Card White (Surface 1) row with a green icon and a semibold Ink label.
+- **Desktop sidebar:** the frosted 232px panel with a 12px radius. The Catat button sits on top: a 32px fill-colour control with 6px corners, a 16px icon and a semibold Body label. Nav rows are 28px, 6px-radius rows with a 16px Slate icon and a Graphite Body label; the active row is a Card White (Surface 1) row with a green icon and a semibold Ink label.
 - **Phone:** a frosted top bar and tab bar with 24px icons and Caption labels, Ink at rest and green when active. Catat is a raised 56px fill-colour circle in the centre with a 4px ring in the page-ground colour.
 
 ### Book Icon
@@ -326,7 +328,10 @@ The family (shared) book wears the fill colour; a personal book is a neutral Clo
 Spent bars are the fill colour; Budget bars are the neutral chart grey; the track is Cloud (Surface 4 in dark). Bars have 4px top corners and ticks are Caption in Slate.
 
 ### Category Tiles and Picker (signature)
-A category's emoji on a tile tinted with its chosen chip colour, falling back to its group colour and then to the name's first letter. Every transaction and budget row starts with one. Quick capture picks a category from tiles, not a list: the most used in the last 90 days plus an "All" tile that opens every category grouped by Needs, Wants, Savings and Income, with search.
+A category's emoji on a tile tinted with its chosen chip colour, falling back to its group colour and then to the name's first letter, at 24px (6px corners), 28px (6px) or 40px (8px). Every transaction and budget row starts with one. Quick capture picks a category from 56px-tall tiles, not a list: the most used in the last 90 days plus an "All" tile that opens every category grouped by Needs, Wants, Savings and Income, with search.
+
+### Drawers and Modals
+Forms open in a drawer or modal with 16px padding on every side, a 15px semibold Title 3 heading, fields 12px apart and a sticky footer for the actions.
 
 ### Deletes
 Deletes happen at once and show an Undo toast for 8 seconds that names what went. Only actions that can't be undone (removing a member, resetting a password, deleting an account with moves) ask first, in a dialog that names the consequence.
@@ -340,7 +345,7 @@ Dropdowns, listboxes and calendars are nearly opaque glass (8% clarity) with the
 - **Do** use BoardUI semantic colour tokens and composite type utilities only; pick a different token rather than writing a `dark:` override with a raw colour.
 - **Do** colour every accent fill with the theme fill and its on-fill text (Forest with white, Lime with On-Lime).
 - **Do** keep green for actions, selection and the Spent series; keep Catat the most saturated object on screen.
-- **Do** build hierarchy from the surface ladder and 1px hairlines: 12px cards, 8px controls.
+- **Do** build hierarchy from the surface ladder and 1px hairlines: 12px cards, 8px fields, 6px buttons.
 - **Do** put icons on neutral discs with Ink glyphs.
 - **Do** show changes as Positive or Negative text with a direction arrow.
 - **Do** give every touch target 44px on phones (buttons, fields, triggers, icon-button hit areas, the tab bar).

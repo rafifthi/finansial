@@ -93,7 +93,7 @@ export function DrawerForm({
       ref={formRef}
       // The form shows its own inline messages; the browser's bubbles would block onSubmit.
       noValidate
-      className="flex min-h-0 flex-1 flex-col gap-4"
+      className="flex min-h-0 flex-1 flex-col gap-3"
       onSubmit={(e: FormEvent) => {
         e.preventDefault();
         setAttempt((n) => n + 1);
@@ -108,8 +108,8 @@ export function DrawerForm({
       }}
     >
       <DrawerHeader title={title} description={description} />
-      <DrawerBody className={cx("flex flex-col gap-4", className)}>{children}</DrawerBody>
-      <div className="mt-2 flex shrink-0 flex-col gap-3 px-6">
+      <DrawerBody className={cx("flex flex-col gap-3", className)}>{children}</DrawerBody>
+      <div className="mt-1 flex shrink-0 flex-col gap-2 px-4">
         <FormError>{error}</FormError>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           {destructive ? <div className="flex *:max-sm:h-11 sm:order-first">{destructive}</div> : <span className="hidden sm:block" />}

@@ -146,7 +146,7 @@ export function DatePicker({
           aria-expanded={isOpen}
           className={cx(triggerButtonClassName, isInvalid && "border-border-error-default", className)}
         >
-          <RiCalendarLine className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
+          <RiCalendarLine className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
           <span className="flex items-center justify-center whitespace-nowrap px-1 text-body-medium text-text-primary">
             {committedValue ? (formatValue ? formatValue(committedValue) : formatTriggerDate(committedValue, locale)) : "Select date"}
           </span>

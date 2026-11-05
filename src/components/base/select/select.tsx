@@ -122,7 +122,7 @@ export function Select<T extends object>({
               "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:text-text-tertiary disabled:shadow-none",
               size === "sm"
                 ? "gap-1 px-[7px] py-1 text-body-2-medium"
-                : "min-h-9 gap-1.5 px-2.5 py-1.5 text-body-2-regular max-sm:min-h-11",
+                : "min-h-8 gap-1.5 px-2 py-1.5 text-body-regular max-sm:min-h-11",
               triggerClassName,
             )}
           >

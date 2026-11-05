@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T01:54:28+00:00",
+  "generatedAt": "2026-11-05T02:01:43+00:00",
   "title": "Design System: Finansial",
   "extensions": {
     "colorMeta": {
@@ -553,15 +553,15 @@
     "typographyMeta": {
       "title-1": {
         "displayName": "Title 1",
-        "purpose": "Page titles from small screens up (text-title-1-medium)."
+        "purpose": "Page titles at every width (text-title-1-medium)."
       },
       "title-2": {
         "displayName": "Title 2",
-        "purpose": "Page titles on phones; drawer and sheet titles."
+        "purpose": "Sheet and section titles."
       },
       "title-3": {
         "displayName": "Title 3",
-        "purpose": "Section titles inside wide surfaces."
+        "purpose": "Drawer and modal titles (15px semibold)."
       },
       "stat-value": {
         "displayName": "Stat Value",
@@ -573,11 +573,11 @@
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Running text, list rows; stat labels at 500."
+        "purpose": "Running text, list rows and fields; buttons, nav and stat labels at 500."
       },
       "body-2": {
         "displayName": "Body 2",
-        "purpose": "Buttons, fields, selects, nav labels; card descriptions at 400."
+        "purpose": "Small buttons, deltas at 600, card descriptions at 400."
       },
       "caption": {
         "displayName": "Caption",
@@ -659,12 +659,12 @@
       {
         "name": "sm",
         "value": "640px",
-        "purpose": "Controls drop from 44px to 36px; cards pad 20px."
+        "purpose": "Below it, medium buttons and fields grow to 44px (from 28/32px), icon buttons to 40px, inputs render at 16px; cards pad 16px from here up."
       },
       {
         "name": "lg",
         "value": "1024px",
-        "purpose": "Floating sidebar replaces the phone top and tab bars."
+        "purpose": "Floating 232px sidebar replaces the phone top and tab bars."
       },
       {
         "name": "xl",
@@ -696,9 +696,9 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The theme fill: Forest with white text in light, Lime with On-Lime text in dark. 36px, 8px corners.",
+      "description": "The theme fill: Forest with white text in light, Lime with On-Lime text in dark. 28px (44px on phones), 6px corners.",
       "html": "<button class=\"ds-btn-primary\">Save</button>",
-      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 12px; border:none; border-radius:8px; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:14px; line-height:20px; letter-spacing:-0.003em; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease, transform 150ms ease; } .ds-btn-primary:hover { background:var(--color-accent-solid-hover, #135243); } .ds-btn-primary:active { transform:scale(0.98); } .ds-btn-primary:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:none; border-radius:6px; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:13px; line-height:20px; letter-spacing:-0.003em; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease, transform 150ms ease; } .ds-btn-primary:hover { background:var(--color-accent-solid-hover, #135243); } .ds-btn-primary:active { transform:scale(0.98); } .ds-btn-primary:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
       "name": "Secondary Button",
@@ -706,7 +706,7 @@
       "refersTo": "button-secondary",
       "description": "Surface 1 with a hairline edge; the quiet companion to Primary.",
       "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
-      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; height:36px; padding:0 12px; border:1px solid var(--color-border-button-default, #dcdee1); border-radius:8px; background:var(--color-background-primary-default, #ffffff); color:var(--color-text-primary, #1b1c1e); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:14px; line-height:20px; letter-spacing:-0.003em; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease, border-color 150ms ease; } .ds-btn-secondary:hover { background:var(--color-background-primary-hover, #f3f4f5); border-color:var(--color-border-button-hover, #c4c7cc); } .ds-btn-secondary:active { background:var(--color-background-primary-active, #eaebec); } .ds-btn-secondary:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; height:28px; padding:0 10px; border:1px solid var(--color-border-button-default, #dcdee1); border-radius:6px; background:var(--color-background-primary-default, #ffffff); color:var(--color-text-primary, #1b1c1e); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:13px; line-height:20px; letter-spacing:-0.003em; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease, border-color 150ms ease; } .ds-btn-secondary:hover { background:var(--color-background-primary-hover, #f3f4f5); border-color:var(--color-border-button-hover, #c4c7cc); } .ds-btn-secondary:active { background:var(--color-background-primary-active, #eaebec); } .ds-btn-secondary:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
       "name": "Ghost Button",
@@ -714,23 +714,23 @@
       "refersTo": "button-ghost",
       "description": "Green text on transparent with a selection-tint hover; for low-emphasis actions.",
       "html": "<button class=\"ds-btn-ghost\">View all</button>",
-      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; height:36px; padding:0 12px; border:none; border-radius:8px; background:transparent; color:var(--color-button-ghost-foreground, #1a6b52); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:14px; line-height:20px; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease; } .ds-btn-ghost:hover { background:var(--color-button-ghost-hover, #eef7e3); } .ds-btn-ghost:active { background:var(--color-button-ghost-active, #e2f1d0); } .ds-btn-ghost:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; height:28px; padding:0 10px; border:none; border-radius:6px; background:transparent; color:var(--color-button-ghost-foreground, #1a6b52); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:13px; line-height:20px; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease; } .ds-btn-ghost:hover { background:var(--color-button-ghost-hover, #eef7e3); } .ds-btn-ghost:active { background:var(--color-button-ghost-active, #e2f1d0); } .ds-btn-ghost:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
       "name": "Icon Button",
       "kind": "button",
       "refersTo": "icon-button",
-      "description": "A ghost square that shows a surface on hover; 44px hit area on phones.",
-      "html": "<button class=\"ds-icon-btn\" aria-label=\"More\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M5 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm14 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-7 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z\"/></svg></button>",
-      "css": ".ds-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; border:none; border-radius:8px; background:transparent; color:var(--color-foreground-icon-secondary, #62666d); cursor:pointer; outline:none; transition:background-color 150ms ease, color 150ms ease, transform 150ms ease; } .ds-icon-btn:hover { background:var(--color-background-secondary-hover, #eaebec); color:var(--color-foreground-icon-primary, #1b1c1e); } .ds-icon-btn:active { transform:scale(0.98); background:var(--color-background-tertiary-default, #eaebec); } .ds-icon-btn:focus-visible { box-shadow:0 0 0 2px var(--color-background-primary-default, #ffffff), 0 0 0 4px var(--color-border-focus-ring, #2f8a6b); }"
+      "description": "A 28px ghost square (40px on phones, hit area extended 6px) that shows a surface on hover.",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"More\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M5 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm14 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-7 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z\"/></svg></button>",
+      "css": ".ds-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0; border:none; border-radius:8px; background:transparent; color:var(--color-foreground-icon-secondary, #62666d); cursor:pointer; outline:none; transition:background-color 150ms ease, color 150ms ease, transform 150ms ease; } .ds-icon-btn:hover { background:var(--color-background-secondary-hover, #eaebec); color:var(--color-foreground-icon-primary, #1b1c1e); } .ds-icon-btn:active { transform:scale(0.98); background:var(--color-background-tertiary-default, #eaebec); } .ds-icon-btn:focus-visible { box-shadow:0 0 0 2px var(--color-background-primary-default, #ffffff), 0 0 0 4px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
       "name": "Text Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "36px field (44px on phones) with a 1px inset field edge that clears 3:1.",
+      "description": "32px field (44px on phones, 16px text there) with a 1px inset field edge that clears 3:1.",
       "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Description</span><input class=\"ds-input\" placeholder=\"Groceries at Superindo\" /></label>",
-      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-field-label { font-size:14px; line-height:20px; font-weight:500; color:var(--color-text-secondary, #3c3f44); } .ds-input { min-height:36px; padding:6px 10px; border:none; border-radius:8px; background:var(--color-background-primary-default, #ffffff); box-shadow:inset 0 0 0 1px var(--color-border-input, #8a8f98); color:var(--color-text-primary, #1b1c1e); font-family:inherit; font-size:14px; line-height:20px; outline:none; transition:box-shadow 150ms ease; } .ds-input::placeholder { color:var(--color-text-placeholder, #62666d); } .ds-input:focus-visible { box-shadow:inset 0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
+      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-field-label { font-size:12px; line-height:16px; font-weight:500; color:var(--color-text-secondary, #3c3f44); } .ds-input { min-height:32px; padding:6px 8px; border:none; border-radius:8px; background:var(--color-background-primary-default, #ffffff); box-shadow:inset 0 0 0 1px var(--color-border-input, #8a8f98); color:var(--color-text-primary, #1b1c1e); font-family:inherit; font-size:13px; line-height:20px; outline:none; transition:box-shadow 150ms ease; } .ds-input::placeholder { color:var(--color-text-placeholder, #62666d); } .ds-input:focus-visible { box-shadow:inset 0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
       "name": "Card",
@@ -738,23 +738,23 @@
       "refersTo": "card",
       "description": "Solid hairline panel, 12px corners, no shadow; Headline title and optional View all link.",
       "html": "<section class=\"ds-card\"><header class=\"ds-card-head\"><div><h2 class=\"ds-card-title\">Recent</h2><p class=\"ds-card-desc\">Last 7 days</p></div><a class=\"ds-card-link\" href=\"#\">View all</a></header><p class=\"ds-card-body\">Rp 1.250.000 spent</p></section>",
-      "css": ".ds-card { display:flex; flex-direction:column; gap:16px; padding:20px; border:1px solid var(--color-separator-border, #e6e7e9); border-radius:12px; background:var(--color-background-primary-default, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; } .ds-card-title { margin:0; font-size:16px; line-height:22px; letter-spacing:-0.011em; font-weight:600; color:var(--color-text-primary, #1b1c1e); } .ds-card-desc { margin:2px 0 0; font-size:14px; line-height:20px; color:var(--color-text-tertiary, #62666d); } .ds-card-link { font-size:14px; line-height:20px; font-weight:500; color:var(--color-button-ghost-foreground, #1a6b52); text-decoration:none; border-radius:6px; outline:none; } .ds-card-link:hover { text-decoration:underline; } .ds-card-link:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); } .ds-card-body { margin:0; font-size:15px; line-height:22px; color:var(--color-text-secondary, #3c3f44); font-variant-numeric:tabular-nums; }"
+      "css": ".ds-card { display:flex; flex-direction:column; gap:16px; padding:16px; border:1px solid var(--color-separator-border, #e6e7e9); border-radius:12px; background:var(--color-background-primary-default, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; } .ds-card-title { margin:0; font-size:14px; line-height:20px; letter-spacing:-0.006em; font-weight:600; color:var(--color-text-primary, #1b1c1e); } .ds-card-desc { margin:2px 0 0; font-size:12px; line-height:16px; color:var(--color-text-tertiary, #62666d); } .ds-card-link { font-size:12px; line-height:16px; font-weight:500; color:var(--color-button-ghost-foreground, #1a6b52); text-decoration:none; border-radius:6px; outline:none; } .ds-card-link:hover { text-decoration:underline; } .ds-card-link:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); } .ds-card-body { margin:0; font-size:13px; line-height:20px; color:var(--color-text-secondary, #3c3f44); font-variant-numeric:tabular-nums; }"
     },
     {
       "name": "Stat Card",
       "kind": "card",
       "refersTo": "card",
       "description": "Neutral icon disc, label over a tabular value, and a hairline footnote with a Positive/Negative delta as text.",
-      "html": "<section class=\"ds-stat\"><span class=\"ds-stat-disc\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z\"/></svg></span><div class=\"ds-stat-main\"><p class=\"ds-stat-label\">Left this period</p><p class=\"ds-stat-value\">Rp 4.820.000</p></div><div class=\"ds-stat-foot\"><span>From last month</span><span class=\"ds-stat-delta\">+8.1%</span></div></section>",
-      "css": ".ds-stat { display:flex; flex-direction:column; padding:8px; border:1px solid var(--color-separator-border, #e6e7e9); border-radius:12px; background:var(--color-background-primary-default, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-stat-disc { display:flex; align-items:center; justify-content:center; width:40px; height:40px; margin:8px; border-radius:9999px; background:var(--color-background-secondary-default, #f3f4f5); color:var(--color-foreground-icon-primary, #1b1c1e); } .ds-stat-main { padding:10px 8px 14px; } .ds-stat-label { margin:0; font-size:15px; line-height:22px; font-weight:500; color:var(--color-text-secondary, #3c3f44); } .ds-stat-value { margin:2px 0 0; font-size:32px; line-height:38px; letter-spacing:-0.022em; font-weight:500; color:var(--color-text-primary, #1b1c1e); font-variant-numeric:tabular-nums; } .ds-stat-foot { display:flex; justify-content:space-between; gap:8px; margin:0 8px; padding:10px 0 6px; border-top:1px solid var(--color-separator-border, #e6e7e9); font-size:15px; line-height:22px; color:var(--color-text-secondary, #3c3f44); } .ds-stat-delta { font-size:14px; font-weight:600; color:var(--color-text-positive, #1e7a35); font-variant-numeric:tabular-nums; }"
+      "html": "<section class=\"ds-stat\"><span class=\"ds-stat-disc\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z\"/></svg></span><div class=\"ds-stat-main\"><p class=\"ds-stat-label\">Left this period</p><p class=\"ds-stat-value\">Rp 4.820.000</p></div><div class=\"ds-stat-foot\"><span>From last month</span><span class=\"ds-stat-delta\">+8.1%</span></div></section>",
+      "css": ".ds-stat { display:flex; flex-direction:column; padding:8px; border:1px solid var(--color-separator-border, #e6e7e9); border-radius:12px; background:var(--color-background-primary-default, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-stat-disc { display:flex; align-items:center; justify-content:center; width:28px; height:28px; margin:8px; border-radius:9999px; background:var(--color-background-secondary-default, #f3f4f5); color:var(--color-foreground-icon-primary, #1b1c1e); } .ds-stat-main { padding:10px 8px 14px; } .ds-stat-label { margin:0; font-size:13px; line-height:20px; font-weight:500; color:var(--color-text-secondary, #3c3f44); } .ds-stat-value { margin:2px 0 0; font-size:24px; line-height:30px; letter-spacing:-0.018em; font-weight:500; color:var(--color-text-primary, #1b1c1e); font-variant-numeric:tabular-nums; } .ds-stat-foot { display:flex; justify-content:space-between; gap:8px; margin:0 8px; padding:10px 0 6px; border-top:1px solid var(--color-separator-border, #e6e7e9); font-size:13px; line-height:20px; color:var(--color-text-secondary, #3c3f44); } .ds-stat-delta { font-size:12px; font-weight:600; color:var(--color-text-positive, #1e7a35); font-variant-numeric:tabular-nums; }"
     },
     {
       "name": "Sidebar Navigation",
       "kind": "nav",
       "refersTo": "button-primary",
-      "description": "Frosted 260px panel: the Catat action on top, then 8px nav rows; the active row is a solid surface with a green icon.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-catat\" href=\"#\">Catat</a><a class=\"ds-nav-row is-active\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z\"/></svg><span>Dashboard</span></a><a class=\"ds-nav-row\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z\"/></svg><span>Transactions</span></a></nav>",
-      "css": ".ds-nav { display:flex; flex-direction:column; gap:2px; width:236px; padding:12px; border-radius:12px; background:color-mix(in oklab, var(--color-background-secondary-default, #f3f4f5) 75%, transparent); backdrop-filter:blur(13px) saturate(1.42); -webkit-backdrop-filter:blur(13px) saturate(1.42); box-shadow:0 0 0 1px var(--color-separator-border, #e6e7e9); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-nav-catat { display:flex; align-items:center; justify-content:center; min-height:36px; margin-bottom:14px; padding:0 12px; border-radius:8px; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); font-size:15px; line-height:22px; font-weight:600; text-decoration:none; outline:none; transition:background-color 150ms, transform 150ms; } .ds-nav-catat:hover { background:var(--color-accent-solid-hover, #135243); } .ds-nav-catat:active { transform:scale(0.98); } .ds-nav-catat:focus-visible, .ds-nav-row:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); } .ds-nav-row { display:flex; align-items:center; gap:8px; padding:8px; border-radius:8px; color:var(--color-text-secondary, #3c3f44); font-size:15px; line-height:22px; font-weight:500; text-decoration:none; outline:none; transition:background-color 150ms; } .ds-nav-row svg { color:var(--color-foreground-icon-secondary, #62666d); } .ds-nav-row:hover { background:var(--color-background-secondary-hover, #eaebec); } .ds-nav-row.is-active { background:var(--color-background-primary-default, #ffffff); color:var(--color-text-primary, #1b1c1e); font-weight:600; } .ds-nav-row.is-active svg { color:var(--color-button-ghost-foreground, #1a6b52); }"
+      "description": "Frosted 232px panel: the 32px Catat action on top, then 28px nav rows with 16px icons; the active row is a solid surface with a green icon.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-catat\" href=\"#\">Catat</a><a class=\"ds-nav-row is-active\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z\"/></svg><span>Dashboard</span></a><a class=\"ds-nav-row\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z\"/></svg><span>Transactions</span></a></nav>",
+      "css": ".ds-nav { display:flex; flex-direction:column; gap:2px; width:216px; padding:8px; border-radius:12px; background:color-mix(in oklab, var(--color-background-secondary-default, #f3f4f5) 75%, transparent); backdrop-filter:blur(13px) saturate(1.42); -webkit-backdrop-filter:blur(13px) saturate(1.42); box-shadow:0 0 0 1px var(--color-separator-border, #e6e7e9); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-nav-catat { display:flex; align-items:center; justify-content:center; min-height:32px; margin-bottom:14px; padding:0 12px; gap:6px; border-radius:6px; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); font-size:13px; line-height:20px; font-weight:600; text-decoration:none; outline:none; transition:background-color 150ms, transform 150ms; } .ds-nav-catat:hover { background:var(--color-accent-solid-hover, #135243); } .ds-nav-catat:active { transform:scale(0.98); } .ds-nav-catat:focus-visible, .ds-nav-row:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); } .ds-nav-row { display:flex; align-items:center; gap:8px; height:28px; padding:0 8px; border-radius:6px; color:var(--color-text-secondary, #3c3f44); font-size:13px; line-height:20px; font-weight:500; text-decoration:none; outline:none; transition:background-color 150ms; } .ds-nav-row svg { color:var(--color-foreground-icon-secondary, #62666d); } .ds-nav-row:hover { background:var(--color-background-secondary-hover, #eaebec); } .ds-nav-row.is-active { background:var(--color-background-primary-default, #ffffff); color:var(--color-text-primary, #1b1c1e); font-weight:600; } .ds-nav-row.is-active svg { color:var(--color-button-ghost-foreground, #1a6b52); }"
     },
     {
       "name": "Filter Chip",
@@ -762,18 +762,18 @@
       "refersTo": "button-secondary",
       "description": "Pill toggle (reconcile account filter): hairline neutral at rest, theme fill when selected.",
       "html": "<div class=\"ds-chips\"><button class=\"ds-chip is-on\" aria-pressed=\"true\">BCA</button><button class=\"ds-chip\" aria-pressed=\"false\">Jenius</button></div>",
-      "css": ".ds-chips { display:flex; gap:8px; font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-chip { padding:6px 12px; border:1px solid var(--color-border-button-default, #dcdee1); border-radius:9999px; background:var(--color-background-primary-default, #ffffff); color:var(--color-text-secondary, #3c3f44); font-family:inherit; font-size:14px; line-height:20px; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms; } .ds-chip:hover { background:var(--color-background-primary-hover, #f3f4f5); } .ds-chip.is-on { border-color:transparent; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); } .ds-chip:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
+      "css": ".ds-chips { display:flex; gap:8px; font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-chip { padding:6px 12px; border:1px solid var(--color-border-button-default, #dcdee1); border-radius:9999px; background:var(--color-background-primary-default, #ffffff); color:var(--color-text-secondary, #3c3f44); font-family:inherit; font-size:12px; line-height:16px; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms; } .ds-chip:hover { background:var(--color-background-primary-hover, #f3f4f5); } .ds-chip.is-on { border-color:transparent; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); } .ds-chip:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     }
   ],
   "narrative": {
     "northStar": "The Night Ledger",
-    "overview": "Finansial wears Linear's precise, dark-led workspace, adapted for a two-person household that checks its money on phone and laptop, often at night. The source is the shadcn.io \"Linear\" DESIGN.md (Dov Azencot's packaging of Linear's marketing system), pinned by the user. From it the app takes the near-black surface ladder, hairlines in place of shadows, tightly tracked sans type, 8px controls, 12px cards and the discipline of a single chromatic accent. Dark is the default; light is a full peer theme for daytime.\n\nFour translations separate this build from the source file. **The accent:** Linear's lavender-blue became one green from the user's finance-app reference, forest (#0f3d33) as the fill in light and lime (#b8e08a) as the fill in dark, on a shared ramp. **Light mode:** the marketing file is dark only, so the light theme follows Linear's own app light theme: a pale grey page, white cards and grey hairlines. **Type:** Linear Display, Linear Text and Linear Mono are proprietary, so Inter (with its optical-size axis) stands in for all three. **Glass:** Linear has no frosted chrome, but the functional bars (the phone top and tab bars, the sidebar, sheets, menus and toasts) stay glass, a choice the user made before this world. One build divergence from the source: the dark canvas ships at #08090a, a step above Linear's #010102.\n\nDensity is compact. The type is a size smaller than a consumer app's, controls are 36px on desktop and the app grows them to 44px on phones. Hierarchy comes from surface steps and hairlines, never from shadow or colour. Green means \"you can act here\" or \"this is selected\", and the Spent series is the only data that wears it.",
+    "overview": "**Creative North Star: \"The Night Ledger\"**\n\nFinansial wears Linear's precise, dark-led workspace, adapted for a two-person household that checks its money on phone and laptop, often at night. The source is the shadcn.io \"Linear\" DESIGN.md (Dov Azencot's packaging of Linear's marketing system), pinned by the user. From it the app takes the near-black surface ladder, hairlines in place of shadows, tightly tracked sans type, small controls, 12px cards and the discipline of a single chromatic accent. Dark is the default; light is a full peer theme for daytime.\n\nFour translations separate this build from the source file. **The accent:** Linear's lavender-blue became one green from the user's finance-app reference, forest (#0f3d33) as the fill in light and lime (#b8e08a) as the fill in dark, on a shared ramp. **Light mode:** the marketing file is dark only, so the light theme follows Linear's own app light theme: a pale grey page, white cards and grey hairlines. **Type:** Linear Display, Linear Text and Linear Mono are proprietary, so Inter (with its optical-size axis) stands in for all three. **Glass:** Linear has no frosted chrome, but the functional bars (the phone top and tab bars, the sidebar, sheets, menus and toasts) stay glass, a choice the user made before this world. One build divergence from the source: the dark canvas ships at #08090a, a step above Linear's #010102.\n\nDensity is Linear's own app scale: 13px body, 28px buttons and 32px fields on desktop, with phones growing the main buttons and fields to 44px for thumbs. Hierarchy comes from surface steps and hairlines, never from shadow or colour. Green means \"you can act here\" or \"this is selected\", and the Spent series is the only data that wears it.",
     "keyCharacteristics": [
       "Dark-led: a #08090a canvas with a four-step surface ladder; light mode is a pale page with white cards.",
       "One green, flipping per theme: forest fills in light, lime fills in dark.",
       "Hairlines, not shadows; the only shadow belongs to floating menus.",
       "Inter with tracking that tightens as size grows, and weight 500 for labels and controls.",
-      "8px controls, 12px cards, pills only for chips and the phone Catat button.",
+      "6px buttons, 8px fields and icon controls, 12px cards, pills only for chips and the phone Catat button.",
       "Glass on the bars only; content stays solid."
     ],
     "rules": [
@@ -817,7 +817,7 @@
       "Do use BoardUI semantic colour tokens and composite type utilities only; pick a different token rather than writing a `dark:` override with a raw colour.",
       "Do colour every accent fill with the theme fill and its on-fill text (Forest with white, Lime with On-Lime).",
       "Do keep green for actions, selection and the Spent series; keep Catat the most saturated object on screen.",
-      "Do build hierarchy from the surface ladder and 1px hairlines: 12px cards, 8px controls.",
+      "Do build hierarchy from the surface ladder and 1px hairlines: 12px cards, 8px fields, 6px buttons.",
       "Do put icons on neutral discs with Ink glyphs.",
       "Do show changes as Positive or Negative text with a direction arrow.",
       "Do give every touch target 44px on phones (buttons, fields, triggers, icon-button hit areas, the tab bar).",

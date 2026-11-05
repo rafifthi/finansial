@@ -176,8 +176,8 @@ function FooterStatCard({ stat }: { stat: Stat }) {
       {/* Icon tile + optional info glyph, both hanging from the same top inset */}
       <div className="flex w-full items-start justify-between gap-2.5 p-2">
         {/* A quiet grey disc: Catat stays the only saturated object on screen. */}
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background-secondary-default">
-          <stat.icon className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background-secondary-default">
+          <stat.icon className="size-4 shrink-0 text-foreground-icon-primary" aria-hidden />
         </span>
         {stat.hint && <StatHint label={stat.label} hint={stat.hint} />}
       </div>

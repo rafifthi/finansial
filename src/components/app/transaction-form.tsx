@@ -237,7 +237,7 @@ function TransactionFormBody({
           autoFocus={!isEdit}
           isRequired
           error={errors.amount}
-          fieldClassName="p-3"
+          fieldClassName="px-2.5 py-2"
           inputClassName="field-display text-title-1-semibold"
         />
         <TodayDateField value={draft.date} today={options.today} onChange={(v) => set("date", v)} error={errors.date} />
@@ -381,7 +381,7 @@ function TodayDateField({ value, today, onChange, error }: { value: string; toda
         value={parsed}
         onChange={(d) => onChange(d ? d.toString() : "")}
         formatValue={format}
-        className="h-[3.625rem] px-3"
+        className="h-[2.625rem] px-2.5"
       />
     </div>
   );

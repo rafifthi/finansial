@@ -146,13 +146,13 @@ const inputStyles = sortCx({
   ].join(" "),
 
   fieldSize: {
-    medium: "min-h-9 px-2.5 py-1.5 max-sm:min-h-11", // 36 tall, 44 on phones
+    medium: "min-h-8 px-2 py-1.5 max-sm:min-h-11", // 32 tall, 44 on phones
     small:  "h-8 px-1.5 py-2",    // 32 / 6 / 8
   },
 
   // When a leadingAddon is present (Phone basic): tighten left padding.
   fieldWithAddonSize: {
-    medium: "h-9 ps-1 pe-2.5 py-1.5 max-sm:h-11",
+    medium: "h-8 ps-1 pe-2 py-1.5 max-sm:h-11",
     small:  "h-8 ps-1 pe-1.5 py-2",
   },
 
@@ -168,7 +168,7 @@ const inputStyles = sortCx({
     "aria-invalid:placeholder:text-text-error-placeholder",
   ].join(" "),
 
-  icon: "size-5 shrink-0",
+  icon: "size-4 shrink-0",
 });
 
 /** The field shell's state for a render-prop className. */

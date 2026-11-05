@@ -131,7 +131,7 @@ export function SegmentedControlItem({
       {...props}
       className={(state) =>
         cx(
-          "relative z-10 inline-flex cursor-pointer items-center justify-center rounded-md px-2.5 py-1 text-center whitespace-nowrap max-sm:min-h-9",
+          "relative z-10 inline-flex cursor-pointer items-center justify-center rounded-md px-2 py-0.5 text-center whitespace-nowrap max-sm:min-h-11 max-sm:py-1",
           "transition-colors duration-200 ease",
           "outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring",
           state.isSelected

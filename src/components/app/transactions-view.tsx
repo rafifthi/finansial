@@ -522,7 +522,7 @@ function TxnListItem({
         }}
         disabled={!onOpen}
         className={cx(
-          "flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl py-3 text-start",
+          "flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-lg py-2 text-start",
           onDelete && !selecting ? "pe-1" : "pe-2",
           "outline-none select-none [-webkit-touch-callout:none] focus-visible:ring-2 focus-visible:ring-border-focus-ring focus-visible:ring-inset disabled:cursor-default",
         )}

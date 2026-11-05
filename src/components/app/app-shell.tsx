@@ -44,7 +44,7 @@ export async function AppShell({ user, current, children }: { user: PublicUser; 
   const currentShell = current ? books.find((b) => b.id === current.book.id) : undefined;
 
   const frame = (
-    <div className="flex min-h-dvh flex-col gap-3 lg:flex-row lg:p-3">
+    <div className="flex min-h-dvh flex-col gap-2 lg:flex-row lg:p-2">
       <AppSidebar
         user={{ name: user.name, email: user.email, isSystemAdmin: user.is_system_admin }}
         books={books}
@@ -54,7 +54,7 @@ export async function AppShell({ user, current, children }: { user: PublicUser; 
         quickAdd={quickAdd}
       />
       {/* Bottom padding clears the phone tab bar (and the home indicator). */}
-      <main className="flex min-w-0 flex-1 flex-col gap-5 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 sm:gap-6 lg:px-6 lg:pb-10">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 lg:px-5 lg:pt-3 lg:pb-8">
         {setupError ? <SetupNotice message={setupError} /> : children}
       </main>
     </div>

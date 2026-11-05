@@ -83,7 +83,7 @@ const styles = sortCx({
     // overflow-CLIP, not hidden: a hidden box is still programmatically
     // scrollable, so focusing a field clipped by the body's scroller could
     // scroll the whole panel instead (see Settings Modal).
-    "flex min-h-0 flex-col gap-4 overflow-clip py-6 outline-none",
+    "flex min-h-0 flex-col gap-3 overflow-clip py-4 outline-none",
     // Settings Modal's surface: page white in light mode, and in dark mode a
     // ground darker than the inputs and menus it holds, so they keep an edge.
     "rounded-3xl border border-separator-border bg-background-full shadow-xs",
@@ -250,14 +250,14 @@ export function ModalHeader({
   }, [hasDescription, setDescribed]);
 
   return (
-    <div className={cx("flex shrink-0 items-start gap-3 px-6", className)}>
+    <div className={cx("flex shrink-0 items-start gap-3 px-4", className)}>
       <div className="flex min-w-0 flex-1 flex-col">
         {Icon ? (
           <span className={cx("mb-4 flex size-10 shrink-0 items-center justify-center rounded-full", styles.icon[tone])}>
             <Icon className="size-5" aria-hidden />
           </span>
         ) : null}
-        <AriaHeading slot="title" className="text-title-3-medium text-text-primary">
+        <AriaHeading slot="title" className="text-title-3-semibold text-text-primary">
           {title}
         </AriaHeading>
         {hasDescription ? (
@@ -299,7 +299,7 @@ export function ModalBody({ className, children }: ModalBodyProps) {
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         onScroll={fade.onScroll}
-        className={cx("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-1 text-body-regular text-text-secondary", className)}
+        className={cx("min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-1 text-body-regular text-text-secondary", className)}
       >
         {children}
       </div>
@@ -315,7 +315,7 @@ export function ModalFooter({ className, children }: { className?: string; child
         // Stacked full-width on phones (primary action on top), a trailing
         // row from sm up. 8px extra over the dialog's gap-4 sets the actions
         // apart from the content.
-        "mt-2 flex shrink-0 flex-col-reverse gap-2 px-6 sm:flex-row sm:items-center sm:justify-end",
+        "mt-1 flex shrink-0 flex-col-reverse gap-2 px-4 sm:flex-row sm:items-center sm:justify-end",
         className,
       )}
     >

@@ -61,12 +61,12 @@ const styles = sortCx({
     "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:text-icon-button-disabled-foreground disabled:opacity-60",
   ].join(" "),
   size: {
-    medium: "size-9",
-    small: "size-8",
+    medium: "size-7 max-sm:size-10",
+    small: "size-6 max-sm:size-9",
   },
   icon: {
-    medium: "size-5 shrink-0",
-    small: "size-4 shrink-0",
+    medium: "size-4 shrink-0",
+    small: "size-3.5 shrink-0",
   },
 });
 

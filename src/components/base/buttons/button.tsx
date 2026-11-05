@@ -85,10 +85,10 @@ const styles = sortCx({
 
   // Base shape per size (used when label is present OR medium icon-only).
   size: {
-    // Linear controls: 8px corners, 36px tall (44px on phones for thumbs).
-    medium: "h-9 rounded-2lg px-3 text-body-2-medium max-sm:h-11",
-    small:  "h-8 rounded-lg px-2.5 text-body-2-medium",
-    xs:     "h-6 rounded-lg px-2 text-caption-1-medium",
+    // Linear controls: 28px tall with 6px corners (44px on phones for thumbs).
+    medium: "h-7 rounded-lg px-2.5 text-body-medium max-sm:h-11 max-sm:px-3",
+    small:  "h-6 rounded-lg px-2 text-body-2-medium max-sm:h-11 max-sm:px-3",
+    xs:     "h-5 rounded-md px-1.5 text-caption-1-medium max-sm:h-11 max-sm:px-3",
   },
 
   // Icon-only override:
@@ -98,14 +98,14 @@ const styles = sortCx({
   //   Xs     → forces 24×24, content-centered — used for the calendar
   //            template's edit-icon buttons (timezone/participants/reminder).
   iconOnlySize: {
-    medium: "size-9 p-0 max-sm:size-11",
-    small:  "size-8 p-0",
-    xs:     "size-6 p-0",
+    medium: "size-7 p-0 max-sm:size-11",
+    small:  "size-6 p-0 max-sm:size-11",
+    xs:     "size-5 p-0 max-sm:size-11",
   },
 
   icon: {
-    medium: "size-5 shrink-0",        // 20px
-    small:  "size-[18px] shrink-0",   // 18px
+    medium: "size-4 shrink-0",        // 16px
+    small:  "size-3.5 shrink-0",      // 14px
     xs:     "size-3.5 shrink-0",      // 14px
   },
 

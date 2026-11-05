@@ -323,7 +323,7 @@ export function FileUpload({
           >
             {rejection ?? (
               <>
-                Drag and drop to upload or <span className="text-accent-500">select</span>
+                Drag and drop to upload or <span className="text-button-ghost-foreground">select</span>
               </>
             )}
           </p>

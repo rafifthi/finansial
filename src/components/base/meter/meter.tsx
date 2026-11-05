@@ -24,7 +24,7 @@ import { cx, sortCx } from "@/utils/cx";
 export type MeterTone = "accent" | "success" | "warning" | "error";
 
 const tones = sortCx({
-  accent: "text-accent-500",
+  accent: "text-button-ghost-foreground",
   success: "text-notification-success-foreground",
   warning: "text-chart-8-active",
   error: "text-notification-error-foreground",

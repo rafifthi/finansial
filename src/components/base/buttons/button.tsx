@@ -85,10 +85,10 @@ const styles = sortCx({
 
   // Base shape per size (used when label is present OR medium icon-only).
   size: {
-    // Apple pills: every button is a capsule; 44px is the touch target.
-    medium: "h-11 rounded-full px-4 text-body-regular",
-    small:  "h-9 rounded-full px-3 text-body-2-regular",
-    xs:     "h-7 rounded-full px-2.5 text-caption-1-semibold",
+    // Linear controls: 8px corners, 36px tall (44px on phones for thumbs).
+    medium: "h-9 rounded-2lg px-3 text-body-2-medium max-sm:h-11",
+    small:  "h-8 rounded-lg px-2.5 text-body-2-medium",
+    xs:     "h-6 rounded-lg px-2 text-caption-1-medium",
   },
 
   // Icon-only override:
@@ -98,9 +98,9 @@ const styles = sortCx({
   //   Xs     → forces 24×24, content-centered — used for the calendar
   //            template's edit-icon buttons (timezone/participants/reminder).
   iconOnlySize: {
-    medium: "size-11 p-0",     // 44×44 circle
-    small:  "size-9 p-0",      // 36×36 circle
-    xs:     "size-7 p-0",      // 28×28 circle
+    medium: "size-9 p-0 max-sm:size-11",
+    small:  "size-8 p-0",
+    xs:     "size-6 p-0",
   },
 
   icon: {
@@ -117,7 +117,7 @@ const styles = sortCx({
 
   variant: {
     primary: [
-      "bg-button-primary text-text-white",
+      "bg-button-primary text-on-accent",
       "disabled:text-button-primary-disabled-foreground disabled:shadow-none",
       "aria-disabled:text-button-primary-disabled-foreground aria-disabled:shadow-none",
     ].join(" "),
@@ -127,10 +127,10 @@ const styles = sortCx({
       "aria-disabled:text-foreground-disabled-danger aria-disabled:shadow-none",
     ].join(" "),
     secondary: [
-      // Apple's grey capsule: a quiet fill, no edge, no shadow.
-      "bg-background-tertiary-default text-text-primary",
-      "hover:bg-background-tertiary-hover",
-      "active:bg-background-tertiary-hover",
+      // Linear's secondary: surface 1 with a hairline edge.
+      "bg-background-primary-default text-text-primary border border-border-button-default",
+      "hover:bg-background-primary-hover hover:border-border-button-hover",
+      "active:bg-background-primary-active",
       "disabled:bg-background-primary-disabled disabled:text-text-tertiary",
       "aria-disabled:bg-background-primary-disabled aria-disabled:text-text-tertiary",
     ].join(" "),

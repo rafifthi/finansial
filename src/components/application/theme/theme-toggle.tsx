@@ -87,11 +87,12 @@ function installThemeTransitionStyle(
 }
 
 function storedTheme(): ThemeMode {
-  if (typeof window === "undefined") return "light";
+  // Dark leads (Linear world): only an explicit "light" choice turns it off.
+  if (typeof window === "undefined") return "dark";
   try {
-    return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark";
   } catch {
-    return "light";
+    return "dark";
   }
 }
 
@@ -191,7 +192,7 @@ function subscribe(onStoreChange: () => void) {
   const onThemeChange = () => onStoreChange();
   const onStorage = (event: StorageEvent) => {
     if (event.key !== THEME_STORAGE_KEY) return;
-    applyTheme(event.newValue === "dark" ? "dark" : "light", { persist: false });
+    applyTheme(event.newValue === "light" ? "light" : "dark", { persist: false });
   };
   window.addEventListener(THEME_CHANGE_EVENT, onThemeChange);
   window.addEventListener("storage", onStorage);

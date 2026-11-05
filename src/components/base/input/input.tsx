@@ -146,13 +146,13 @@ const inputStyles = sortCx({
   ].join(" "),
 
   fieldSize: {
-    medium: "min-h-11 px-2.5 py-2", // 44px tall: the Apple touch target
+    medium: "min-h-9 px-2.5 py-1.5 max-sm:min-h-11", // 36 tall, 44 on phones
     small:  "h-8 px-1.5 py-2",    // 32 / 6 / 8
   },
 
   // When a leadingAddon is present (Phone basic): tighten left padding.
   fieldWithAddonSize: {
-    medium: "h-11 ps-1 pe-2.5 py-2", // 44 / 4 / 10 / 8
+    medium: "h-9 ps-1 pe-2.5 py-1.5 max-sm:h-11",
     small:  "h-8 ps-1 pe-1.5 py-2",
   },
 
@@ -192,7 +192,7 @@ export function inputFieldClassName(
     inputStyles.field,
     hasAddon ? inputStyles.fieldWithAddonSize[size] : inputStyles.fieldSize[size],
     // Hover: idle, no focus, no disabled, no invalid
-    isHovered && !isFocusWithin && !isDisabled && !isInvalid && "ring-border-button-hover",
+    isHovered && !isFocusWithin && !isDisabled && !isInvalid && "ring-foreground-icon-secondary",
     // Focus wins over hover
     isFocusWithin && !isDisabled && !isInvalid && "ring-2 ring-border-focus-ring",
     // Disabled

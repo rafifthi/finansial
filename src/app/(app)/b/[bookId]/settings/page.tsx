@@ -59,7 +59,7 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
               <>
                 Connected to{" "}
                 <a
-                  className="text-accent-600 underline dark:text-accent-400"
+                  className="text-button-ghost-foreground underline"
                   href={`https://docs.google.com/spreadsheets/d/${sheetId}`}
                   target="_blank"
                   rel="noreferrer"

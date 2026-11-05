@@ -139,7 +139,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
         <Card title="Budget usage" description={`${monthLabel(month)} · most used first`} href={data.href(`/budget?m=${month}`)} className="xl:col-span-2">
           {expenseLines.length === 0 ? (
             <EmptyState>
-              No budgets for this month yet. <Link className="text-accent-600 underline" href={data.href(`/budget?m=${month}`)}>Set them up</Link>.
+              No budgets for this month yet. <Link className="text-button-ghost-foreground underline" href={data.href(`/budget?m=${month}`)}>Set them up</Link>.
             </EmptyState>
           ) : (
             <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
@@ -156,8 +156,8 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
               href={data.href("/reconcile")}
               className="flex items-center gap-3 rounded-3xl border border-separator-border bg-background-primary-default p-4 outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
             >
-              <span className="flex size-10 items-center justify-center rounded-2lg bg-yellow-400">
-                <RiCheckDoubleLine className="size-5 text-white" aria-hidden />
+              <span className="flex size-10 items-center justify-center rounded-2lg bg-background-secondary-default">
+                <RiCheckDoubleLine className="size-5 text-foreground-icon-primary" aria-hidden />
               </span>
               <span className="flex flex-col">
                 <span className="text-body-semibold text-text-primary">{unverified} to reconcile</span>

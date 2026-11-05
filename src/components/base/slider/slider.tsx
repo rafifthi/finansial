@@ -100,8 +100,7 @@ function SliderBase<T extends SliderValue>({
                     aria-hidden
                     className={cx(
                       "absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full",
-                      "bg-accent-600",
-                      "shadow-[inset_0_1px_0_rgb(255_255_255/0.24),0_1px_2px_rgb(4_80_226/0.16)]",
+                      "bg-accent-solid",
                     )}
                     style={{
                       insetInlineStart: `${startPercent * 100}%`,
@@ -163,7 +162,7 @@ function SliderBase<T extends SliderValue>({
                             <span
                               aria-hidden
                               className={cx(
-                                "size-2 rounded-full bg-accent-600",
+                                "size-2 rounded-full bg-accent-solid",
                                 "shadow-[inset_0_1px_0_rgb(255_255_255/0.24)] transition-[filter] duration-150 ease",
                                 (isDragging || isFocused) && "brightness-110",
                               )}

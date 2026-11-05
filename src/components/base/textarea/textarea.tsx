@@ -171,7 +171,7 @@ export function TextareaBase({
             !isFocusWithin &&
             !isDisabled &&
             !isInvalid &&
-            "ring-border-button-hover",
+            "ring-foreground-icon-secondary",
           // Focus wins over hover
           isFocusWithin &&
             !isDisabled &&

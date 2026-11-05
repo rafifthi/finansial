@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 // Applies the saved BoardUI theme and glass level before first paint (no flash).
-const themeScript = `try{if(localStorage.getItem("boardui:theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}${glassBootScript}`;
+// Dark leads: only a saved "light" choice keeps the page light.
+const themeScript = `try{if(localStorage.getItem("boardui:theme")!=="light")document.documentElement.classList.add("dark")}catch(e){document.documentElement.classList.add("dark")}${glassBootScript}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

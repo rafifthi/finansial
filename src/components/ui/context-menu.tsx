@@ -111,7 +111,7 @@ function ContextMenuCheckboxItem({ className, children, checked, ...props }: Com
     >
       <span className={MENU_INDICATOR}>
         <ContextMenuPrimitive.ItemIndicator>
-          <RiCheckLine className="size-4 text-accent-500" />
+          <RiCheckLine className="size-4 text-button-ghost-foreground" />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -124,7 +124,7 @@ function ContextMenuRadioItem({ className, children, ...props }: ComponentProps<
     <ContextMenuPrimitive.RadioItem data-slot="context-menu-radio-item" className={cx(MENU_INDICATOR_ITEM, className)} {...props}>
       <span className={MENU_INDICATOR}>
         <ContextMenuPrimitive.ItemIndicator>
-          <RiCircleFill className="size-2 text-accent-500" />
+          <RiCircleFill className="size-2 text-button-ghost-foreground" />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}

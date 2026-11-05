@@ -174,7 +174,7 @@ export function ComboBoxItem({ className, children, ...props }: ComboBoxItemProp
       {({ isSelected }) => (
         <>
           <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
-          {isSelected ? <RiCheckLine className="size-4 shrink-0 text-accent-500" aria-hidden /> : null}
+          {isSelected ? <RiCheckLine className="size-4 shrink-0 text-button-ghost-foreground" aria-hidden /> : null}
         </>
       )}
     </AriaListBoxItem>

@@ -877,8 +877,7 @@
     transform 420ms cubic-bezier(0.4, 0, 0.2, 1);
 
   &:active:not(:disabled):not([aria-disabled="true"]) {
-    /* Apple's press: the whole capsule shrinks a little. */
-    transform: scale(0.95);
+    transform: scale(0.98);
     transition-duration: 150ms, 150ms, 150ms, 150ms, 220ms;
   }
 
@@ -964,148 +963,169 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Apple world (2026-11-05)
+ * Linear world, in green (2026-11-05)
  *
- * The household's chosen look: shadcn.io's "Apple" DESIGN.md, translated from
- * marketing pages to an app. One Action Blue for every action, parchment
- * ground with white cards, hairlines instead of shadows, SF Pro through the
- * system stack, no gradients. These overrides sit last so they win over the
- * BoardUI defaults above; light first, then dark.
+ * The household's chosen look: shadcn.io's "Linear" DESIGN.md (near-black
+ * surface ladder, hairlines instead of shadows, tight Inter, 8px controls,
+ * 12px cards), with its lavender accent swapped for the forest + lime green
+ * of the user's reference. Dark leads; light is Linear's own app light theme.
+ * Green is for actions and selection only. These overrides sit last so they
+ * win over the BoardUI defaults above: light first, then dark.
  * --------------------------------------------------------------------------- */
 @theme {
-  /* SF Pro on Apple devices; Inter (next/font) everywhere else. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", var(--font-inter), system-ui, sans-serif,
+  /* Inter stands in for Linear's proprietary sans (its documented substitute). */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif,
                "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  /* Action Blue and its siblings. 600 is the button and link colour (#0066cc),
-   * 500 the focus ring (#0071e3), 400 the link colour on dark (#2997ff). */
-  --color-accent-400: #2997ff;
-  --color-accent-500: #0071e3;
-  --color-accent-600: #0066cc;
-  --color-accent-700: #0058b0;
-  --color-accent-800: #004a94;
+  /* The green ramp: lime at 300, focus at 500, link green at 600, forest at 700. */
+  --color-accent-50:  #f1f8ea;
+  --color-accent-100: #e2f1d0;
+  --color-accent-200: #cde8ac;
+  --color-accent-300: #b8e08a;
+  --color-accent-400: #8fc463;
+  --color-accent-500: #2f8a6b;
+  --color-accent-600: #1a6b52;
+  --color-accent-700: #0f3d33;
+  --color-accent-800: #0b2e26;
+  --color-accent-900: #082219;
+  --color-accent-950: #04140f;
 
-  /* Radii: cards and panels at Apple's 18px; controls at 12px. */
-  --radius-3xl: 18px;
-  --radius-2xl: 14px;
-  --radius-2lg: 12px;
+  /* Linear radii: 12px cards, 8px controls and fields, 6px small controls. */
+  --radius-3xl: 12px;
+  --radius-2xl: 12px;
+  --radius-2lg: 8px;
+  --radius-xl: 8px;
+  --radius-lg: 6px;
 
-  /* No shadows on chrome: buttons, inputs and cards are flat and edged by hairlines. */
+  /* The surface ladder carries hierarchy: no shadows on chrome. */
   --shadow-2xs: 0 0 #0000;
   --shadow-xs: 0 0 #0000;
   --shadow-card: 0 0 #0000;
   --shadow-sidebar: 0 0 0 1px var(--color-separator-border);
   --shadow-nav-selected: 0 0 #0000;
   --shadow-checkbox-selected: 0 0 #0000;
-  /* The one shadow, kept for things that float over content (menus, popovers). */
-  --shadow-dropdown: 0 5px 30px 0 rgb(0 0 0 / 0.16), 0 0 0 1px rgb(0 0 0 / 0.04);
+  /* The one shadow: floating layers (menus, popovers) over content. */
+  --shadow-dropdown: 0 4px 24px 0 rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04);
 }
 
 :root {
-  --color-text-primary:       #1d1d1f;
-  --color-text-secondary:     #424245;
-  --color-text-tertiary:      #636366;
-  --color-text-placeholder:   #6e6e73;
-  --color-foreground-icon-primary:    #1d1d1f;
-  --color-foreground-icon-secondary:  #6e6e73;
-  --color-foreground-icon-tertiary:   #86868b;
+  --color-text-primary:       #1b1c1e;
+  --color-text-secondary:     #3c3f44;
+  --color-text-tertiary:      #62666d;
+  --color-text-placeholder:   #62666d;
+  --color-foreground-icon-primary:    #1b1c1e;
+  --color-foreground-icon-secondary:  #62666d;
+  --color-foreground-icon-tertiary:   #8a8f98;
 
-  --color-background-full:              #f5f5f7;
+  --color-background-full:              #f7f8f8;
   --color-background-primary-default:   #ffffff;
   --color-background-inner-default:     #ffffff;
-  --color-background-primary-hover:     #f5f5f7;
-  --color-background-primary-active:    #e8e8ed;
-  --color-background-secondary-default: #f5f5f7;
-  --color-background-secondary-hover:   #e8e8ed;
-  --color-background-tertiary-default:  #e8e8ed;
-  --color-background-tertiary-hover:    #d2d2d7;
+  --color-background-primary-hover:     #f3f4f5;
+  --color-background-primary-active:    #eaebec;
+  --color-background-secondary-default: #f3f4f5;
+  --color-background-secondary-hover:   #eaebec;
+  --color-background-tertiary-default:  #eaebec;
+  --color-background-tertiary-hover:    #dfe0e3;
 
-  --color-border-button-default: #d2d2d7;
-  --color-border-button-hover:   #86868b;
-  --color-border-button-active:  #6e6e73;
-  --color-border-button-white:   #e0e0e0;
-  --color-border-table:          #e0e0e0;
-  --color-separator-border:      #e0e0e0;
-  --color-separator-border-strong: #d2d2d7;
-  /* Form fields need a 3:1 edge (WCAG 1.4.11); Apple's own forms use #86868b. */
-  --color-border-input:          #86868b;
-  --color-border-focus-ring:     #0071e3;
+  --color-border-button-default: #dcdee1;
+  --color-border-button-hover:   #c4c7cc;
+  --color-border-button-active:  #8a8f98;
+  --color-border-button-white:   #e6e7e9;
+  --color-border-table:          #e6e7e9;
+  --color-separator-border:      #e6e7e9;
+  --color-separator-border-strong: #dcdee1;
+  /* Text fields need a 3:1 edge (WCAG 1.4.11). */
+  --color-border-input:          #8a8f98;
+  --color-border-focus-ring:     #2f8a6b;
 
-  --color-segmented-control-background:          #e8e8ed;
+  /* Accent fills and what sits on them; they flip per theme (forest in light, lime in dark). */
+  --color-accent-solid:          #0f3d33;
+  --color-accent-solid-hover:    #135243;
+  --color-on-accent:             #ffffff;
+
+  --color-segmented-control-background:          #eaebec;
   --color-segmented-control-selected-background: #ffffff;
-  --color-dropdown-item-hover-background:        #f5f5f7;
-  --color-pill-tab-blue-selected-background:     #e8f2fc;
-  --color-button-ghost-foreground:               #0066cc;
+  --color-dropdown-item-hover-background:        #f3f4f5;
+  --color-pill-tab-blue-selected-background:     #eef7e3;
+  --color-button-ghost-foreground:               #1a6b52;
   --color-button-ghost-background:               transparent;
-  --color-button-ghost-hover:                    #e8f2fc;
-  --color-button-ghost-active:                   #d6e8fa;
-  --color-chart-track:                           #e8e8ed;
-  /* Apple system green and red, for good and bad changes (text only). */
-  --color-text-positive:                         #248a3d;
-  --color-text-negative:                         #d70015;
+  --color-button-ghost-hover:                    #eef7e3;
+  --color-button-ghost-active:                   #e2f1d0;
+  --color-chart-track:                           #eaebec;
+  --color-chart-neutral:                         #dcdee1;
+  --color-text-positive:                         #1e7a35;
+  --color-text-negative:                         #c5221f;
 
-  /* Flat fills: one colour, no light-to-dark gradient. */
-  --gradient-button-primary-default:  linear-gradient(#0066cc, #0066cc);
-  --gradient-button-primary-hover:    linear-gradient(#0058b0, #0058b0);
-  --gradient-button-primary-active:   linear-gradient(#004a94, #004a94);
-  --gradient-button-primary-disabled: linear-gradient(#e8e8ed, #e8e8ed);
+  --gradient-button-primary-default:  linear-gradient(#0f3d33, #0f3d33);
+  --gradient-button-primary-hover:    linear-gradient(#135243, #135243);
+  --gradient-button-primary-active:   linear-gradient(#0b2e26, #0b2e26);
+  --gradient-button-primary-disabled: linear-gradient(#eaebec, #eaebec);
+  --color-button-primary-disabled-foreground: #8a8f98;
   --gradient-button-danger-default:   linear-gradient(var(--color-red-600), var(--color-red-600));
   --gradient-button-danger-hover:     linear-gradient(var(--color-red-700), var(--color-red-700));
   --gradient-button-danger-active:    linear-gradient(var(--color-red-800), var(--color-red-800));
 }
 
 .dark {
-  --color-text-primary:       #f5f5f7;
-  --color-text-secondary:     #c7c7cc;
-  --color-text-tertiary:      #a1a1a6;
-  --color-text-placeholder:   #98989d;
-  --color-foreground-icon-primary:    #f5f5f7;
-  --color-foreground-icon-secondary:  #a1a1a6;
-  --color-foreground-icon-tertiary:   #8e8e93;
+  --color-text-primary:       #f7f8f8;
+  --color-text-secondary:     #d0d6e0;
+  --color-text-tertiary:      #8a8f98;
+  --color-text-placeholder:   #8a8f98;
+  --color-foreground-icon-primary:    #f7f8f8;
+  --color-foreground-icon-secondary:  #8a8f98;
+  --color-foreground-icon-tertiary:   #62666d;
 
-  --color-background-full:              #000000;
-  --color-background-primary-default:   #1c1c1e;
-  --color-background-inner-default:     #1c1c1e;
-  --color-background-primary-hover:     #2c2c2e;
-  --color-background-primary-active:    #3a3a3c;
-  /* One step lighter than cards, so insets (stat footers, read-only rows) still show. */
-  --color-background-secondary-default: #2c2c2e;
-  --color-background-secondary-hover:   #3a3a3c;
-  --color-background-tertiary-default:  #3a3a3c;
-  --color-background-tertiary-hover:    #48484a;
+  /* Linear's ladder: canvas → surface 1 → 2 → 3. */
+  --color-background-full:              #08090a;
+  --color-background-primary-default:   #0f1011;
+  --color-background-inner-default:     #0f1011;
+  --color-background-primary-hover:     #141516;
+  --color-background-primary-active:    #18191a;
+  --color-background-secondary-default: #141516;
+  --color-background-secondary-hover:   #1c1d1f;
+  --color-background-tertiary-default:  #1c1d1f;
+  --color-background-tertiary-hover:    #232427;
 
-  --color-border-button-default: #3a3a3c;
-  --color-border-button-hover:   #636366;
-  --color-border-button-active:  #8e8e93;
-  --color-border-button-white:   #2c2c2e;
-  --color-border-table:          #2c2c2e;
-  --color-separator-border:      #2c2c2e;
-  --color-separator-border-strong: #3a3a3c;
-  --color-border-input:          #7c7c80;
-  --color-border-focus-ring:     #2997ff;
+  --color-border-button-default: #23252a;
+  --color-border-button-hover:   #34343a;
+  --color-border-button-active:  #3e3e44;
+  --color-border-button-white:   #1c1d1f;
+  --color-border-table:          #23252a;
+  --color-separator-border:      #23252a;
+  --color-separator-border-strong: #34343a;
+  --color-border-input:          #6b6f78;
+  --color-border-focus-ring:     #b8e08a;
 
-  --color-segmented-control-background:          #2c2c2e;
-  --color-segmented-control-selected-background: #636366;
-  --color-dropdown-item-hover-background:        #2c2c2e;
-  --color-pill-tab-blue-selected-background:     #0a2a4d;
-  --color-button-ghost-foreground:               #2997ff;
+  --color-accent-solid:          #b8e08a;
+  --color-accent-solid-hover:    #c9e8a5;
+  --color-on-accent:             #0f2a22;
+
+  --color-segmented-control-background:          #141516;
+  --color-segmented-control-selected-background: #232427;
+  --color-dropdown-item-hover-background:        #1c1d1f;
+  --color-pill-tab-blue-selected-background:     #13362d;
+  --color-button-ghost-foreground:               #b8e08a;
   --color-button-ghost-background:               transparent;
-  --color-button-ghost-hover:                    #0a2a4d;
-  --color-button-ghost-active:                   #0d3561;
-  /* Budget bars and legend dots must stay visible on #1c1c1e cards. */
-  --color-chart-track:                           #48484a;
-  --color-text-positive:                         #30d158;
-  --color-text-negative:                         #ff453a;
+  --color-button-ghost-hover:                    #13362d;
+  --color-button-ghost-active:                   #174235;
+  --color-chart-track:                           #34343a;
+  --color-chart-neutral:                         #3e3e44;
+  --color-text-positive:                         #4cc06a;
+  --color-text-negative:                         #ff6b6b;
 
-  --gradient-button-primary-default:  linear-gradient(#0071e3, #0071e3);
-  --gradient-button-primary-hover:    linear-gradient(#0066cc, #0066cc);
-  --gradient-button-primary-active:   linear-gradient(#0058b0, #0058b0);
-  --gradient-button-primary-disabled: linear-gradient(#2c2c2e, #2c2c2e);
-  --shadow-dropdown: 0 5px 30px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06);
+  --gradient-button-primary-default:  linear-gradient(#b8e08a, #b8e08a);
+  --gradient-button-primary-hover:    linear-gradient(#c9e8a5, #c9e8a5);
+  --gradient-button-primary-active:   linear-gradient(#a6d473, #a6d473);
+  --gradient-button-primary-disabled: linear-gradient(#1c1d1f, #1c1d1f);
+  --color-button-primary-disabled-foreground: #62666d;
+  --shadow-dropdown: 0 4px 24px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06);
 }
 
 @theme inline {
   --color-border-input: var(--color-border-input);
   --color-text-positive: var(--color-text-positive);
   --color-text-negative: var(--color-text-negative);
+  --color-accent-solid: var(--color-accent-solid);
+  --color-accent-solid-hover: var(--color-accent-solid-hover);
+  --color-on-accent: var(--color-on-accent);
 }

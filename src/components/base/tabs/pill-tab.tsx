@@ -48,11 +48,11 @@ const styles = sortCx({
     gray: "bg-background-primary-hover",
   },
   selectedIcon: {
-    blue: "text-accent-500",
+    blue: "text-button-ghost-foreground",
     gray: "text-foreground-icon-primary",
   },
   selectedLabel: {
-    blue: "text-accent-500",
+    blue: "text-button-ghost-foreground",
     gray: "text-text-primary",
   },
 });

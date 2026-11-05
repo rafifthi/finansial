@@ -39,7 +39,7 @@ const dotStyles = {
     dot: "size-3.5",
     inner: "size-[5px]",
     selected:
-      "bg-accent-600",
+      "bg-accent-solid",
     border: "border-[0.875px]",
     gap: "gap-2",
     label: "text-body-2-medium",
@@ -48,7 +48,7 @@ const dotStyles = {
     dot: "size-4",
     inner: "size-1.5",
     selected:
-      "bg-accent-600",
+      "bg-accent-solid",
     border: "border",
     gap: "gap-2",
     label: "text-body-medium",
@@ -105,7 +105,7 @@ export function RadioDot({ selected = false, size = "sm", focusVisible = false, 
           dot read as sitting below center. */}
       <span
         className={cx(
-          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-control-indicator-background",
+          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-on-accent",
           "transition-[scale,opacity] duration-200 ease",
           s.inner,
           selected ? "scale-100 opacity-100" : "scale-0 opacity-0",

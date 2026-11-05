@@ -6,7 +6,7 @@ import { cx } from "@/utils/cx";
  */
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cx("flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent-600 text-white", className)}>
+    <span className={cx("flex size-8 shrink-0 items-center justify-center rounded-xl bg-accent-solid text-on-accent", className)}>
       <svg viewBox="96 116 320 292" className="size-3/5" aria-hidden>
         <path d="M112 244 256 132l144 112" fill="none" stroke="currentColor" strokeWidth="46" strokeLinecap="round" strokeLinejoin="round" />
         <g fill="currentColor">

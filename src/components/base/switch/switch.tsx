@@ -101,7 +101,7 @@ export function SwitchTrack({
         s.track,
         s.trackRadius[shape],
         state.isSelected
-          ? cx("bg-accent-600", s.onShadow)
+          ? "bg-accent-solid"
           : // A 3:1 edge so the off state still reads as a control (WCAG 1.4.11).
             "bg-background-tertiary-default ring-1 ring-inset ring-border-input",
         state.isDisabled && "opacity-50",
@@ -131,7 +131,7 @@ export function SwitchTrack({
             s.chip,
             s.chipRadius[shape],
             state.isSelected
-              ? "border-accent-600 from-switch-on-chip-start to-switch-on-chip-end"
+              ? "border-accent-solid from-switch-on-chip-start to-switch-on-chip-end"
               : "border-border-button-default/50 from-switch-off-chip-start to-switch-off-chip-end",
           )}
         />

@@ -49,15 +49,15 @@ export interface IconLinkButtonProps
 
 const styles = sortCx({
   base: [
-    // Apple's circular control: a quiet grey disc, with a 44px hit area on phones.
-    "relative inline-flex shrink-0 items-center justify-center overflow-visible rounded-full",
-    "bg-background-secondary-default text-foreground-icon-primary",
+    // Linear's icon control: a ghost square that shows a surface on hover, 44px hit area on phones.
+    "relative inline-flex shrink-0 items-center justify-center overflow-visible rounded-2lg",
+    "bg-transparent text-foreground-icon-secondary hover:text-foreground-icon-primary",
     "max-sm:after:absolute max-sm:after:-inset-1.5 max-sm:after:content-['']",
     "select-none cursor-pointer",
     "transition-[background-color,color,transform] duration-150 ease",
     "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus-ring",
-    "hover:bg-background-tertiary-default",
-    "active:scale-95 active:bg-background-tertiary-hover",
+    "hover:bg-background-secondary-hover",
+    "active:scale-[0.98] active:bg-background-tertiary-default",
     "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:text-icon-button-disabled-foreground disabled:opacity-60",
   ].join(" "),
   size: {

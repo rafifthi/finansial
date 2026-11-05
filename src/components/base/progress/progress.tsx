@@ -98,7 +98,7 @@ export function ProgressTrack({ percentage, size = "md", isIndeterminate = false
   return (
     // The rail is File Upload's ring track colour, which keeps an edge on
     // every surface in both themes (chart-track matches dark cards).
-    <div className={cx("relative w-full rounded-full bg-border-button-default text-accent-500", styles.track[size], className)}>
+    <div className={cx("relative w-full rounded-full bg-border-button-default text-button-ghost-foreground", styles.track[size], className)}>
       {isIndeterminate ? (
         <Sweep />
       ) : (
@@ -174,7 +174,7 @@ export function ProgressCircle({ size = "md", isIndeterminate, className, ...pro
             width={box}
             height={box}
             viewBox={`0 0 ${box} ${box}`}
-            className={cx("-rotate-90 text-accent-500", className)}
+            className={cx("-rotate-90 text-button-ghost-foreground", className)}
           >
             <circle cx={box / 2} cy={box / 2} r={radius} fill="none" strokeWidth={line} className="stroke-border-button-default" />
             <circle

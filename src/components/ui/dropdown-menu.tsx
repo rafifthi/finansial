@@ -74,7 +74,7 @@ function DropdownMenuCheckboxItem({ className, children, checked, ...props }: Co
     >
       <span className={MENU_INDICATOR}>
         <DropdownMenuPrimitive.ItemIndicator>
-          <RiCheckLine className="size-4 text-accent-500" />
+          <RiCheckLine className="size-4 text-button-ghost-foreground" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -91,7 +91,7 @@ function DropdownMenuRadioItem({ className, children, ...props }: ComponentProps
     <DropdownMenuPrimitive.RadioItem data-slot="dropdown-menu-radio-item" className={cx(MENU_INDICATOR_ITEM, className)} {...props}>
       <span className={MENU_INDICATOR}>
         <DropdownMenuPrimitive.ItemIndicator>
-          <RiCircleFill className="size-2 text-accent-500" />
+          <RiCircleFill className="size-2 text-button-ghost-foreground" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}

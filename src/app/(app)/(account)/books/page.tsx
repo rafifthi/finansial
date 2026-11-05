@@ -20,7 +20,7 @@ export default async function BooksPage() {
   if (books.length === 0) {
     return (
       <section className="mx-auto mt-6 flex w-full max-w-lg flex-col items-center gap-5 rounded-3xl border border-separator-border bg-background-primary-default p-8 text-center">
-        <span className="flex size-14 items-center justify-center rounded-2xl bg-accent-600 text-title-2-semibold text-white">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-accent-solid text-title-2-semibold text-on-accent">
           F
         </span>
         <div className="flex flex-col gap-1.5">

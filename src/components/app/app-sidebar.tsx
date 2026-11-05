@@ -133,8 +133,8 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
             onClick={onNavigate}
             aria-current={onCatat ? "page" : undefined}
             className={cx(
-              "flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent-600 px-4 text-body-regular text-white outline-none transition-[background-color,transform] duration-150",
-              "hover:bg-accent-700 focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-95",
+              "flex min-h-9 items-center justify-center gap-2 rounded-2lg bg-accent-solid px-3 text-body-2-medium text-on-accent outline-none transition-[background-color,transform] duration-150 max-sm:min-h-11",
+              "hover:bg-accent-solid-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-[0.98]",
               onCatat && "ring-2 ring-accent-300 ring-offset-2 ring-offset-background-secondary-default",
             )}
           >
@@ -280,7 +280,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
                 aria-current={onCatat ? "page" : undefined}
                 className="-mt-5 flex flex-col items-center gap-0.5 rounded-full pb-1.5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
-                <span className="flex size-14 items-center justify-center rounded-full bg-accent-600 text-white ring-4 ring-background-full active:scale-95">
+                <span className="flex size-14 items-center justify-center rounded-full bg-accent-solid text-on-accent ring-4 ring-background-full active:scale-95">
                   <RiSparkling2Fill className="size-7" aria-hidden />
                 </span>
                 <span className="text-caption-1-medium text-button-ghost-foreground">Catat</span>
@@ -292,7 +292,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
             <RiMoreLine className="size-6" aria-hidden />
             <span>More</span>
             {props.badges.unverified ? (
-              <span className="absolute end-[calc(50%-1.1rem)] top-1 size-2 rounded-full bg-yellow-500" aria-label="Items to reconcile" />
+              <span className="absolute end-[calc(50%-1.1rem)] top-1 size-2 rounded-full bg-accent-solid" aria-label="Items to reconcile" />
             ) : null}
           </button>
         </div>

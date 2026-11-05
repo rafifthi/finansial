@@ -31,6 +31,8 @@ export interface BudgetMonth {
   lines: BudgetLine[];
   incomeLines: BudgetLine[];
   groups: Record<Exclude<Group, "Income">, { budget: number; actual: number }>;
+  /** Where the money went: real spending on Needs and Wants, and net saved. Budget moved between them isn't counted twice. */
+  outByGroup: Record<Exclude<Group, "Income">, number>;
 }
 
 export function budgetMonth(input: {
@@ -88,6 +90,7 @@ export function budgetMonth(input: {
     budgetedExpenses: groups.Needs.budget + groups.Wants.budget,
     spent: totals.spent,
     saved: totals.saved,
+    outByGroup: { Needs: totals.byGroup.Needs, Wants: totals.byGroup.Wants, Savings: totals.byGroup.Savings },
     lines,
     incomeLines,
     groups,

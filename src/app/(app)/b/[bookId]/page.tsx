@@ -142,9 +142,9 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
           <GroupDonut
             money={money}
             data={[
-              { group: "Needs", value: bm.groups.Needs.actual },
-              { group: "Wants", value: bm.groups.Wants.actual },
-              { group: "Savings", value: bm.groups.Savings.actual },
+              { group: "Needs", value: bm.outByGroup.Needs },
+              { group: "Wants", value: bm.outByGroup.Wants },
+              { group: "Savings", value: Math.max(bm.outByGroup.Savings, 0) },
             ]}
           />
         </Card>

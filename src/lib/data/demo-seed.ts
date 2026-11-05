@@ -11,6 +11,7 @@ import type {
   User,
 } from "@/lib/sheets/schema";
 import { hashPasswordSync } from "@/lib/auth/password";
+import { budgetMonth, closeMonthPlan } from "@/lib/finance/budget";
 import { addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
 
 export const DEMO_PASSWORD = "demo1234";
@@ -216,6 +217,24 @@ export function demoSeed() {
       if (d % 9 === 4) push(d, { amount: Math.round(50_000 + rnd() * 200_000), category_id: "petty-cash", description: "Obat Louie" });
       if (d % 11 === 6) push(d, { amount: Math.round(40_000 + rnd() * 120_000), category_id: "groceries", description: "Superindo" });
     }
+  }
+
+  // Last month is already closed: its leftovers covered any overspend and went to Rumah,
+  // so the dashboard has a month-end sweep to show.
+  const lastMonth = addMonths(thisMonth, -1);
+  const closed = budgetMonth({ month: lastMonth, budgets, categories, txns: transactions });
+  const name = (id: string) => categories.find((c) => c.id === id)?.name ?? "";
+  for (const m of closeMonthPlan(closed.lines, "rumah")) {
+    transactions.push(
+      tx({
+        date: dayInMonth(lastMonth, 31),
+        type: "transfer",
+        amount: m.amount,
+        category_id: m.to,
+        from_category_id: m.from,
+        description: m.reason === "cover" ? `Covers ${name(m.to)} overspend` : `Leftover from ${name(m.from)}`,
+      }),
+    );
   }
 
   const goals: Goal[] = [

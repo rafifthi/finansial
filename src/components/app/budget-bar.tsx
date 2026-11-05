@@ -48,15 +48,20 @@ export function BudgetBar({
   const usage = budget > 0 ? actual / budget : actual > 0 ? 2 : 0;
   const remaining = budget - actual;
   const saved = Math.max(toSavings, 0);
-  // Budget handed to other categories (e.g. covering an overspend); negative when it received some.
-  const moved = Math.max(actual - spent - saved, 0);
-  const scale = Math.max(budget, actual, 1);
+  // Net budget handed to other categories (e.g. covering their overspend), or received from them.
+  const net = actual - spent - saved;
+  const moved = Math.max(net, 0);
+  const covered = Math.max(-net, 0);
+  const scale = Math.max(budget, spent + saved + moved, 1);
   const pct = (n: number) => `${(Math.max(n, 0) / scale) * 100}%`;
-  const spendTone = usageTone(budget > 0 ? spent / budget : spent > 0 ? 2 : 0, isSavings);
+  const spentUsage = budget > 0 ? spent / budget : spent > 0 ? 2 : 0;
+  // An overspend that leftovers covered is a warning, not an error.
+  const spendTone = spentUsage > 1 && covered > 0 && remaining >= 0 ? "warning" : usageTone(spentUsage, isSavings);
   const parts = [
     `${fmt(spent)} spent`,
     saved > 0 && `${fmt(saved)} to savings`,
-    moved > 0 && `${fmt(moved)} moved`,
+    moved > 0 && `${fmt(moved)} to other budgets`,
+    covered > 0 && `${fmt(covered)} covered from other budgets`,
     budget === 0 ? "no budget set" : remaining >= 0 ? `${fmt(remaining)} left` : `${fmt(-remaining)} over`,
   ].filter(Boolean);
 
@@ -85,7 +90,7 @@ export function BudgetBar({
         </div>
         <span
           className={cx(
-            "truncate text-caption-1-medium tabular-nums",
+            "text-caption-1-medium tabular-nums",
             remaining < 0 && !isSavings ? "text-text-error-primary" : "text-text-tertiary",
           )}
         >

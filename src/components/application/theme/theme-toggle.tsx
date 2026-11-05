@@ -86,13 +86,42 @@ function installThemeTransitionStyle(
   return style;
 }
 
-function storedTheme(): ThemeMode {
-  // Dark leads (Linear world): only an explicit "light" choice turns it off.
-  if (typeof window === "undefined") return "dark";
+/** "system" follows the operating system; "light" / "dark" are an explicit choice. */
+export type ThemePreference = "system" | ThemeMode;
+
+const SYSTEM_DARK = "(prefers-color-scheme: dark)";
+
+export function readThemePreference(): ThemePreference {
+  if (typeof window === "undefined") return "system";
   try {
-    return window.localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark";
+    const v = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return v === "light" || v === "dark" ? v : "system";
   } catch {
-    return "dark";
+    return "system";
+  }
+}
+
+function systemTheme(): ThemeMode {
+  return typeof window !== "undefined" && window.matchMedia(SYSTEM_DARK).matches ? "dark" : "light";
+}
+
+/** The theme to show now: the saved choice, else whatever the system uses. */
+function storedTheme(): ThemeMode {
+  const pref = readThemePreference();
+  return pref === "system" ? systemTheme() : pref;
+}
+
+/** Saves a preference ("system" clears the explicit choice) and applies it. */
+export function setThemePreference(pref: ThemePreference) {
+  if (pref === "system") {
+    try {
+      window.localStorage.removeItem(THEME_STORAGE_KEY);
+    } catch {
+      // Still applies for this visit when storage is blocked.
+    }
+    applyTheme(systemTheme(), { persist: false });
+  } else {
+    applyTheme(pref);
   }
 }
 
@@ -192,13 +221,20 @@ function subscribe(onStoreChange: () => void) {
   const onThemeChange = () => onStoreChange();
   const onStorage = (event: StorageEvent) => {
     if (event.key !== THEME_STORAGE_KEY) return;
-    applyTheme(event.newValue === "light" ? "light" : "dark", { persist: false });
+    applyTheme(event.newValue === "light" || event.newValue === "dark" ? event.newValue : systemTheme(), { persist: false });
+  };
+  // With no explicit choice, the app follows the system live (e.g. macOS auto dark at sunset).
+  const media = window.matchMedia(SYSTEM_DARK);
+  const onSystem = () => {
+    if (readThemePreference() === "system") applyTheme(systemTheme(), { persist: false });
   };
   window.addEventListener(THEME_CHANGE_EVENT, onThemeChange);
   window.addEventListener("storage", onStorage);
+  media.addEventListener("change", onSystem);
   return () => {
     window.removeEventListener(THEME_CHANGE_EVENT, onThemeChange);
     window.removeEventListener("storage", onStorage);
+    media.removeEventListener("change", onSystem);
   };
 }
 
@@ -223,7 +259,7 @@ export interface ThemeToggleProps {
   transitionDuration?: number;
 }
 
-/** Manual light/dark control. It never reads the operating-system theme. */
+/** Light/dark control. Pressing it saves an explicit choice; Settings → Appearance can return to System. */
 export function ThemeToggle({
   collapsed = false,
   appearance = "sidebar",

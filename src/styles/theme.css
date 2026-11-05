@@ -1017,6 +1017,8 @@
   --color-foreground-icon-secondary:  #62666d;
   --color-foreground-icon-tertiary:   #8a8f98;
 
+  /* Linear's two planes: the canvas the sidebar sits on, and the work panel (background-full). */
+  --color-background-canvas:            #eef0f1;
   --color-background-full:              #f7f8f8;
   --color-background-primary-default:   #ffffff;
   --color-background-inner-default:     #ffffff;
@@ -1076,7 +1078,8 @@
   --color-foreground-icon-tertiary:   #62666d;
 
   /* Linear's ladder: canvas → surface 1 → 2 → 3. */
-  --color-background-full:              #08090a;
+  --color-background-canvas:            #08090a;
+  --color-background-full:              #0d0e0f;
   --color-background-primary-default:   #0f1011;
   --color-background-inner-default:     #0f1011;
   --color-background-primary-hover:     #141516;
@@ -1122,6 +1125,7 @@
 }
 
 @theme inline {
+  --color-background-canvas: var(--color-background-canvas);
   --color-border-input: var(--color-border-input);
   --color-text-positive: var(--color-text-positive);
   --color-text-negative: var(--color-text-negative);

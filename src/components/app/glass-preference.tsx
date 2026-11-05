@@ -84,7 +84,7 @@ export function GlassPreference() {
         <span>
           {reduced
             ? "Off while your device's Reduce transparency setting is on."
-            : `${describe(value)}. Saved on this device only.`}
+            : `${describe(value)}. Frosts the phone’s top and tab bars and floating menus. Saved on this device only.`}
         </span>
         {!reduced && level !== null && level !== DEFAULT_GLASS ? (
           <button

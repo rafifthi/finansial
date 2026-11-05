@@ -183,7 +183,7 @@ components:
 
 **Creative North Star: "The Night Ledger"**
 
-Finansial wears Linear's precise, dark-led workspace, adapted for a two-person household that checks its money on phone and laptop, often at night. The source is the shadcn.io "Linear" DESIGN.md (Dov Azencot's packaging of Linear's marketing system), pinned by the user. From it the app takes the near-black surface ladder, hairlines in place of shadows, tightly tracked sans type, small controls, 12px cards and the discipline of a single chromatic accent. Dark is the default; light is a full peer theme for daytime.
+Finansial wears Linear's precise, dark-led workspace, adapted for a two-person household that checks its money on phone and laptop, often at night. The source is the shadcn.io "Linear" DESIGN.md (Dov Azencot's packaging of Linear's marketing system), pinned by the user. From it the app takes the near-black surface ladder, hairlines in place of shadows, tightly tracked sans type, small controls, 12px cards and the discipline of a single chromatic accent. The theme follows the device (System) by default, with Light or Dark as a per-device choice; both are full peer themes.
 
 Four translations separate this build from the source file. **The accent:** Linear's lavender-blue became one green from the user's finance-app reference, forest (#0f3d33) as the fill in light and lime (#b8e08a) as the fill in dark, on a shared ramp. **Light mode:** the marketing file is dark only, so the light theme follows Linear's own app light theme: a pale grey page, white cards and grey hairlines. **Type:** Linear Display, Linear Text and Linear Mono are proprietary, so Inter (with its optical-size axis) stands in for all three. **Glass:** Linear has no frosted chrome, but the functional bars (the phone top and tab bars, the sidebar, sheets, menus and toasts) stay glass, a choice the user made before this world. One build divergence from the source: the dark canvas ships at #08090a, a step above Linear's #010102.
 
@@ -195,7 +195,8 @@ Density is Linear's own app scale: 13px body, 28px buttons and 32px fields on de
 - Hairlines, not shadows; the only shadow belongs to floating menus.
 - Inter with tracking that tightens as size grows, and weight 500 for labels and controls.
 - 6px buttons, 8px fields and icon controls, 12px cards, pills only for chips and the phone Catat button.
-- Glass on the bars only; content stays solid.
+- Glass only on bars that content scrolls under (phone top and tab bars) and floating layers; sidebar, panel and drawers are solid.
+- Theme follows the system by default; Settings → Appearance offers System, Light or Dark per device.
 
 ## Colors
 
@@ -266,7 +267,7 @@ Desktop is a floating 232px sidebar with 8px padding, inset 8px from the viewpor
 
 Flat by construction. Depth comes from the surface ladder (Canvas, then Surface 1 to 4 in dark; Paper, then Card White, Mist and Cloud in light) and from 1px hairlines. Card, button, field, nav-row and checkbox shadows are all set to nothing. The sidebar's only edge is a 1px hairline ring. Floating layers over content (menus, popovers, listboxes) take the one shadow.
 
-Glass is functional, not atmospheric. The phone bars, the desktop sidebar, sheets, drawers, menus, toasts and the bulk-action bar frost whatever scrolls beneath them, from one per-device glass level (0.6 by default: up to 22px blur and a mild saturation lift). Text-dense floating surfaces are nearly opaque (8% clarity). Glass turns off entirely at level 0 and under Reduce Transparency. There is no wash, gradient or colour blob behind it.
+Glass is functional, not atmospheric, as in Linear: structural chrome is solid. On desktop the sidebar sits flat on the canvas (`background-canvas`: #eef0f1 light, #08090a dark) with no card, edge or blur, and the work area is a lifted panel (`background-full`: #f7f8f8 / #0d0e0f) with a 12px radius and a hairline edge. Drawers and sheets are solid. Frost appears only where content scrolls beneath a bar: the phone top bar and tab bar, plus floating menus, toasts and the bulk-action bar, all following the per-device glass level in Settings and switching off under Reduce Transparency.
 
 ### Shadow Vocabulary
 - **Float** (light `0 4px 24px 0 rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04)`; dark `0 4px 24px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06)`): menus, popovers and listboxes over content.
@@ -275,7 +276,7 @@ Glass is functional, not atmospheric. The phone bars, the desktop sidebar, sheet
 ### Named Rules
 **The Ladder Rule.** A surface that needs to read as raised steps up the ladder; it never gains a shadow. Shadow is for things that float over content.
 
-**The Bars-Only Glass Rule.** Frost only the bars and floating layers. Cards, lists and panels are content and stay solid.
+**The Bars-Only Glass Rule.** Frost only bars that content scrolls under and floating layers. The sidebar, the work panel, drawers, cards and lists stay solid.
 
 ## Shapes
 

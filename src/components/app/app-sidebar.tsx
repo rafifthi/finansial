@@ -253,7 +253,8 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
 
   return (
     <>
-      <aside className="glass glass-secondary sticky top-2 hidden h-[calc(100dvh-16px)] w-[232px] shrink-0 overflow-y-auto rounded-3xl border border-border-button-white bg-background-secondary-default p-2 shadow-sidebar lg:block">
+      {/* Flat on the canvas, as in Linear: no glass, no card, no edge. */}
+      <aside className="sticky top-2 hidden h-[calc(100dvh-16px)] w-[232px] shrink-0 overflow-y-auto p-2 lg:block">
         <SidebarPanel {...props} />
       </aside>
 

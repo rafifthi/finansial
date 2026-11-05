@@ -31,9 +31,6 @@ export function categoryColor(c: { color?: string; group?: string }): ChipColor 
   return ALIASES[name] ?? GROUP_COLOR[c.group ?? ""] ?? "neutral";
 }
 
-/** A few starting points for the emoji field; any emoji can be typed. */
-export const EMOJI_SUGGESTIONS = ["🛒", "🍜", "☕", "🚗", "🧾", "🏠", "💊", "👶", "🎉", "🛍️", "📺", "✈️", "🎁", "🐷", "🚨", "💼"];
-
 /** First grapheme only, so a pasted word or several emoji stay one glyph. */
 export function firstGrapheme(value: string): string {
   const s = value.trim();

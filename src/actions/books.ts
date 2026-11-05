@@ -3,45 +3,18 @@
 import { z } from "zod";
 import { PermissionError } from "@/auth";
 import { provisionBook, rememberedOptions, type ProvisionOptions, type ProvisionResult } from "@/lib/books/provision";
-import { sheetProbe } from "@/lib/books/probe";
-import { verifySheet, type SheetVerification } from "@/lib/books/verify";
+import type { SheetVerification } from "@/lib/books/verify";
 import { bookAction, userAction } from "@/lib/data/action";
 import { registry } from "@/lib/data/registry";
-import { bookStore, newId, usingDemoDb } from "@/lib/data/store";
+import { bookStore, newId } from "@/lib/data/store";
 import { normalizeCutoff } from "@/lib/finance/period";
-import { fetchReferencePlan } from "@/lib/import/fetch";
-import { REFERENCE_FIXTURE } from "@/lib/import/fixtures";
-import { planImport, type ImportPlan } from "@/lib/import/reference";
+import { loadImportPlan, usedSheetIds, verifyFor } from "@/lib/import/source";
 import { monthTotals } from "@/lib/finance/ledger";
-import { getSheetsClient, serviceAccountEmail } from "@/lib/sheets/client";
 import { BOOK_KINDS, type Book } from "@/lib/sheets/schema";
-import type { PublicUser } from "@/lib/auth/users";
 
 /* ── New-book wizard ───────────────────────────────────────────────────────── */
 
-const DEMO_SA = "finansial-demo@demo.iam.gserviceaccount.com";
-const saEmail = () => (usingDemoDb() ? DEMO_SA : serviceAccountEmail());
-
-async function usedSheetIds() {
-  return new Set((await registry().fresh("books")).map((b) => b.spreadsheet_id).filter(Boolean));
-}
-
-function verify(user: PublicUser, input: string, purpose: "book" | "import", resumingBookId?: string, used?: Set<string>) {
-  return (async () =>
-    verifySheet(sheetProbe(user.email), {
-      input,
-      purpose,
-      userEmail: user.email,
-      serviceAccount: saEmail(),
-      usedSheetIds: used ?? (await usedSheetIds()),
-      resumingBookId,
-    }))();
-}
-
-async function loadImportPlan(sheetId: string): Promise<ImportPlan> {
-  if (usingDemoDb()) return planImport(REFERENCE_FIXTURE, { year: new Date().getFullYear(), now: new Date().toISOString() });
-  return (await fetchReferencePlan(getSheetsClient(), sheetId)).plan;
-}
+const verify = verifyFor;
 
 /** Live checklist while the user pastes a link. */
 export const checkSheet = userAction(

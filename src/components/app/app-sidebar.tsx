@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   type RemixiconComponentType,
+  RiAddLine,
   RiArrowLeftRightLine,
   RiBankCard2Line,
   RiBookShelfLine,
@@ -20,7 +21,6 @@ import {
   RiRepeatLine,
   RiSettings4Line,
   RiShieldUserLine,
-  RiSparkling2Fill,
   RiUserLine,
   RiWallet3Line,
 } from "@remixicon/react";
@@ -138,7 +138,7 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
               onCatat && "ring-2 ring-accent-300 ring-offset-2 ring-offset-background-secondary-default",
             )}
           >
-            <RiSparkling2Fill className="size-4 shrink-0" aria-hidden />
+            <RiAddLine className="size-4 shrink-0" aria-hidden />
             <span className="text-body-semibold">Catat</span>
           </Link>
         ) : null}
@@ -282,7 +282,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
                 className="-mt-5 flex flex-col items-center gap-0.5 rounded-full pb-1.5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
                 <span className="flex size-14 items-center justify-center rounded-full bg-accent-solid text-on-accent ring-4 ring-background-full active:scale-95">
-                  <RiSparkling2Fill className="size-7" aria-hidden />
+                  <RiAddLine className="size-7" aria-hidden />
                 </span>
                 <span className="text-caption-1-medium text-button-ghost-foreground">Catat</span>
               </Link>

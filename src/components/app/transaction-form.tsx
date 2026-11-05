@@ -11,6 +11,7 @@ import { Input } from "@/components/base/input/input";
 import { Label } from "@/components/base/input/label";
 import { SegmentedControl, SegmentedControlItem } from "@/components/base/segmented-control/segmented-control";
 import { toast } from "@/components/base/toast/toast";
+import type { ActionResult } from "@/lib/data/action";
 import type { FormOptions } from "@/lib/data/app-data";
 import { formatMoney } from "@/lib/finance/money";
 import { cx } from "@/utils/cx";
@@ -22,7 +23,7 @@ import { DrawerForm, FormDrawer, summarizeErrors } from "./form-drawer";
 import { undoToast } from "./undo";
 import { useBookId, useViewerMember } from "./permissions";
 
-type Draft = Omit<TxnInput, "amount"> & { amount: number | null };
+export type Draft = Omit<TxnInput, "amount"> & { amount: number | null };
 
 const blank = (today: string, member: string): Draft => ({
   date: today,
@@ -74,14 +75,21 @@ export function TransactionDrawer({
   );
 }
 
-function TransactionFormBody({
+export function TransactionFormBody({
   options,
   initial,
   onDone,
+  title,
+  description,
+  save,
 }: {
   options: FormOptions;
   initial?: Draft;
   onDone: () => void;
+  title?: string;
+  description?: string;
+  /** Saves a new entry some other way (e.g. a bill row records and matches it); the form stays single-entry. */
+  save?: (input: TxnInput) => Promise<ActionResult<unknown>>;
 }) {
   const member = useViewerMember();
   const bookId = useBookId();
@@ -149,7 +157,8 @@ function TransactionFormBody({
     setErrors(found);
     if (Object.keys(found).length) return;
     startTransition(async () => {
-      const res = await saveTransaction(bookId, { ...draft, amount: draft.amount! });
+      const input = { ...draft, amount: draft.amount! };
+      const res = save ? await save(input) : await saveTransaction(bookId, input);
       if (!res.ok) {
         setErrors((res.fieldErrors ?? {}) as Errors);
         return setFormError(res.fieldErrors ? null : res.error);
@@ -187,7 +196,8 @@ function TransactionFormBody({
 
   return (
     <DrawerForm
-      title={isEdit ? "Edit transaction" : "New transaction"}
+      title={title ?? (isEdit ? "Edit transaction" : "New transaction")}
+      description={description}
       onSubmit={() => submit()}
       error={summarizeErrors(errors) ?? formError}
       destructive={
@@ -199,7 +209,7 @@ function TransactionFormBody({
       }
       footer={
         <>
-          {isEdit ? null : (
+          {isEdit || save ? null : (
             <Button type="button" variant="secondary" onClick={() => submit(true)} disabled={pending}>
               Save &amp; add another
             </Button>

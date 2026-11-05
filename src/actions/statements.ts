@@ -10,6 +10,7 @@ import { autoMatch } from "@/lib/statements/match";
 import { lineKey, loadPool, splitKey } from "@/lib/statements/pool";
 import { classifyLine } from "@/lib/statements/parse";
 import { IMAGE_TYPES, readStatementImages } from "@/lib/statements/read-image";
+import { TxnInput, writeTransaction } from "@/lib/data/transaction-write";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date");
 
@@ -220,14 +221,26 @@ export const ignoreLine = bookAction(
   },
 );
 
+/** Records a bill row that was never entered, from the full transaction form, and matches it. */
 export const createFromLine = bookAction(
   "data:write",
-  z.object({ lineId: z.string().min(1), category_id: z.string().min(1, "Pick a category"), account_id: z.string().default("") }),
-  async ({ lineId, category_id, account_id }, ctx) => {
-    const { db, line, statement } = await getLine(ctx, lineId);
-    if (line.status === "matched") throw new Error("This line is already matched.");
-    const transaction_id = await insertTxnForLine(ctx, line, statement.statement_date, category_id, account_id);
+  z.object({ lineId: z.string().min(1), transaction: TxnInput }),
+  async ({ lineId, transaction }, ctx) => {
+    const { db, line } = await getLine(ctx, lineId);
+    if (line.status === "matched") throw new Error("This row is already matched.");
+    // The bill is the evidence, so the new transaction starts verified.
+    const transaction_id = await writeTransaction({ ...transaction, id: undefined, verified: true }, ctx);
     await db.update("statement_lines", lineId, { status: "matched", transaction_id, transaction_book_id: "" });
+  },
+);
+
+/** Fixes a row's name after the bill is saved (a misread screenshot, a cryptic merchant). */
+export const renameLine = bookAction(
+  "data:write",
+  z.object({ lineId: z.string().min(1), description: z.string().trim().min(1, "Enter a name").max(200) }),
+  async ({ lineId, description }, ctx) => {
+    const { db } = await getLine(ctx, lineId);
+    await db.update("statement_lines", lineId, { description });
   },
 );
 

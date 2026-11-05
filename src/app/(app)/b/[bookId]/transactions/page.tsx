@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { requireBookPage } from "@/auth";
 import { MonthNav } from "@/components/app/month-nav";
 import { PageHeader } from "@/components/app/page-header";
+import { ReferenceSyncButton } from "@/components/app/reference-sync";
 import { TransactionsView, type TxnRow } from "@/components/app/transactions-view";
 import { formOptions, loadAppData, monthParam } from "@/lib/data/app-data";
+import { usingDemoDb } from "@/lib/data/store";
 import { periodOf } from "@/lib/finance/period";
 
 export const metadata: Metadata = { title: "Transactions" };
@@ -42,14 +44,28 @@ export default async function TransactionsPage({ params: route, searchParams }: 
       toAccountName: data.accountById.get(t.to_account_id)?.name ?? "",
     }));
 
+  const options = formOptions(data);
+
   return (
     <>
       <PageHeader
         title="Transactions"
         description="Everything in the Transactions tab of your sheet, period by period."
-        actions={<MonthNav month={month} path={data.href("/transactions")} params={params} cutoff={data.cutoffDay} />}
+        actions={
+          <>
+            <ReferenceSyncButton linked={Boolean(data.book.migrated_from)} suggested={suggestedReference()} options={options} />
+            <MonthNav month={month} path={data.href("/transactions")} params={params} cutoff={data.cutoffDay} />
+          </>
+        }
       />
-      <TransactionsView rows={rows} options={formOptions(data)} filters={filters} />
+      <TransactionsView rows={rows} options={options} filters={filters} />
     </>
   );
+}
+
+/** The old tracker the original book was migrated from, offered when a book has none linked yet. */
+function suggestedReference() {
+  if (usingDemoDb()) return "demo-old-sheet";
+  const id = process.env.REFERENCE_SPREADSHEET_ID;
+  return id ? `https://docs.google.com/spreadsheets/d/${id}` : "";
 }

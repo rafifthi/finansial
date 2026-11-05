@@ -24,6 +24,7 @@ import {
   ignoreLine,
   linkLine,
   readScreenshots,
+  renameLine,
   unlinkLine,
   updateStatement,
 } from "@/actions/statements";
@@ -44,7 +45,8 @@ import { shrinkImage } from "@/lib/ai/shrink-image";
 import { DateField, MoneyField, SelectField } from "./fields";
 import { shortDateClient } from "./format";
 import { DrawerForm, FormDrawer, FormError } from "./form-drawer";
-import { useBookHref, useBookId, useCan } from "./permissions";
+import { useBookHref, useBookId, useCan, useViewerMember } from "./permissions";
+import { TransactionFormBody, type Draft } from "./transaction-form";
 
 const KIND_LABEL: Record<LineKind, string> = {
   charge: "Purchase",
@@ -557,7 +559,7 @@ export function BillRows({ views, pickable, options }: { views: LineView[]; pick
       ) : (
         <ul className="divide-y divide-separator-border overflow-hidden rounded-3xl border border-separator-border bg-background-primary-default">
           {shown.map((v) => (
-            <BillRow key={v.line.id} view={v} money={money} onOpen={canWrite ? () => setOpenLine(v.line.id) : undefined} />
+            <BillRow key={v.line.id} view={v} money={money} canWrite={canWrite} onOpen={canWrite ? () => setOpenLine(v.line.id) : undefined} />
           ))}
         </ul>
       )}
@@ -569,34 +571,111 @@ export function BillRows({ views, pickable, options }: { views: LineView[]; pick
   );
 }
 
-/** One bill row: status, date, name, amount. */
-function BillRow({ view, money, onOpen }: { view: LineView; money: (n: number) => string; onOpen?: () => void }) {
+/** One bill row: status, date, name, amount. The name can be fixed in place from the pencil that shows on hover. */
+function BillRow({ view, money, canWrite, onOpen }: { view: LineView; money: (n: number) => string; canWrite: boolean; onOpen?: () => void }) {
   const { line, match } = view;
+  const bookId = useBookId();
   const credit = isCreditKind(line.kind);
   const date = line.date || match?.date;
   const ignored = line.status === "ignored";
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(line.description);
+  const [saving, startSaving] = useTransition();
+  // Enter saves, then the field disables and blurs; the blur must not save a second time.
+  const busy = useRef(false);
+
+  function save() {
+    if (busy.current) return;
+    const next = name.trim();
+    if (!next || next === line.description) {
+      setName(line.description);
+      return setEditing(false);
+    }
+    busy.current = true;
+    startSaving(async () => {
+      const res = await renameLine(bookId, { lineId: line.id, description: next });
+      busy.current = false;
+      if (!res.ok) return void toast(res.error, { status: "error" });
+      toast("Row renamed", { status: "success" });
+      setEditing(false);
+    });
+  }
+
+  const status =
+    line.status === "matched" ? (
+      <RiCheckboxCircleFill className="size-5 shrink-0 text-status-lime-text" aria-label="Matched" />
+    ) : ignored ? (
+      <RiEyeOffLine className="size-5 shrink-0 text-foreground-icon-quaternary" aria-label="Ignored" />
+    ) : (
+      <RiCheckboxBlankCircleLine className="size-5 shrink-0 text-foreground-icon-tertiary" aria-label="To check" />
+    );
+  const dateCell = <span className="w-14 shrink-0 text-body-2-regular text-text-tertiary tabular-nums">{date ? shortDateClient(date) : "–"}</span>;
+  const amount = (
+    <span className={cx("shrink-0 text-body-semibold tabular-nums", credit ? "text-status-lime-text" : "text-text-primary", ignored && "text-text-tertiary line-through")}>
+      {credit ? "+" : ""}
+      {money(line.amount)}
+    </span>
+  );
+
+  if (editing) {
+    return (
+      <li className="flex items-center gap-3 px-4 py-2">
+        {status}
+        {dateCell}
+        <Input
+          aria-label="Row name"
+          value={name}
+          onChange={setName}
+          autoFocus
+          onFocus={(e) => e.target.select()}
+          size="small"
+          maxLength={200}
+          isDisabled={saving}
+          onBlur={save}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              save();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              setName(line.description);
+              setEditing(false);
+            }
+          }}
+          className="min-w-0 flex-1"
+        />
+        {amount}
+      </li>
+    );
+  }
+
   return (
-    <li>
+    <li className="group flex items-center">
       <button
         type="button"
         onClick={onOpen}
         disabled={!onOpen}
-        className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-start outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-border-focus-ring disabled:cursor-default"
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-3 ps-4 text-start outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-border-focus-ring disabled:cursor-default"
       >
-        {line.status === "matched" ? (
-          <RiCheckboxCircleFill className="size-5 shrink-0 text-status-lime-text" aria-label="Matched" />
-        ) : ignored ? (
-          <RiEyeOffLine className="size-5 shrink-0 text-foreground-icon-quaternary" aria-label="Ignored" />
-        ) : (
-          <RiCheckboxBlankCircleLine className="size-5 shrink-0 text-foreground-icon-tertiary" aria-label="To check" />
-        )}
-        <span className="w-14 shrink-0 text-body-2-regular text-text-tertiary tabular-nums">{date ? shortDateClient(date) : "–"}</span>
+        {status}
+        {dateCell}
         <span className={cx("min-w-0 flex-1 truncate text-body-medium", ignored ? "text-text-tertiary" : "text-text-primary")}>{line.description}</span>
-        <span className={cx("shrink-0 text-body-semibold tabular-nums", credit ? "text-status-lime-text" : "text-text-primary", ignored && "text-text-tertiary line-through")}>
-          {credit ? "+" : ""}
-          {money(line.amount)}
-        </span>
+        {amount}
       </button>
+      {canWrite ? (
+        <IconButton
+          icon={RiPencilLine}
+          size="small"
+          aria-label={`Rename ${line.description}`}
+          onClick={() => {
+            setName(line.description);
+            setEditing(true);
+          }}
+          className="mx-2 shrink-0 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+        />
+      ) : (
+        <span className="pe-4" />
+      )}
     </li>
   );
 }
@@ -609,8 +688,8 @@ function RowForm({ view, pickable, options, onDone }: { view: LineView; pickable
   const { pending, run } = useRun();
   const [picked, setPicked] = useState("");
   const kind = credit ? "income" : "expense";
-  const [category, setCategory] = useState("");
-  const [account, setAccount] = useState("");
+  const member = useViewerMember();
+  const [creating, setCreating] = useState(false);
 
   const pickOptions = pickable
     .filter((t) => t.type === kind)
@@ -619,20 +698,42 @@ function RowForm({ view, pickable, options, onDone }: { view: LineView; pickable
       id: t.id,
       label: [shortDateClient(t.date), t.description || t.categoryName || "Untitled", money(t.amount), t.bookName].filter(Boolean).join(" · "),
     }));
-  const categoryOptions = options.categories.filter((c) => c.kind === kind).map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }));
-  const accountOptions = options.accounts.map((a) => ({ id: a.id, label: a.name }));
-
   const link = (transactionKey: string) => run(() => linkLine(bookId, { lineId: line.id, transactionKey }), "Matched and marked verified", onDone);
+  const summary = [line.date ? shortDateClient(line.date) : "", `${credit ? "+" : ""}${money(line.amount)}`].filter(Boolean).join(" · ");
+
+  if (creating) {
+    // Not in the records yet: the full transaction form, filled in from the bill row.
+    const draft: Draft = {
+      date: line.date || options.today,
+      type: kind,
+      amount: line.amount,
+      category_id: "",
+      from_category_id: "",
+      account_id: "",
+      to_account_id: "",
+      member: options.members.includes(member) ? member : "",
+      description: line.description,
+      verified: true,
+      installment_id: "",
+    };
+    return (
+      <TransactionFormBody
+        options={options}
+        initial={draft}
+        title="Record this row"
+        description={`It's matched to ${line.description} and marked verified.`}
+        save={(transaction) => createFromLine(bookId, { lineId: line.id, transaction })}
+        onDone={onDone}
+      />
+    );
+  }
 
   return (
     <DrawerForm
       title={line.description}
-      description={[line.date ? shortDateClient(line.date) : "", `${credit ? "+" : ""}${money(line.amount)}`].filter(Boolean).join(" · ")}
-      onSubmit={() =>
-        category
-          ? run(() => createFromLine(bookId, { lineId: line.id, category_id: category, account_id: account }), "Transaction added and matched", onDone)
-          : undefined
-      }
+      description={summary}
+      // Nothing to submit here: matching happens on its own buttons, and creating opens the full form.
+      onSubmit={() => undefined}
       footer={
         line.status === "matched" ? (
           <>
@@ -654,9 +755,11 @@ function RowForm({ view, pickable, options, onDone }: { view: LineView; pickable
             >
               {line.status === "ignored" ? "Stop ignoring" : "Ignore row"}
             </Button>
-            <Button type="submit" variant="primary" disabled={pending || !category}>
-              Create transaction
-            </Button>
+            {line.status === "unmatched" ? (
+              <Button type="button" variant="primary" leadingIcon={RiAddLine} disabled={pending} onClick={() => setCreating(true)}>
+                Create transaction
+              </Button>
+            ) : null}
           </>
         )
       }
@@ -689,7 +792,9 @@ function RowForm({ view, pickable, options, onDone }: { view: LineView; pickable
               ))}
             </section>
           ) : (
-            <p className="text-body-regular text-text-secondary">Nothing recorded with this exact amount around the bill date.</p>
+            <p className="text-body-regular text-text-secondary">
+              Nothing recorded with this exact amount around the bill date. If it was never entered, create the transaction from this row.
+            </p>
           )}
 
           <section className="flex flex-col gap-2">
@@ -700,12 +805,6 @@ function RowForm({ view, pickable, options, onDone }: { view: LineView; pickable
                 Match
               </Button>
             </div>
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <h3 className="text-body-semibold text-text-primary">Or record it now</h3>
-            <SelectField label="Category" value={category} onChange={setCategory} options={categoryOptions} searchable />
-            <SelectField label="Account" value={account} onChange={setAccount} options={accountOptions} allowEmpty="Category default" />
           </section>
         </>
       )}

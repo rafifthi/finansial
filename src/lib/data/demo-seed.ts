@@ -117,6 +117,7 @@ export function demoSeed() {
     color,
     emoji,
     archived: false,
+    position: 0,
   });
 
   const categories: Category[] = [
@@ -280,6 +281,7 @@ function demoPersonalSeed() {
     color: "",
     emoji: "",
     archived: false,
+    position: 0,
   });
   const categories = [
     c("p-allowance", "Allowance", "Income"),

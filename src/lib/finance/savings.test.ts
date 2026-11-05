@@ -15,6 +15,7 @@ const cat = (id: string, group: Category["group"], extra: Partial<Category> = {}
   color: "",
   emoji: "",
   archived: false,
+  position: 0,
   ...extra,
 });
 

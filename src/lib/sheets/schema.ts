@@ -56,7 +56,27 @@ export const CategorySchema = z.object({
   color: z.string().default(""),
   emoji: z.string().default(""),
   archived: z.boolean().default(false),
+  /** Display order across the app (1, 2, …); 0 keeps the sheet's row order. */
+  position: z.number().int().nonnegative().default(0),
 });
+
+/** Categories in display order: by position, ties (and unset 0s) in sheet order. */
+export function orderCategories<C extends { position: number }>(categories: C[]): C[] {
+  return categories
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => (a.c.position || 0) - (b.c.position || 0) || a.i - b.i)
+    .map(({ c }) => c);
+}
+
+/**
+ * The full order after rearranging `ids` (a subset, in their new order) among
+ * the places they already held; everything else stays where it was.
+ */
+export function rearrange(order: string[], ids: string[]): string[] {
+  const moving = new Set(ids.filter((id) => order.includes(id)));
+  const queue = ids.filter((id) => moving.has(id));
+  return order.map((id) => (moving.has(id) ? queue.shift()! : id));
+}
 
 export const BudgetSchema = z.object({
   id,
@@ -165,6 +185,7 @@ export const TABLES = {
     color: "string",
     emoji: "string",
     archived: "boolean",
+    position: "number",
   }),
   budgets: table("Budgets", BudgetSchema, {
     id: "string",

@@ -166,6 +166,7 @@ export function planGoalMerge(goals: Goal[], categories: Category[], newId: () =
         color: "",
         emoji: "",
         archived: goal.archived,
+        position: 0,
       };
       return { goal, pot, isNew: true, patch: {}, notes: ["No savings pot was linked, so a new one is created."] };
     }

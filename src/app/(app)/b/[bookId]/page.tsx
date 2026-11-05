@@ -1,7 +1,8 @@
 import { requireBookPage } from "@/auth";
 import Link from "next/link";
 import { RiCalendarCheckLine, RiCheckDoubleLine } from "@remixicon/react";
-import { BudgetBar } from "@/components/app/budget-bar";
+import { BudgetUsage } from "@/components/app/budget-usage";
+import { can } from "@/lib/auth/roles";
 import { Card, EmptyState } from "@/components/app/card";
 import { CategoryIcon } from "@/components/app/category-icon";
 import { GroupDonut, TrendChart } from "@/components/app/charts";
@@ -94,9 +95,8 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
     };
   });
 
-  const expenseLines = bm.lines
-    .filter((l) => l.category.group !== "Savings" && (l.budget > 0 || l.actual > 0))
-    .sort((a, b) => b.usage - a.usage);
+  // In the book's category order (Settings → Categories, or Reorder on the card).
+  const expenseLines = bm.lines.filter((l) => l.category.group !== "Savings" && (l.budget > 0 || l.actual > 0));
   const balances = savingsBalances(categories, txns, adjustments);
   const pots = categories.filter((c) => c.group === "Savings" && (!c.archived || (balances.get(c.id) ?? 0) !== 0));
   const totalSaved = pots.reduce((s, c) => s + (balances.get(c.id) ?? 0), 0);
@@ -151,19 +151,28 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card title="Budget usage" description={`${monthLabel(month)} · most used first`} href={data.href(`/budget?m=${month}`)} className="xl:col-span-2">
-          {expenseLines.length === 0 ? (
+        <BudgetUsage
+          lines={expenseLines.map((l) => ({
+            id: l.category.id,
+            name: l.category.name,
+            emoji: l.category.emoji,
+            color: l.category.color,
+            group: l.category.group,
+            actual: l.actual,
+            spent: l.spent,
+            toSavings: l.toSavings,
+            budget: l.budget,
+          }))}
+          money={money}
+          description={monthLabel(month)}
+          href={data.href(`/budget?m=${month}`)}
+          canReorder={can(data.membership.role, "setup:write")}
+          empty={
             <EmptyState>
               No budgets for this month yet. <Link className="text-button-ghost-foreground underline" href={data.href(`/budget?m=${month}`)}>Set them up</Link>.
             </EmptyState>
-          ) : (
-            <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
-              {expenseLines.map((l) => (
-                <BudgetBar key={l.category.id} name={l.category.name} category={l.category} actual={l.actual} spent={l.spent} toSavings={l.toSavings} budget={l.budget} money={money} />
-              ))}
-            </div>
-          )}
-        </Card>
+          }
+        />
 
         <div className="flex flex-col gap-4">
           {unverified > 0 ? (

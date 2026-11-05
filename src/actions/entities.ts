@@ -8,7 +8,7 @@ import { PermissionError } from "@/auth";
 import { can, TABLE_PERMISSION } from "@/lib/auth/roles";
 import type { Role } from "@/lib/auth/roles";
 import { transferErrors } from "@/lib/data/transaction-write";
-import { TABLES } from "@/lib/sheets/schema";
+import { orderCategories, rearrange, TABLES } from "@/lib/sheets/schema";
 
 const EDITABLE = ["categories", "installments", "recurring"] as const;
 type Editable = (typeof EDITABLE)[number];
@@ -45,6 +45,11 @@ export const saveEntity = bookAction(
         values.target_date = "";
       }
       values.emoji = Array.from(String(values.emoji ?? "").trim()).slice(0, 8).join("");
+      // A new category goes to the end of a reordered list; with no order set, the sheet's row order already does that.
+      if (!id) {
+        const top = Math.max(0, ...(await store.rows("categories")).map((c) => c.position));
+        values.position = top ? top + 1 : 0;
+      }
     }
     // Books created before a column existed (category emoji, starting balance) lack it in
     // the sheet; add it first so the write isn't silently dropped.
@@ -96,6 +101,27 @@ export const restoreEntity = bookAction(
     if (!parsed.success) throw new Error("That item can't be restored.");
     if ((await store.rows(table)).some((r) => r.id === parsed.data.id)) return;
     await store.insert(table, [parsed.data as never]);
+  },
+);
+
+/**
+ * Saves a new category order. `ids` may be a subset (e.g. the Needs and Wants
+ * lines shown on the dashboard): they're rearranged among the places they
+ * already held, and every other category keeps its place.
+ */
+export const reorderCategories = bookAction(
+  "setup:write",
+  z.object({ ids: z.array(z.string().min(1)).min(1).max(500) }),
+  async ({ ids }, { store }) => {
+    const headers = (await store.snapshot()).categories.headers.map(String);
+    if (!headers.includes("position")) {
+      await store.db.ensureSchema();
+      store.invalidate();
+    }
+    const order = orderCategories(await store.rows("categories"));
+    const next = rearrange(order.map((c) => c.id), ids);
+    const changes = next.flatMap((id, i) => (order.find((c) => c.id === id)!.position === i + 1 ? [] : [{ key: id, patch: { position: i + 1 } }]));
+    await store.updateMany("categories", changes);
   },
 );
 

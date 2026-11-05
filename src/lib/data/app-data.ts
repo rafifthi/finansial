@@ -2,7 +2,7 @@ import "server-only";
 import { today } from "@/lib/finance/dates";
 import { normalizeCutoff, periodOf, periodProgress } from "@/lib/finance/period";
 import type { MoneyFormat } from "@/lib/finance/money";
-import type { Category } from "@/lib/sheets/schema";
+import { orderCategories, type Category } from "@/lib/sheets/schema";
 import type { Book, Membership } from "@/lib/sheets/schema";
 import { bookStore, savingsStore } from "./store";
 
@@ -12,7 +12,7 @@ export async function loadAppData({ book, membership }: { book: Book; membership
   const [snap, settings] = await Promise.all([store.snapshot(), store.settings()]);
   const pick = <K extends keyof typeof snap>(k: K) => snap[k].rows.map((r) => r.data) as (typeof snap)[K]["rows"][number]["data"][];
 
-  const categories = pick("categories");
+  const categories = orderCategories(pick("categories"));
   const transactions = pick("transactions").sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at));
 
   return {

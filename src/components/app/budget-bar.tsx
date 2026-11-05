@@ -60,8 +60,6 @@ export function BudgetBar({
   const parts = [
     `${fmt(spent)} spent`,
     saved > 0 && `${fmt(saved)} to savings`,
-    moved > 0 && `${fmt(moved)} to other budgets`,
-    covered > 0 && `${fmt(covered)} covered from other budgets`,
     budget === 0 ? "no budget set" : remaining >= 0 ? `${fmt(remaining)} left` : `${fmt(-remaining)} over`,
   ].filter(Boolean);
 

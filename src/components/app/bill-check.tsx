@@ -709,8 +709,6 @@ function RowForm({ view, pickable, options, onDone }: { view: LineView; pickable
       amount: line.amount,
       category_id: "",
       from_category_id: "",
-      account_id: "",
-      to_account_id: "",
       member: options.members.includes(member) ? member : "",
       description: line.description,
       verified: true,

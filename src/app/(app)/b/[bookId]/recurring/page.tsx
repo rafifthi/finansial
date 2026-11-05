@@ -49,13 +49,14 @@ export default async function RecurringPage({ params }: PageProps<"/b/[bookId]/r
             {data.recurring.map((r) => {
               const next = occurrences(r, addDays(data.today, 1), horizon)[0];
               const cat = data.categoryById.get(r.category_id);
+              const from = r.type === "transfer" ? data.categoryById.get(r.from_category_id) : undefined;
               const ended = r.end_date && r.end_date < data.today;
               return (
                 <li key={r.id} className="flex items-center gap-3 py-3">
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-body-medium text-text-primary">{r.description || cat?.name || "Untitled"}</span>
-                      {cat ? <Chip variant="caption" color="neutral">{cat.name}</Chip> : null}
+                      {cat ? <Chip variant="caption" color="neutral">{from ? `${from.name} → ${cat.name}` : cat.name}</Chip> : null}
                     </div>
                     <span className="text-body-2-regular text-text-tertiary">
                       {r.frequency === "monthly"
@@ -63,7 +64,6 @@ export default async function RecurringPage({ params }: PageProps<"/b/[bookId]/r
                           ? "Monthly on the last day"
                           : `Monthly on the ${ordinal(r.day)}`
                         : `Weekly on ${WEEKDAYS[r.day] ?? r.day}`}
-                      {data.accountById.get(r.account_id) ? ` · ${data.accountById.get(r.account_id)?.name}` : ""}
                       {ended ? " · ended" : next ? ` · next ${shortDate(next)}` : ""}
                     </span>
                   </div>

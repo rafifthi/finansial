@@ -1,42 +1,65 @@
-import type { Account, Category, Transaction } from "@/lib/sheets/schema";
+import type { Category, SavingsAdjustment, Transaction } from "@/lib/sheets/schema";
 import { END_OF_MONTH, periodOf } from "./period";
 
 export type Group = Category["group"];
 
-/** Balance per account id: opening + income − expense − transfers out + transfers in. */
-export function accountBalances(accounts: Account[], txns: Transaction[], upTo?: string): Map<string, number> {
-  const balances = new Map(accounts.map((a) => [a.id, a.opening_balance]));
+/** Categories a transfer may run between: everything except income. */
+export const canTransfer = (c: Pick<Category, "kind">) => c.kind === "expense";
+
+/**
+ * How a transfer moves budget. Leaving a Needs/Wants category uses up its
+ * budget (like spending it); arriving gives the category room back. A Savings
+ * category works the other way round: money in is saved, money out is taken
+ * from the pot. Returns category id → signed change to that category's actual.
+ */
+export function transferEffects(t: Pick<Transaction, "amount" | "category_id" | "from_category_id">, catById: Map<string, Category>): [string, number][] {
+  const from = catById.get(t.from_category_id);
+  const to = catById.get(t.category_id);
+  // Transfers recorded before they had a source category only count when they fed savings.
+  if (!from) return to?.group === "Savings" ? [[to.id, t.amount]] : [];
+  const effects: [string, number][] = [];
+  if (canTransfer(from)) effects.push([from.id, from.group === "Savings" ? -t.amount : t.amount]);
+  if (to && canTransfer(to)) effects.push([to.id, to.group === "Savings" ? t.amount : -t.amount]);
+  return effects;
+}
+
+/**
+ * What each Savings category holds: its starting balance, plus everything saved
+ * into it, minus what was taken out, plus any balance adjustments.
+ */
+export function savingsBalances(
+  categories: Category[],
+  txns: Transaction[],
+  adjustments: Pick<SavingsAdjustment, "category_id" | "date" | "amount">[] = [],
+  upTo?: string,
+): Map<string, number> {
+  const catById = new Map(categories.map((c) => [c.id, c]));
+  const balances = new Map(categories.filter((c) => c.group === "Savings").map((c) => [c.id, c.starting_balance]));
   const bump = (id: string, delta: number) => {
-    if (!id) return;
-    balances.set(id, (balances.get(id) ?? 0) + delta);
+    if (balances.has(id)) balances.set(id, balances.get(id)! + delta);
   };
   for (const t of txns) {
     if (upTo && t.date > upTo) continue;
-    if (t.type === "income") bump(t.account_id, t.amount);
-    else if (t.type === "expense") bump(t.account_id, -t.amount);
-    else {
-      bump(t.account_id, -t.amount);
-      bump(t.to_account_id, t.amount);
-    }
+    if (t.type === "expense") bump(t.category_id, t.amount);
+    else if (t.type === "transfer") for (const [id, delta] of transferEffects(t, catById)) bump(id, delta);
   }
+  for (const a of adjustments) if (!upTo || a.date <= upTo) bump(a.category_id, a.amount);
   return balances;
 }
 
 export interface MonthTotals {
   income: number;
-  /** Spending on Needs + Wants (and uncategorised expenses). */
+  /** Spending on Needs + Wants (and uncategorised expenses). Moving budget around isn't spending. */
   spent: number;
-  /** Outflows into Savings-group categories (expense or categorised transfer). */
+  /** Net into Savings categories: expenses booked there plus transfers in, minus transfers out. */
   saved: number;
+  /** Per category: what counts against its budget (spending plus budget moved out, minus budget moved in). */
   byCategory: Map<string, number>;
+  /** Real spending per group, and net saved; budget moved between Needs and Wants doesn't show here. */
   byGroup: Record<Group, number>;
 }
 
-/**
- * Totals for one month. A Savings-group category counts as "saved" whether
- * it was booked as an expense or as a transfer into an investment account.
- * Plain transfers between own accounts are neutral.
- */
+/** Totals for one budget period. */
 export function monthTotals(txns: Transaction[], categories: Category[], month: string, cutoff = END_OF_MONTH): MonthTotals {
   const catById = new Map(categories.map((c) => [c.id, c]));
   const totals: MonthTotals = {
@@ -46,11 +69,21 @@ export function monthTotals(txns: Transaction[], categories: Category[], month: 
     byCategory: new Map(),
     byGroup: { Needs: 0, Wants: 0, Savings: 0, Income: 0 },
   };
+  const add = (id: string, delta: number) => totals.byCategory.set(id, (totals.byCategory.get(id) ?? 0) + delta);
   for (const t of txns) {
     if (periodOf(t.date, cutoff) !== month) continue;
+    if (t.type === "transfer") {
+      for (const [id, delta] of transferEffects(t, catById)) {
+        add(id, delta);
+        if (catById.get(id)?.group === "Savings") {
+          totals.saved += delta;
+          totals.byGroup.Savings += delta;
+        }
+      }
+      continue;
+    }
     const cat = catById.get(t.category_id);
-    if (t.type === "transfer" && cat?.group !== "Savings") continue;
-    if (t.category_id) totals.byCategory.set(t.category_id, (totals.byCategory.get(t.category_id) ?? 0) + t.amount);
+    if (t.category_id) add(t.category_id, t.amount);
     if (t.type === "income") {
       totals.income += t.amount;
       totals.byGroup.Income += t.amount;

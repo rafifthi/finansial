@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { Account, Budget, Category, Goal, Installment, Recurring, Transaction } from "@/lib/sheets/schema";
-import { budgetMonth, copyBudgets } from "./budget";
+import type { Budget, Category, Installment, Recurring, Transaction } from "@/lib/sheets/schema";
+import { budgetMonth, closeMonthPlan, copyBudgets } from "./budget";
 import { addMonths, dayInMonth, monthDiff, monthsEnding } from "./dates";
-import { goalProgress } from "./goals";
 import { installmentStatus } from "./installments";
-import { accountBalances, monthTotals } from "./ledger";
+import { monthTotals, savingsBalances } from "./ledger";
 import { formatMoney, parseAmount } from "./money";
 import { dueTransactions, occurrences } from "./recurring";
 
@@ -17,8 +16,6 @@ const txn = (p: Partial<Transaction>): Transaction => ({
   type: "expense",
   amount: 0,
   category_id: "",
-  account_id: "jago",
-  to_account_id: "",
   from_category_id: "",
   member: "",
   description: "",
@@ -37,8 +34,10 @@ const cat = (id: string, group: Category["group"], extra: Partial<Category> = {}
   name: id,
   kind: group === "Income" ? "income" : "expense",
   group,
-  default_account_id: "",
   goal_id: "",
+  starting_balance: 0,
+  target_amount: 0,
+  target_date: "",
   color: "",
   emoji: "",
   archived: false,
@@ -87,32 +86,58 @@ describe("dates", () => {
 });
 
 describe("ledger", () => {
-  const accounts: Account[] = [
-    { id: "jago", name: "Jago", type: "bank", opening_balance: 1000, institution: "", archived: false },
-    { id: "bibit", name: "Bibit", type: "investment", opening_balance: 0, institution: "", archived: false },
-  ];
   const txns = [
     txn({ type: "income", amount: 5000, category_id: "salary" }),
     txn({ amount: 300, category_id: "meals" }),
     txn({ amount: 200, category_id: "date" }),
-    txn({ type: "transfer", amount: 1000, to_account_id: "bibit", from_category_id: "", category_id: "travel" }),
-    txn({ type: "transfer", amount: 50, to_account_id: "bibit" }),
+    txn({ amount: 1000, category_id: "travel" }),
+    // Month end: Meals' leftover into savings, Date's into Transport.
+    txn({ type: "transfer", amount: 150, from_category_id: "meals", category_id: "travel" }),
+    txn({ type: "transfer", amount: 40, from_category_id: "date", category_id: "transport" }),
     txn({ date: "2026-11-02", amount: 99, category_id: "meals" }),
   ];
 
-  it("derives balances with transfers", () => {
-    const b = accountBalances(accounts, txns);
-    expect(b.get("jago")).toBe(1000 + 5000 - 300 - 200 - 1000 - 50 - 99);
-    expect(b.get("bibit")).toBe(1050);
-    expect(accountBalances(accounts, txns, "2026-10-31").get("jago")).toBe(1000 + 5000 - 300 - 200 - 1050);
-  });
-
-  it("splits month totals into spent / saved / groups", () => {
+  it("counts budget moved out against the source and in for the target", () => {
     const t = monthTotals(txns, categories, "2026-10");
     expect(t.income).toBe(5000);
-    expect(t.spent).toBe(500);
-    expect(t.saved).toBe(1000); // categorised savings transfer counts, plain transfer doesn't
-    expect(t.byGroup).toEqual({ Needs: 300, Wants: 200, Savings: 1000, Income: 5000 });
+    expect(t.spent).toBe(500); // moving budget isn't spending
+    expect(t.saved).toBe(1150);
+    expect(t.byGroup).toEqual({ Needs: 300, Wants: 200, Savings: 1150, Income: 5000 });
+    expect(t.byCategory.get("meals")).toBe(450);
+    expect(t.byCategory.get("date")).toBe(240);
+    expect(t.byCategory.get("transport")).toBe(-40);
+    expect(t.byCategory.get("travel")).toBe(1150);
+  });
+
+  it("takes money out of a savings pot", () => {
+    const t = monthTotals([txn({ type: "transfer", amount: 70, from_category_id: "travel", category_id: "meals" })], categories, "2026-10");
+    expect(t.saved).toBe(-70);
+    expect(t.byCategory.get("travel")).toBe(-70);
+    expect(t.byCategory.get("meals")).toBe(-70);
+    expect(t.spent).toBe(0);
+  });
+
+  it("ignores income in transfers and counts legacy transfers only into savings", () => {
+    const t = monthTotals(
+      [
+        txn({ type: "transfer", amount: 10, from_category_id: "salary", category_id: "meals" }),
+        txn({ type: "transfer", amount: 20, category_id: "travel" }),
+        txn({ type: "transfer", amount: 30, category_id: "meals" }),
+      ],
+      categories,
+      "2026-10",
+    );
+    expect(t.byCategory.get("meals")).toBe(-10);
+    expect(t.byCategory.has("salary")).toBe(false);
+    expect(t.saved).toBe(20);
+  });
+
+  it("keeps a running balance per savings pot", () => {
+    const pots = categories.map((c) => (c.id === "travel" ? { ...c, starting_balance: 5000 } : c));
+    const b = savingsBalances(pots, [...txns, txn({ date: "2026-11-03", type: "transfer", amount: 400, from_category_id: "travel", category_id: "date" })]);
+    expect(b.get("travel")).toBe(5000 + 1000 + 150 - 400);
+    expect(b.has("meals")).toBe(false);
+    expect(savingsBalances(pots, txns, [], "2026-09-30").get("travel")).toBe(5000);
   });
 });
 
@@ -137,6 +162,36 @@ describe("budget", () => {
     expect(m.groups.Savings).toEqual({ budget: 1000000, actual: 1000000 });
   });
 
+  it("plans the month end: cover overspend first, then save the rest", () => {
+    const line = (id: string, group: Category["group"], remaining: number) => ({ category: { id, group }, remaining });
+    const moves = closeMonthPlan(
+      [line("meals", "Needs", 300), line("date", "Wants", 50), line("transport", "Needs", -120), line("travel", "Savings", 500), line("salary", "Income", 9)],
+      "travel",
+    );
+    expect(moves).toEqual([
+      { from: "meals", to: "transport", amount: 120, reason: "cover" },
+      { from: "meals", to: "travel", amount: 180, reason: "save" },
+      { from: "date", to: "travel", amount: 50, reason: "save" },
+    ]);
+    expect(closeMonthPlan([line("meals", "Needs", 0)], "travel")).toEqual([]);
+  });
+
+  it("leaves every Needs and Wants line at zero once the plan is booked", () => {
+    const b2: Budget[] = [
+      { id: "x1", month: "2026-10", category_id: "meals", amount: 500 },
+      { id: "x2", month: "2026-10", category_id: "transport", amount: 100 },
+    ];
+    const t2 = [txn({ amount: 200, category_id: "meals" }), txn({ amount: 160, category_id: "transport" })];
+    const before = budgetMonth({ month: "2026-10", budgets: b2, categories, txns: t2 });
+    const booked = closeMonthPlan(before.lines, "travel").map((m) =>
+      txn({ type: "transfer", amount: m.amount, from_category_id: m.from, category_id: m.to }),
+    );
+    const after = budgetMonth({ month: "2026-10", budgets: b2, categories, txns: [...t2, ...booked] });
+    for (const l of after.lines.filter((l) => l.category.group === "Needs" || l.category.group === "Wants")) expect(l.remaining).toBe(0);
+    expect(after.saved).toBe(240);
+    expect(after.spent).toBe(360);
+  });
+
   it("copies budgets without overwriting", () => {
     const copied = copyBudgets(budgets, "2026-10", "2026-11", nid);
     expect(copied.map((b) => [b.month, b.category_id])).toEqual([
@@ -148,30 +203,10 @@ describe("budget", () => {
   });
 });
 
-describe("goals", () => {
-  const goal: Goal = {
-    id: "g-travel",
-    name: "Travel",
-    target_amount: 30000000,
-    target_date: "2026-11-30",
-    starting_amount: 20000000,
-    archived: false,
-  };
-  it("tracks progress and required monthly amount", () => {
-    const p = goalProgress(goal, categories, [txn({ amount: 1000000, category_id: "travel" })], "2026-10-15");
-    expect(p.saved).toBe(21000000);
-    expect(p.remaining).toBe(9000000);
-    expect(p.monthsLeft).toBe(2);
-    expect(p.requiredMonthly).toBe(4500000);
-    expect(p.history).toEqual([{ month: "2026-10", amount: 1000000 }]);
-  });
-});
-
 describe("installments", () => {
   const mobil: Installment = {
     id: "mobil",
     name: "Cicilan Mobil",
-    account_id: "",
     category_id: "",
     monthly_amount: 2000000,
     tenor_months: 33,
@@ -197,8 +232,6 @@ describe("recurring", () => {
     type: "expense",
     amount: 333000,
     category_id: "billing",
-    account_id: "jenius",
-    to_account_id: "",
     from_category_id: "",
     member: "",
     description: "Wifi",

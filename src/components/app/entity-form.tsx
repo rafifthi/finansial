@@ -15,12 +15,11 @@ import { formatMoney, type MoneyFormat } from "@/lib/finance/money";
 import { ordinal } from "@/lib/ordinal";
 import { CategoryIdentityField } from "./category-identity-field";
 import { DateField, MoneyField, MonthField, SelectField, type Option } from "./fields";
-import { InstitutionField } from "./institution-field";
 import { DrawerForm, FormDrawer, summarizeErrors } from "./form-drawer";
 import { undoToast } from "./undo";
 import { useBookId, useCan } from "./permissions";
 
-export type EntityTable = "accounts" | "categories" | "goals" | "installments" | "recurring";
+export type EntityTable = "categories" | "installments" | "recurring";
 
 /** Show (or require) a field only while another field holds one of these values. */
 export interface FieldWhen {
@@ -49,14 +48,12 @@ export type FieldSpec =
   | (Base & { type: "checkbox" })
   /** Category emoji + colour (writes the `emoji` and `color` columns). */
   | (Base & { type: "identity" })
-  /** Account's bank or app, searchable, with logos. */
-  | (Base & { type: "institution" })
   /** Recurring "Repeats" + "On": writes `frequency` and `day`. */
   | (Base & { type: "schedule" })
   /** A section heading between groups of fields. */
   | (Base & { type: "heading" })
   /** A plain-language sentence of what a recurring rule will do. */
-  | (Base & { type: "recurring-preview"; categories: Option[]; accounts: Option[] });
+  | (Base & { type: "recurring-preview"; categories: Option[] });
 
 type Values = Record<string, unknown>;
 
@@ -313,7 +310,7 @@ function EntityFormBody({
               />
             );
           case "recurring-preview":
-            return <RecurringPreview key={f.name} values={values} money={money} categories={f.categories} accounts={f.accounts} />;
+            return <RecurringPreview key={f.name} values={values} money={money} categories={f.categories} />;
           case "identity":
             return (
               <CategoryIdentityField
@@ -323,17 +320,6 @@ function EntityFormBody({
                 emoji={String(values.emoji ?? "")}
                 color={String(values.color ?? "")}
                 onChange={(patch) => setValues((x) => ({ ...x, ...patch }))}
-              />
-            );
-          case "institution":
-            return (
-              <InstitutionField
-                key={f.name}
-                label={f.label}
-                name={String(values.name ?? "")}
-                type={(values.type as never) ?? "bank"}
-                value={String(v ?? "")}
-                onChange={(x) => set(f.name, x)}
               />
             );
           case "checkbox":
@@ -443,7 +429,7 @@ function ScheduleField({
 }
 
 /** "Books Rp 333.000 for Billing on the 3rd of every month, from 3 Dec 2026." */
-function RecurringPreview({ values, money, categories }: { values: Values; money: MoneyFormat; categories: Option[]; accounts: Option[] }) {
+function RecurringPreview({ values, money, categories }: { values: Values; money: MoneyFormat; categories: Option[] }) {
   const amount = typeof values.amount === "number" && values.amount > 0 ? formatMoney(values.amount, money) : null;
   const category = categories.find((c) => c.id === values.category_id)?.label;
   const from = categories.find((c) => c.id === values.from_category_id)?.label;

@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { bookAction, type BookActionContext } from "@/lib/data/action";
 import { registry } from "@/lib/data/registry";
-import { pocketsOf } from "@/lib/finance/accounts";
 import { parseSheetId } from "@/lib/books/verify";
 import { loadImportPlan, verifyFor } from "@/lib/import/source";
 import { previewSync, syncRows, type SyncCandidate } from "@/lib/import/sync";
@@ -24,14 +23,12 @@ async function resolveSource(ctx: BookActionContext, input: string) {
 
 async function existingRows(ctx: BookActionContext) {
   ctx.store.invalidate();
-  const [transactions, categories, accounts, installments, settings] = await Promise.all([
+  const [transactions, categories, installments] = await Promise.all([
     ctx.store.rows("transactions"),
     ctx.store.rows("categories"),
-    ctx.store.rows("accounts"),
     ctx.store.rows("installments"),
-    ctx.store.settings(),
   ]);
-  return { existing: { transactions, categories, accounts, installments }, pockets: pocketsOf(settings) };
+  return { existing: { transactions, categories, installments } };
 }
 
 
@@ -59,8 +56,8 @@ export const applyReferenceSync = bookAction(
   z.object({ input: z.string().max(500).default(""), ids: z.array(z.string().min(1)).min(1, "Pick at least one transaction").max(5000) }),
   async ({ input, ids }, ctx) => {
     const source = await resolveSource(ctx, input);
-    const [plan, { existing, pockets }] = await Promise.all([loadImportPlan(source.sheetId), existingRows(ctx)]);
-    const { transactions, categories } = syncRows(plan, ids, existing, pockets, new Date().toISOString());
+    const [plan, { existing }] = await Promise.all([loadImportPlan(source.sheetId), existingRows(ctx)]);
+    const { transactions, categories } = syncRows(plan, ids, existing, new Date().toISOString());
     if (categories.length) await ctx.store.insert("categories", categories);
     if (transactions.length) await ctx.store.insert("transactions", transactions);
     if (ctx.book.migrated_from !== source.sheetId) await registry().update("books", ctx.book.id, { migrated_from: source.sheetId });

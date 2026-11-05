@@ -9,10 +9,6 @@ const ctx: BookContext = {
     { id: "salary", name: "Gaji", group: "Income", kind: "income" },
     { id: "travel", name: "Travel", group: "Savings", kind: "expense" },
   ],
-  accounts: [
-    { id: "jago", name: "Jago", type: "bank" },
-    { id: "bibit", name: "Bibit", type: "investment" },
-  ],
   members: ["Kanza", "Rafif"],
 };
 
@@ -22,8 +18,6 @@ const draft = (p: Record<string, unknown>) => ({
   amount: 35000,
   category_id: "meals",
   from_category_id: "",
-  account_id: "jago",
-  to_account_id: "",
   description: "Nasi Padang",
   member: "",
   ...p,
@@ -36,22 +30,24 @@ describe("sanitizeReply", () => {
   });
 
   it("drops invented ids, unknown members, and a category of the wrong kind", () => {
-    const [d] = sanitizeReply({ drafts: [draft({ category_id: "salary", account_id: "bca", member: "Budi" })] }, ctx).drafts;
-    expect(d).toMatchObject({ category_id: "", account_id: "", member: "" });
+    const [d] = sanitizeReply({ drafts: [draft({ category_id: "salary", member: "Budi" })] }, ctx).drafts;
+    expect(d).toMatchObject({ category_id: "", member: "" });
   });
 
-  it("runs transfers category to category and leaves the accounts to the server", () => {
-    const [ok, same] = sanitizeReply(
+  it("runs transfers category to category, never through income", () => {
+    const [ok, same, income] = sanitizeReply(
       {
         drafts: [
-          draft({ type: "transfer", from_category_id: "meals", category_id: "travel", account_id: "jago", to_account_id: "bibit" }),
+          draft({ type: "transfer", from_category_id: "meals", category_id: "travel" }),
           draft({ type: "transfer", from_category_id: "travel", category_id: "travel" }),
+          draft({ type: "transfer", from_category_id: "salary", category_id: "salary" }),
         ],
       },
       ctx,
     ).drafts;
-    expect(ok).toMatchObject({ from_category_id: "meals", category_id: "travel", account_id: "", to_account_id: "" });
+    expect(ok).toMatchObject({ from_category_id: "meals", category_id: "travel" });
     expect(same).toMatchObject({ from_category_id: "", category_id: "travel" });
+    expect(income).toMatchObject({ from_category_id: "", category_id: "" });
   });
 
   it("fixes dates, types and amounts, and skips zero amounts", () => {
@@ -81,7 +77,7 @@ describe("buildPrompt", () => {
     const p = buildPrompt(
       ctx,
       [{ role: "user", text: "kopi 18rb" }],
-      [{ date: "2026-11-04", type: "expense", amount: 18000, category: "Meals", from_category: "", account: "", to_account: "", description: "Kopi", member: "" }],
+      [{ date: "2026-11-04", type: "expense", amount: 18000, category: "Meals", from_category: "", description: "Kopi", member: "" }],
       true,
     );
     expect(p).toContain('"id":"meals"');

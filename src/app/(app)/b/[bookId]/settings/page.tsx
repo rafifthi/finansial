@@ -3,15 +3,15 @@ import { requireBookPage } from "@/auth";
 import { personalSections } from "@/components/app/account-settings";
 import { BookDetails } from "@/components/app/book-details";
 import { Card } from "@/components/app/card";
-import { AccountOverrideSetting, GroupAccountButton } from "@/components/app/category-accounts";
 import { CategoryIcon, GROUP_COLOR } from "@/components/app/category-icon";
 import { EntityFormButton } from "@/components/app/entity-form";
 import { PageHeader } from "@/components/app/page-header";
 import { HouseholdSettings, MyMember } from "@/components/app/settings-form";
 import { SettingsTabs } from "@/components/app/settings-tabs";
 import { Chip } from "@/components/base/badges/chip";
-import { loadAppData } from "@/lib/data/app-data";
-import { accountOfCategory } from "@/lib/finance/accounts";
+import { loadAdjustments, loadAppData } from "@/lib/data/app-data";
+import { savingsBalances } from "@/lib/finance/ledger";
+import { formatMoney } from "@/lib/finance/money";
 import { fieldSpecs } from "@/lib/data/field-specs";
 import { usingDemoDb } from "@/lib/data/store";
 import { CATEGORY_GROUPS } from "@/lib/sheets/schema";
@@ -25,8 +25,7 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
   const [data, [account, appearance]] = await Promise.all([loadAppData(ctx), personalSections(ctx.user)]);
   const specs = fieldSpecs(data);
   const sheetId = data.book.spreadsheet_id;
-  const accountOptions = data.accounts.filter((a) => !a.archived).map((a) => ({ id: a.id, label: a.name }));
-  const accountOf = (c: (typeof data.categories)[number]) => accountOfCategory(c, data.pockets);
+  const balances = savingsBalances(data.categories, data.transactions, await loadAdjustments(data));
 
   const book = (
     <>
@@ -100,13 +99,10 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
 
   const categories = (
     <>
-      <Card title="Transaction accounts" description="Where the money of a new expense or income comes from or lands.">
-        <AccountOverrideSetting enabled={data.accountOverride} />
-      </Card>
       <Card
         id="categories"
         title="Categories"
-        description="Group drives the Needs / Wants / Savings split. Each category has the account its money is kept in (or, for income, lands in); new transactions start there."
+        description="Group drives the Needs / Wants / Savings split. A Savings category is a pot: it keeps a running balance of everything moved into it."
         action={
           <EntityFormButton
             table="categories"
@@ -129,11 +125,6 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
               <Chip color={GROUP_COLOR[group]} className="self-start">
                 {group}
               </Chip>
-              <GroupAccountButton
-                group={group}
-                categories={data.categories.filter((c) => c.group === group && !c.archived).map((c) => ({ name: c.name, account: accountOf(c) }))}
-                accounts={accountOptions}
-              />
               <ul className="flex flex-col divide-y divide-separator-border">
                 {data.categories
                   .filter((c) => c.group === group)
@@ -145,21 +136,20 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
                           <span className="truncate text-body-medium text-text-primary">{c.name}</span>
                           <span className="truncate text-body-2-regular text-text-tertiary">
                             {[
-                              data.accountById.get(accountOf(c))?.name ?? "No account",
-                              c.goal_id && `→ ${data.goals.find((g) => g.id === c.goal_id)?.name}`,
+                              c.group === "Savings" && `Pot ${formatMoney(balances.get(c.id) ?? 0, data.money)}`,
+                              c.group === "Savings" && c.target_amount > 0 && `target ${formatMoney(c.target_amount, data.money)}`,
                             ]
                               .filter(Boolean)
                               .join(" · ")}
                           </span>
                         </div>
-                        {/* The drawer shows the account new transactions actually use, group fallback included. */}
                         <EntityFormButton
                           table="categories"
                           title="Category"
                           trigger="icon"
                           fields={specs.categories}
                           money={data.money}
-                          initial={{ ...c, default_account_id: accountOf(c) }}
+                          initial={c}
                         />
                       </div>
                     </li>

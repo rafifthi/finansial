@@ -48,8 +48,8 @@ export interface TxnRow {
   group: string;
   categoryEmoji: string;
   categoryColor: string;
-  accountName: string;
-  toAccountName: string;
+  /** Transfers only: the category the money left. */
+  fromCategoryName: string;
 }
 
 const utc = (iso: string) => {
@@ -168,7 +168,7 @@ export function TransactionsView({
       toast(verified ? "Marked as verified" : "Marked as unverified", { status: "success" });
     });
 
-  const FILTER_KEYS = ["type", "category", "account", "member", "verified"] as const;
+  const FILTER_KEYS = ["type", "category", "member", "verified"] as const;
   const activeFilters = filters ? FILTER_KEYS.filter((k) => filters[k]).length : 0;
   const clearFilters = () => {
     const q = new URLSearchParams(search);
@@ -197,14 +197,6 @@ export function TransactionsView({
         allowEmpty="All categories"
         options={options.categories.map((c) => ({ id: c.id, label: c.name }))}
         searchable
-      />
-      <SelectField
-        className="sm:w-40"
-        label={<span className="sm:sr-only">Account</span>}
-        value={filters.account}
-        onChange={(v) => setFilter("account", v)}
-        allowEmpty="All accounts"
-        options={options.accounts.map((a) => ({ id: a.id, label: a.name }))}
       />
       {options.members.length ? (
         <SelectField
@@ -471,8 +463,7 @@ function TxnListItem({
   const title = txn.description || row.categoryName || (txn.type === "transfer" ? "Transfer" : "Untitled");
   // The tile carries the category, so the subtitle only names it when the title doesn't.
   const subtitle = [
-    txn.description && row.categoryName,
-    txn.type === "transfer" ? `${row.accountName || "?"} → ${row.toAccountName || "?"}` : row.accountName,
+    txn.type === "transfer" ? `${row.fromCategoryName || "?"} → ${row.categoryName || "?"}` : txn.description && row.categoryName,
     txn.member,
   ]
     .filter(Boolean)

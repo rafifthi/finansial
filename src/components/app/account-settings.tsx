@@ -5,7 +5,6 @@ import type { PublicUser } from "@/lib/auth/users";
 import { booksOf } from "@/lib/data/registry";
 import { BookIcon, KIND_LABEL } from "./book-switcher";
 import { Card, EmptyState } from "./card";
-import { GlassPreference } from "./glass-preference";
 import { ThemePreference } from "./theme-preference";
 import { StartPagePreference } from "./start-page-preference";
 import { PasswordCard, ProfileCard } from "./profile-forms";
@@ -64,10 +63,7 @@ export async function personalSections(me: PublicUser): Promise<SettingsSection[
       label: "Appearance",
       content: (
         <Card title="Appearance" description="Personal to this device and browser.">
-          <div className="grid gap-6 md:grid-cols-[auto_minmax(0,1fr)] md:items-start">
-            <ThemePreference />
-            <GlassPreference />
-          </div>
+          <ThemePreference />
           <div className="max-w-sm">
             <StartPagePreference />
           </div>

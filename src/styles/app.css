@@ -1,24 +1,18 @@
 /* ---------------------------------------------------------------------------
  * App-level surfaces on top of BoardUI.
  *
- * Glass: one knob, --glass (0 = solid … 1 = most glassy), set per device from
- * Settings → Appearance (lib/glass.ts writes it onto <html>, with
- * data-glass="off" at 0). Every glass surface derives from the three values
- * below, so the slider moves all of them together. At 0 a surface renders
- * exactly like its solid BoardUI token.
- *
- * Glass is for what floats over content: the phone top/tab bars, sheets and
- * drawers, menus, toasts, the bulk-action bar. Cards, lists and panels are
- * content and stay solid; a blur with nothing scrolling behind it only costs.
+ * Glass, Linear's way: only bars that content scrolls under (the phone top
+ * and tab bars) and floating layers frost. One fixed level for every device;
+ * the system's Reduce transparency turns it off.
  * --------------------------------------------------------------------------*/
 :root {
-  --glass: 0.6; /* lib/glass.ts DEFAULT_GLASS; the boot script overrides it before paint */
+  --glass: 0.6;
   --glass-clarity: 42%; /* how much shows through at full glass */
   --glass-blur: calc(var(--glass) * 22px);
   --glass-saturate: calc(1 + var(--glass) * 0.7);
 }
 
-/* The system's Reduce transparency beats the in-app level, live. */
+/* The system's Reduce transparency turns glass off, live. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --glass: 0 !important;
@@ -49,11 +43,6 @@ body {
  * busy content: same blur, almost opaque, so labels behind never read through. */
 .glass-raised {
   --glass-clarity: 8%;
-}
-/* Off means off: no backdrop pass at all (also no containing block for fixed children). */
-:root[data-glass="off"] .glass {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 @media (prefers-reduced-transparency: reduce) {
   .glass {

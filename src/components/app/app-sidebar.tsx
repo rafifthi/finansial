@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   type RemixiconComponentType,
+  RiAddLine,
   RiArrowLeftRightLine,
   RiBankCard2Line,
   RiBookShelfLine,
@@ -20,7 +21,6 @@ import {
   RiRepeatLine,
   RiSettings4Line,
   RiShieldUserLine,
-  RiSparkling2Fill,
   RiUserLine,
   RiWallet3Line,
 } from "@remixicon/react";
@@ -123,8 +123,8 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
   const onCatat = pathname === catatHref;
 
   return (
-    <div className="flex h-full flex-col justify-between gap-6">
-      <div className="flex flex-col gap-4">
+    <div className="flex h-full flex-col justify-between gap-4">
+      <div className="flex flex-col gap-3">
         <BookSwitcher books={books} current={current} onNavigate={onNavigate} />
         {canCatat ? (
           // The main action: record a transaction with AI, above everything else.
@@ -133,12 +133,12 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
             onClick={onNavigate}
             aria-current={onCatat ? "page" : undefined}
             className={cx(
-              "flex items-center justify-center gap-2 rounded-xl bg-linear-to-b from-accent-600 to-accent-700 px-3 py-2.5 text-white shadow-nav-selected outline-none transition",
-              "hover:from-accent-400 hover:to-accent-500 focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-[0.98]",
+              "flex min-h-8 items-center justify-center gap-1.5 rounded-lg bg-accent-solid px-3 text-body-medium text-on-accent outline-none transition-[background-color,transform] duration-150 max-sm:min-h-11",
+              "hover:bg-accent-solid-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-[0.98]",
               onCatat && "ring-2 ring-accent-300 ring-offset-2 ring-offset-background-secondary-default",
             )}
           >
-            <RiSparkling2Fill className="size-5 shrink-0" aria-hidden />
+            <RiAddLine className="size-4 shrink-0" aria-hidden />
             <span className="text-body-semibold">Catat</span>
           </Link>
         ) : null}
@@ -152,15 +152,15 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cx(
-                  "flex items-center justify-between rounded-2lg p-2 outline-none transition-colors",
+                  "flex h-7 items-center justify-between rounded-lg px-2 outline-none transition-colors",
                   "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
                   // Soft raised pill: the solid blue is kept for the Catat call to action.
                   active ? "bg-background-primary-default shadow-xs" : "hover:bg-background-secondary-hover",
                 )}
               >
                 <span className="flex items-center gap-2">
-                  <item.icon className={cx("size-5 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
-                  <span className={cx(active ? "text-body-semibold text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
+                  <item.icon className={cx("size-4 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
+                  <span className={cx(active ? "text-body-medium text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
                 </span>
                 {item.badge ? <Badge color="neutral">{item.badge}</Badge> : null}
               </Link>
@@ -253,7 +253,8 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
 
   return (
     <>
-      <aside className="sticky top-3 hidden h-[calc(100dvh-24px)] w-[260px] shrink-0 overflow-y-auto rounded-3xl border border-border-button-white bg-background-secondary-default p-3 shadow-sidebar lg:block">
+      {/* Flat on the canvas, as in Linear: no glass, no card, no edge. */}
+      <aside className="sticky top-2 hidden h-[calc(100dvh-16px)] w-[232px] shrink-0 overflow-y-auto p-2 lg:block">
         <SidebarPanel {...props} />
       </aside>
 
@@ -280,8 +281,8 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
                 aria-current={onCatat ? "page" : undefined}
                 className="-mt-5 flex flex-col items-center gap-0.5 rounded-full pb-1.5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
-                <span className="flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-600 to-accent-700 text-white shadow-nav-selected ring-4 ring-background-full active:scale-95">
-                  <RiSparkling2Fill className="size-7" aria-hidden />
+                <span className="flex size-14 items-center justify-center rounded-full bg-accent-solid text-on-accent ring-4 ring-background-full active:scale-95">
+                  <RiAddLine className="size-7" aria-hidden />
                 </span>
                 <span className="text-caption-1-medium text-button-ghost-foreground">Catat</span>
               </Link>
@@ -292,7 +293,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
             <RiMoreLine className="size-6" aria-hidden />
             <span>More</span>
             {props.badges.unverified ? (
-              <span className="absolute end-[calc(50%-1.1rem)] top-1 size-2 rounded-full bg-yellow-500" aria-label="Items to reconcile" />
+              <span className="absolute end-[calc(50%-1.1rem)] top-1 size-2 rounded-full bg-accent-solid" aria-label="Items to reconcile" />
             ) : null}
           </button>
         </div>

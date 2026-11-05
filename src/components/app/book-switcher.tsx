@@ -28,8 +28,9 @@ export function BookIcon({ kind, className }: { kind: ShellBook["kind"]; classNa
   return (
     <span
       className={cx(
-        "flex size-8 shrink-0 items-center justify-center rounded-xl bg-linear-to-b text-white",
-        kind === "personal" ? "from-purple-600 to-purple-700" : "from-accent-600 to-accent-700",
+        "flex size-8 shrink-0 items-center justify-center rounded-xl",
+        // One accent: the family book wears the green, a personal one stays neutral.
+        kind === "personal" ? "bg-background-tertiary-default text-text-primary" : "bg-accent-solid text-on-accent",
         className,
       )}
     >
@@ -99,7 +100,7 @@ export function BookSwitcher({
                 {b.provisioning ? "Finish setup" : `${KIND_LABEL[b.kind]} book`}
               </span>
             </span>
-            {b.id === current?.id ? <RiCheckLine className="size-4 text-accent-600" aria-label="Current" /> : null}
+            {b.id === current?.id ? <RiCheckLine className="size-4 text-button-ghost-foreground" aria-label="Current" /> : null}
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />

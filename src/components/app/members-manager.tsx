@@ -56,7 +56,7 @@ export function MembersManager({
   return (
     <>
       {personal ? (
-        <div className="flex items-start gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4">
+        <div className="flex items-start gap-3 rounded-3xl border border-separator-border bg-background-primary-default p-4">
           <RiLock2Line className="mt-0.5 size-5 shrink-0 text-foreground-icon-secondary" aria-hidden />
           <p className="text-body-regular text-text-secondary">
             This is a <span className="text-text-primary">personal book</span>: only you can open it. To share money with
@@ -71,7 +71,7 @@ export function MembersManager({
         </div>
       )}
 
-      <ul className="flex flex-col divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
+      <ul className="flex flex-col divide-y divide-separator-border overflow-hidden rounded-3xl border border-separator-border bg-background-primary-default">
         {members.map((m) => (
           <li key={m.userId} className="flex items-center gap-3 px-4 py-3">
             <Avatar size="md" initials={m.name.slice(0, 1).toUpperCase()} />

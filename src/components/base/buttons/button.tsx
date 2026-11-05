@@ -85,9 +85,10 @@ const styles = sortCx({
 
   // Base shape per size (used when label is present OR medium icon-only).
   size: {
-    medium: "h-9 rounded-2lg p-2 text-body-medium",
-    small:  "h-8 rounded-lg px-2 py-1.5 text-body-medium",
-    xs:     "h-6 rounded-sm px-2 text-caption-1-semibold",
+    // Linear controls: 28px tall with 6px corners (44px on phones for thumbs).
+    medium: "h-7 rounded-lg px-2.5 text-body-medium max-sm:h-11 max-sm:px-3",
+    small:  "h-6 rounded-lg px-2 text-body-2-medium max-sm:h-11 max-sm:px-3",
+    xs:     "h-5 rounded-md px-1.5 text-caption-1-medium max-sm:h-11 max-sm:px-3",
   },
 
   // Icon-only override:
@@ -97,14 +98,14 @@ const styles = sortCx({
   //   Xs     → forces 24×24, content-centered — used for the calendar
   //            template's edit-icon buttons (timezone/participants/reminder).
   iconOnlySize: {
-    medium: "",                // base size already produces 36×36 with a 20px icon
-    small:  "size-8 p-0",      // hard 32×32, content-centered
-    xs:     "size-6 p-0",      // hard 24×24, content-centered
+    medium: "size-7 p-0 max-sm:size-11",
+    small:  "size-6 p-0 max-sm:size-11",
+    xs:     "size-5 p-0 max-sm:size-11",
   },
 
   icon: {
-    medium: "size-5 shrink-0",        // 20px
-    small:  "size-[18px] shrink-0",   // 18px
+    medium: "size-4 shrink-0",        // 16px
+    small:  "size-3.5 shrink-0",      // 14px
     xs:     "size-3.5 shrink-0",      // 14px
   },
 
@@ -116,22 +117,22 @@ const styles = sortCx({
 
   variant: {
     primary: [
-      "bg-button-primary text-text-white shadow-xs",
+      "bg-button-primary text-on-accent",
       "disabled:text-button-primary-disabled-foreground disabled:shadow-none",
       "aria-disabled:text-button-primary-disabled-foreground aria-disabled:shadow-none",
     ].join(" "),
     danger: [
-      "bg-button-danger text-text-white shadow-xs",
+      "bg-button-danger text-text-white",
       "disabled:text-foreground-disabled-danger disabled:shadow-none",
       "aria-disabled:text-foreground-disabled-danger aria-disabled:shadow-none",
     ].join(" "),
     secondary: [
-      "bg-background-primary-default text-text-primary",
-      "border border-border-button-default shadow-xs",
-      "hover:bg-background-primary-hover  hover:border-border-button-hover",
-      "active:bg-background-primary-active active:border-border-button-active",
-      "disabled:bg-background-primary-disabled disabled:border-border-button-default disabled:text-text-tertiary disabled:shadow-none",
-      "aria-disabled:bg-background-primary-disabled aria-disabled:border-border-button-default aria-disabled:text-text-tertiary aria-disabled:shadow-none",
+      // Linear's secondary: surface 1 with a hairline edge.
+      "bg-background-primary-default text-text-primary border border-border-button-default",
+      "hover:bg-background-primary-hover hover:border-border-button-hover",
+      "active:bg-background-primary-active",
+      "disabled:bg-background-primary-disabled disabled:text-text-tertiary",
+      "aria-disabled:bg-background-primary-disabled aria-disabled:text-text-tertiary",
     ].join(" "),
     ghost: [
       "bg-button-ghost-background text-button-ghost-foreground",

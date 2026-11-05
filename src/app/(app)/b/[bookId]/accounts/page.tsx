@@ -90,7 +90,7 @@ export default async function AccountsPage({ params }: PageProps<"/b/[bookId]/ac
                     ) : null}
                   </div>
                 </div>
-                <Link href={data.href(`/transactions?account=${a.id}`)} className="text-body-2-medium text-accent-600 hover:underline dark:text-accent-400">
+                <Link href={data.href(`/transactions?account=${a.id}`)} className="text-body-2-medium text-button-ghost-foreground hover:underline">
                   View transactions
                 </Link>
               </Card>

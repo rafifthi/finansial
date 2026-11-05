@@ -99,7 +99,7 @@ export function SpinnerGlyph({ size = "md", track = true, className }: Omit<Spin
   return (
     <span
       aria-hidden
-      className={cx("relative inline-flex shrink-0 text-accent-500", className)}
+      className={cx("relative inline-flex shrink-0 text-button-ghost-foreground", className)}
       style={{ width: box, height: box }}
     >
       {track ? (

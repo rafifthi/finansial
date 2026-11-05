@@ -96,7 +96,7 @@ export function TrendChart({
         </div>
         <dl className="flex items-center gap-4 text-body-2-medium text-text-secondary">
           <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-chart-6-active" aria-hidden />
+            <span className="size-2 rounded-full bg-accent-solid" aria-hidden />
             <dt>Spent</dt>
           </div>
           <div className="flex items-center gap-1.5">
@@ -129,7 +129,7 @@ export function TrendChart({
             <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={10} tick={{ fontSize: 12, fill: "var(--color-text-tertiary)" }} />
             <Tooltip content={() => null} cursor={{ fill: "var(--color-chart-track)", opacity: 0.5 }} />
             <Bar dataKey="budget" fill="var(--color-chart-neutral)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="spent" fill="var(--color-chart-6-active)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="spent" fill="var(--color-accent-solid)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

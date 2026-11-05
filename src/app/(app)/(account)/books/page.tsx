@@ -19,8 +19,8 @@ export default async function BooksPage() {
 
   if (books.length === 0) {
     return (
-      <section className="mx-auto mt-6 flex w-full max-w-lg flex-col items-center gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-8 text-center">
-        <span className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-b from-accent-500 to-accent-600 text-title-2-semibold text-white">
+      <section className="mx-auto mt-6 flex w-full max-w-lg flex-col items-center gap-5 rounded-3xl border border-separator-border bg-background-primary-default p-8 text-center">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-accent-solid text-title-2-semibold text-on-accent">
           F
         </span>
         <div className="flex flex-col gap-1.5">
@@ -55,7 +55,7 @@ export default async function BooksPage() {
             <li key={book.id}>
               <Link
                 href={ready ? `/b/${book.id}` : `/books/new?resume=${book.id}`}
-                className="flex items-center gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                className="flex items-center gap-3 rounded-3xl border border-separator-border bg-background-primary-default p-4 outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
                 <BookIcon kind={book.kind} className="size-10" />
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">

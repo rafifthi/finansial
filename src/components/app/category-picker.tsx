@@ -126,7 +126,7 @@ export function CategoryPicker({
 }
 
 const TILE = [
-  "flex min-h-[4.5rem] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border border-border-button-default px-1 py-2",
+  "flex min-h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-border-button-default px-1 py-2",
   "outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-out",
   "focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-[0.97]",
 ].join(" ");

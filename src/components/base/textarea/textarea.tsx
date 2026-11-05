@@ -77,7 +77,7 @@ const textareaStyles = sortCx({
     // Same raised field as Select and Date Picker triggers: surface, hairline
     // edge, contact shadow. Text inputs used to be a filled grey well.
     "bg-background-primary-default text-foreground-icon-tertiary shadow-xs",
-    "ring-1 ring-inset ring-border-button-default",
+    "ring-1 ring-inset ring-border-input",
     "transition-[background-color,box-shadow,color] duration-[var(--input-transition-ms)] ease",
   ].join(" "),
 
@@ -171,7 +171,7 @@ export function TextareaBase({
             !isFocusWithin &&
             !isDisabled &&
             !isInvalid &&
-            "ring-border-button-hover",
+            "ring-foreground-icon-secondary",
           // Focus wins over hover
           isFocusWithin &&
             !isDisabled &&

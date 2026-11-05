@@ -195,25 +195,17 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <SelectField
-          label="Save to"
-          value={bookId}
-          onChange={switchBook}
-          options={books.map((b) => ({ id: b.id, label: b.name }))}
-          className="sm:w-64"
-          size="sm"
-        />
-        {turns.length ? (
+      {turns.length ? (
+        <div className="flex justify-end">
           <Button variant="ghost" size="small" onClick={() => (setTurns([]), setRows([]))} disabled={thinking || saving}>
             Start over
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {turns.length === 0 ? (
         <section className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border-button-default px-4 py-10 text-center">
-          <RiSparkling2Line className="size-7 text-accent-500" aria-hidden />
+          <RiSparkling2Line className="size-7 text-button-ghost-foreground" aria-hidden />
           <h2 className="text-title-3-semibold text-text-primary">What did you spend?</h2>
           <p className="max-w-md text-body-2-regular text-text-tertiary">
             Type it the way you&apos;d text it, tap the mic and say it, or attach a receipt or transfer screenshot. Nothing is saved until you check
@@ -254,7 +246,7 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
                 className={cx(
                   "max-w-[85%] rounded-2xl px-3 py-2 text-body-regular",
                   t.role === "user"
-                    ? "bg-linear-to-b from-accent-500 to-accent-600 text-text-white"
+                    ? "bg-accent-solid text-on-accent"
                     : t.failed
                       ? "border border-border-error-default bg-background-primary-default text-text-error-primary"
                       : "border border-border-button-default bg-background-primary-default text-text-primary",
@@ -278,7 +270,7 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
         <section
           ref={draftsRef}
           aria-label="Drafts"
-          className="glass flex flex-col gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-3 sm:p-4"
+          className="flex flex-col gap-3 rounded-3xl border border-separator-border bg-background-primary-default p-3 sm:p-4"
         >
           <header className="flex flex-wrap items-center justify-between gap-2 px-1">
             <h2 className="text-headline-semibold text-text-primary">
@@ -308,10 +300,21 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
         speechLang={options.money.locale}
         placeholder={rows.length ? "Correct a draft, e.g. “yang kedua Wants”, or add more" : undefined}
         onError={(m) => toast(m, { status: "error" })}
+        tools={
+          // Which book the drafts go to, right where you type them.
+          <SelectField
+            aria-label="Save to book"
+            value={bookId}
+            onChange={switchBook}
+            options={books.map((b) => ({ id: b.id, label: `Save to ${b.name}` }))}
+            className="w-auto min-w-0 max-w-48"
+            size="sm"
+          />
+        }
       />
       <p className="text-center text-caption-1-medium text-text-tertiary">
         Messages and images are read by DeepSeek. Prefer the form?{" "}
-        <Link href={`/b/${bookId}/transactions`} className="text-accent-600 underline-offset-2 hover:underline dark:text-accent-400">
+        <Link href={`/b/${bookId}/transactions`} className="text-button-ghost-foreground underline-offset-2 hover:underline">
           Add manually
         </Link>
       </p>

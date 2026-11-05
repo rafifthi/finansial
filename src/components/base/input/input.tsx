@@ -141,18 +141,18 @@ const inputStyles = sortCx({
     // Same raised field as Select and Date Picker triggers: surface, hairline
     // edge, contact shadow. Text inputs used to be a filled grey well.
     "bg-background-primary-default text-foreground-icon-tertiary shadow-xs",
-    "ring-1 ring-inset ring-border-button-default",
+    "ring-1 ring-inset ring-border-input",
     "transition-[background-color,box-shadow,color] duration-[var(--input-transition-ms)] ease",
   ].join(" "),
 
   fieldSize: {
-    medium: "p-2 max-sm:min-h-11", // 8px all sides → h auto = 36; 44 on phones for thumbs
+    medium: "min-h-8 px-2 py-1.5 max-sm:min-h-11", // 32 tall, 44 on phones
     small:  "h-8 px-1.5 py-2",    // 32 / 6 / 8
   },
 
   // When a leadingAddon is present (Phone basic): tighten left padding.
   fieldWithAddonSize: {
-    medium: "h-9 ps-1 pe-2 py-2", // 36 / 4 / 8 / 8
+    medium: "h-8 ps-1 pe-2 py-1.5 max-sm:h-11",
     small:  "h-8 ps-1 pe-1.5 py-2",
   },
 
@@ -168,7 +168,7 @@ const inputStyles = sortCx({
     "aria-invalid:placeholder:text-text-error-placeholder",
   ].join(" "),
 
-  icon: "size-5 shrink-0",
+  icon: "size-4 shrink-0",
 });
 
 /** The field shell's state for a render-prop className. */
@@ -192,7 +192,7 @@ export function inputFieldClassName(
     inputStyles.field,
     hasAddon ? inputStyles.fieldWithAddonSize[size] : inputStyles.fieldSize[size],
     // Hover: idle, no focus, no disabled, no invalid
-    isHovered && !isFocusWithin && !isDisabled && !isInvalid && "ring-border-button-hover",
+    isHovered && !isFocusWithin && !isDisabled && !isInvalid && "ring-foreground-icon-secondary",
     // Focus wins over hover
     isFocusWithin && !isDisabled && !isInvalid && "ring-2 ring-border-focus-ring",
     // Disabled

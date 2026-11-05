@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <main className="flex flex-1 items-center justify-center p-4">
-      <section className="flex w-full max-w-sm flex-col items-center gap-6 rounded-3xl border border-border-button-default bg-background-primary-default p-8 shadow-sidebar">
+      <section className="flex w-full max-w-sm flex-col items-center gap-6 rounded-3xl border border-separator-border bg-background-primary-default p-8 shadow-sidebar">
         <Logo className="size-12 rounded-2xl" />
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-title-2-semibold text-text-primary">Finansial</h1>

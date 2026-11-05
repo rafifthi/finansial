@@ -85,7 +85,7 @@ const styles = sortCx({
     // Hover keeps the resting color — the underline is the hover cue; only
     // the press darkens.
     primary: [
-      "text-accent-600 active:text-accent-800",
+      "text-button-ghost-foreground active:text-accent-800",
       "disabled:text-text-tertiary aria-disabled:text-text-tertiary",
     ].join(" "),
     secondary: [

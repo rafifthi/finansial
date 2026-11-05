@@ -49,23 +49,24 @@ export interface IconLinkButtonProps
 
 const styles = sortCx({
   base: [
+    // Linear's icon control: a ghost square that shows a surface on hover, 44px hit area on phones.
     "relative inline-flex shrink-0 items-center justify-center overflow-visible rounded-2lg",
-    "bg-background-primary-default text-foreground-icon-primary",
-    "border border-border-button-default shadow-xs",
+    "bg-transparent text-foreground-icon-secondary hover:text-foreground-icon-primary",
+    "max-sm:after:absolute max-sm:after:-inset-1.5 max-sm:after:content-['']",
     "select-none cursor-pointer",
-    "transition-[background-color,border-color,box-shadow,color] duration-150 ease",
+    "transition-[background-color,color,transform] duration-150 ease",
     "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus-ring",
-    "hover:bg-background-primary-hover hover:border-border-button-hover",
-    "active:bg-background-primary-active active:border-border-button-active",
-    "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:border-border-button-default disabled:text-icon-button-disabled-foreground disabled:opacity-60 disabled:shadow-none",
+    "hover:bg-background-secondary-hover",
+    "active:scale-[0.98] active:bg-background-tertiary-default",
+    "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:text-icon-button-disabled-foreground disabled:opacity-60",
   ].join(" "),
   size: {
-    medium: "size-9",
-    small: "size-8",
+    medium: "size-7 max-sm:size-10",
+    small: "size-6 max-sm:size-9",
   },
   icon: {
-    medium: "size-5 shrink-0",
-    small: "size-4 shrink-0",
+    medium: "size-4 shrink-0",
+    small: "size-3.5 shrink-0",
   },
 });
 

@@ -1,173 +1,571 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-04T08:30:00Z",
+  "generatedAt": "2026-11-05T02:01:43+00:00",
   "title": "Design System: Finansial",
   "extensions": {
     "colorMeta": {
-      "accent-blue": {
+      "forest": {
         "role": "primary",
-        "displayName": "Action Blue",
-        "canonical": "oklch(62.3% 0.214 259.815)",
+        "displayName": "Forest",
+        "canonical": "#0f3d33",
         "tonalRamp": [
-          "#162456",
-          "#1c398e",
-          "#193cb8",
-          "#1447e6",
-          "#155dfc",
-          "#2b7fff",
-          "#8ec5ff",
-          "#dbeafe"
+          "#04140f",
+          "#082219",
+          "#0b2e26",
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a"
+        ],
+        "note": "Light-theme accent fill (--color-accent-solid in :root); ramp is the shipped accent-950..300 scale."
+      },
+      "forest-hover": {
+        "role": "primary",
+        "displayName": "Forest Hover",
+        "canonical": "#135243",
+        "tonalRamp": [
+          "#04140f",
+          "#082219",
+          "#0b2e26",
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a"
         ]
       },
-      "accent-blue-deep": {
+      "forest-pressed": {
         "role": "primary",
-        "displayName": "Deep Action Blue",
-        "canonical": "oklch(54.6% 0.245 262.881)",
+        "displayName": "Forest Pressed",
+        "canonical": "#0b2e26",
         "tonalRamp": [
-          "#162456",
-          "#1c398e",
-          "#193cb8",
-          "#1447e6",
-          "#155dfc",
-          "#2b7fff",
-          "#8ec5ff",
-          "#dbeafe"
+          "#04140f",
+          "#082219",
+          "#0b2e26",
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a"
         ]
       },
-      "accent-blue-bright": {
+      "lime": {
         "role": "primary",
-        "displayName": "Bright Action Blue",
-        "canonical": "#3392ff",
+        "displayName": "Lime",
+        "canonical": "#b8e08a",
         "tonalRamp": [
-          "#162456",
-          "#1c398e",
-          "#193cb8",
-          "#155dfc",
-          "#3392ff",
-          "#8ec5ff",
-          "#bedbff",
-          "#eff6ff"
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a",
+          "#cde8ac",
+          "#e2f1d0",
+          "#f1f8ea"
+        ],
+        "note": "Dark-theme accent fill (--color-accent-solid in .dark); accent-300."
+      },
+      "lime-hover": {
+        "role": "primary",
+        "displayName": "Lime Hover",
+        "canonical": "#c9e8a5",
+        "tonalRamp": [
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a",
+          "#cde8ac",
+          "#e2f1d0",
+          "#f1f8ea"
+        ]
+      },
+      "lime-pressed": {
+        "role": "primary",
+        "displayName": "Lime Pressed",
+        "canonical": "#a6d473",
+        "tonalRamp": [
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a",
+          "#cde8ac",
+          "#e2f1d0",
+          "#f1f8ea"
+        ]
+      },
+      "on-lime": {
+        "role": "primary",
+        "displayName": "On-Lime",
+        "canonical": "#0f2a22",
+        "tonalRamp": [
+          "#04140f",
+          "#082219",
+          "#0b2e26",
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a"
+        ],
+        "note": "Text and glyphs on Lime fills (--color-on-accent in .dark)."
+      },
+      "link-green": {
+        "role": "primary",
+        "displayName": "Link Green",
+        "canonical": "#1a6b52",
+        "tonalRamp": [
+          "#04140f",
+          "#082219",
+          "#0b2e26",
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a"
+        ],
+        "note": "Ghost-button foreground in light; accent-600."
+      },
+      "focus-green": {
+        "role": "primary",
+        "displayName": "Focus Green",
+        "canonical": "#2f8a6b",
+        "tonalRamp": [
+          "#04140f",
+          "#082219",
+          "#0b2e26",
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a"
+        ],
+        "note": "Light focus ring; accent-500."
+      },
+      "selection-tint": {
+        "role": "primary",
+        "displayName": "Selection Tint",
+        "canonical": "#eef7e3",
+        "tonalRamp": [
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a",
+          "#cde8ac",
+          "#e2f1d0",
+          "#f1f8ea"
+        ]
+      },
+      "selection-tint-night": {
+        "role": "primary",
+        "displayName": "Night Selection Tint",
+        "canonical": "#13362d",
+        "tonalRamp": [
+          "#04140f",
+          "#082219",
+          "#0b2e26",
+          "#0f3d33",
+          "#1a6b52",
+          "#2f8a6b",
+          "#8fc463",
+          "#b8e08a"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#f7f8f8",
+        "tonalRamp": [
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#e6e7e9",
+          "#eaebec",
+          "#f3f4f5",
+          "#ffffff"
+        ]
+      },
+      "card-white": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#e6e7e9",
+          "#eaebec",
+          "#f3f4f5",
+          "#ffffff"
+        ]
+      },
+      "mist": {
+        "role": "neutral",
+        "displayName": "Mist",
+        "canonical": "#f3f4f5",
+        "tonalRamp": [
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#e6e7e9",
+          "#eaebec",
+          "#f3f4f5",
+          "#ffffff"
+        ]
+      },
+      "cloud": {
+        "role": "neutral",
+        "displayName": "Cloud",
+        "canonical": "#eaebec",
+        "tonalRamp": [
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#e6e7e9",
+          "#eaebec",
+          "#f3f4f5",
+          "#ffffff"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e6e7e9",
+        "tonalRamp": [
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#e6e7e9",
+          "#eaebec",
+          "#f3f4f5",
+          "#ffffff"
+        ]
+      },
+      "control-edge": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "#dcdee1",
+        "tonalRamp": [
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#e6e7e9",
+          "#eaebec",
+          "#f3f4f5",
+          "#ffffff"
+        ]
+      },
+      "field-edge": {
+        "role": "neutral",
+        "displayName": "Field Edge",
+        "canonical": "#8a8f98",
+        "tonalRamp": [
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#e6e7e9",
+          "#eaebec",
+          "#f3f4f5",
+          "#ffffff"
         ]
       },
       "ink": {
         "role": "neutral",
         "displayName": "Ink",
-        "canonical": "oklch(14.5% 0 0)",
+        "canonical": "#1b1c1e",
         "tonalRamp": [
-          "#0a0a0a",
-          "#171717",
-          "#262626",
-          "#404040",
-          "#737373",
-          "#a1a1a1",
-          "#ebebeb",
-          "#fafafa"
+          "#1b1c1e",
+          "#3c3f44",
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#eaebec",
+          "#f7f8f8"
         ]
       },
-      "ink-muted": {
+      "graphite": {
         "role": "neutral",
-        "displayName": "Muted Ink",
-        "canonical": "oklch(43.9% 0 0)",
+        "displayName": "Graphite",
+        "canonical": "#3c3f44",
         "tonalRamp": [
-          "#0a0a0a",
-          "#171717",
-          "#262626",
-          "#404040",
-          "#737373",
-          "#a1a1a1",
-          "#ebebeb",
-          "#fafafa"
+          "#1b1c1e",
+          "#3c3f44",
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#eaebec",
+          "#f7f8f8"
         ]
       },
-      "ink-faint": {
+      "slate": {
         "role": "neutral",
-        "displayName": "Faint Ink",
-        "canonical": "color-mix(in srgb, neutral-500 60%, neutral-600)"
+        "displayName": "Slate",
+        "canonical": "#62666d",
+        "tonalRamp": [
+          "#1b1c1e",
+          "#3c3f44",
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#eaebec",
+          "#f7f8f8"
+        ]
       },
-      "paper": {
+      "canvas": {
         "role": "neutral",
-        "displayName": "Paper",
-        "canonical": "#ffffff"
+        "displayName": "Canvas",
+        "canonical": "#08090a",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
       },
-      "paper-soft": {
+      "surface-1": {
         "role": "neutral",
-        "displayName": "Soft Paper",
-        "canonical": "#f7f7f7"
+        "displayName": "Surface 1",
+        "canonical": "#0f1011",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
       },
-      "hairline": {
+      "surface-2": {
         "role": "neutral",
-        "displayName": "Hairline",
-        "canonical": "#ebebeb"
+        "displayName": "Surface 2",
+        "canonical": "#141516",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
       },
-      "night-ground": {
+      "surface-3": {
         "role": "neutral",
-        "displayName": "Night Ground",
-        "canonical": "#121212"
+        "displayName": "Surface 3",
+        "canonical": "#1c1d1f",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
       },
-      "night-panel": {
+      "surface-4": {
         "role": "neutral",
-        "displayName": "Night Panel",
-        "canonical": "oklch(20.5% 0 0)"
-      },
-      "night-surface": {
-        "role": "neutral",
-        "displayName": "Night Surface",
-        "canonical": "oklch(26.9% 0 0)"
+        "displayName": "Surface 4",
+        "canonical": "#232427",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
       },
       "night-hairline": {
         "role": "neutral",
         "displayName": "Night Hairline",
-        "canonical": "oklch(26.9% 0 0)"
+        "canonical": "#23252a",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
       },
-      "error-red": {
-        "role": "status",
-        "displayName": "Error Red",
-        "canonical": "oklch(63.7% 0.237 25.331)"
-      },
-      "warning-amber": {
-        "role": "status",
-        "displayName": "Warning Amber",
-        "canonical": "oklch(79.5% 0.184 86.047)"
-      },
-      "chart-teal": {
-        "role": "data",
-        "displayName": "Chart Teal",
-        "canonical": "oklch(77.7% 0.152 181.912)"
-      },
-      "chart-lime": {
-        "role": "data",
-        "displayName": "Chart Lime",
-        "canonical": "oklch(84.1% 0.238 128.85)"
-      },
-      "chart-pink": {
-        "role": "data",
-        "displayName": "Chart Pink",
-        "canonical": "oklch(71.8% 0.202 349.761)"
-      },
-      "chart-sky": {
-        "role": "data",
-        "displayName": "Chart Sky",
-        "canonical": "oklch(74.6% 0.16 232.661)"
-      },
-      "chart-purple": {
-        "role": "data",
-        "displayName": "Chart Purple",
-        "canonical": "oklch(71.4% 0.203 305.504)"
-      },
-      "placeholder": {
+      "night-hairline-strong": {
         "role": "neutral",
-        "displayName": "Placeholder",
-        "canonical": "oklch(55.6% 0 0)"
+        "displayName": "Night Hairline Strong",
+        "canonical": "#34343a",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
+      },
+      "night-field-edge": {
+        "role": "neutral",
+        "displayName": "Night Field Edge",
+        "canonical": "#6b6f78",
+        "tonalRamp": [
+          "#08090a",
+          "#0f1011",
+          "#141516",
+          "#1c1d1f",
+          "#232427",
+          "#34343a",
+          "#3e3e44",
+          "#62666d"
+        ]
+      },
+      "moonlight": {
+        "role": "neutral",
+        "displayName": "Moonlight",
+        "canonical": "#f7f8f8",
+        "tonalRamp": [
+          "#1b1c1e",
+          "#3c3f44",
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#eaebec",
+          "#f7f8f8"
+        ]
+      },
+      "haze": {
+        "role": "neutral",
+        "displayName": "Haze",
+        "canonical": "#d0d6e0",
+        "tonalRamp": [
+          "#1b1c1e",
+          "#3c3f44",
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#eaebec",
+          "#f7f8f8"
+        ]
+      },
+      "steel": {
+        "role": "neutral",
+        "displayName": "Steel",
+        "canonical": "#8a8f98",
+        "tonalRamp": [
+          "#1b1c1e",
+          "#3c3f44",
+          "#62666d",
+          "#8a8f98",
+          "#c4c7cc",
+          "#dcdee1",
+          "#eaebec",
+          "#f7f8f8"
+        ]
+      },
+      "positive": {
+        "role": "state",
+        "displayName": "Positive",
+        "canonical": "#1e7a35",
+        "tonalRamp": [
+          "#0b3315",
+          "#124d20",
+          "#1e7a35",
+          "#2f9a4b",
+          "#4cc06a",
+          "#85d698",
+          "#bde9c7",
+          "#e8f7ec"
+        ]
+      },
+      "positive-night": {
+        "role": "state",
+        "displayName": "Night Positive",
+        "canonical": "#4cc06a",
+        "tonalRamp": [
+          "#0b3315",
+          "#124d20",
+          "#1e7a35",
+          "#2f9a4b",
+          "#4cc06a",
+          "#85d698",
+          "#bde9c7",
+          "#e8f7ec"
+        ]
+      },
+      "negative": {
+        "role": "state",
+        "displayName": "Negative",
+        "canonical": "#c5221f",
+        "tonalRamp": [
+          "#4a0d0c",
+          "#7a1715",
+          "#c5221f",
+          "#e0423e",
+          "#ff6b6b",
+          "#ff9c9c",
+          "#ffcccc",
+          "#fff0f0"
+        ]
+      },
+      "negative-night": {
+        "role": "state",
+        "displayName": "Night Negative",
+        "canonical": "#ff6b6b",
+        "tonalRamp": [
+          "#4a0d0c",
+          "#7a1715",
+          "#c5221f",
+          "#e0423e",
+          "#ff6b6b",
+          "#ff9c9c",
+          "#ffcccc",
+          "#fff0f0"
+        ]
       }
     },
     "typographyMeta": {
       "title-1": {
         "displayName": "Title 1",
-        "purpose": "Page titles from sm up (text-title-1-medium)."
+        "purpose": "Page titles at every width (text-title-1-medium)."
       },
       "title-2": {
         "displayName": "Title 2",
-        "purpose": "Phone page titles and large figures (text-title-2-semibold)."
+        "purpose": "Sheet and section titles."
+      },
+      "title-3": {
+        "displayName": "Title 3",
+        "purpose": "Drawer and modal titles (15px semibold)."
+      },
+      "stat-value": {
+        "displayName": "Stat Value",
+        "purpose": "Headline number on dashboard stat cards (text-display-4-medium, tabular)."
       },
       "headline": {
         "displayName": "Headline",
@@ -175,194 +573,269 @@
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Rows, inputs, buttons (text-body-regular)."
-      },
-      "body-strong": {
-        "displayName": "Body Medium",
-        "purpose": "Names, nav labels, button labels (text-body-medium)."
+        "purpose": "Running text, list rows and fields; buttons, nav and stat labels at 500."
       },
       "body-2": {
         "displayName": "Body 2",
-        "purpose": "Descriptions and spent/budget amounts (text-body-2-regular)."
+        "purpose": "Small buttons, deltas at 600, card descriptions at 400."
       },
       "caption": {
         "displayName": "Caption",
-        "purpose": "Meter sub-lines, badges (text-caption-1-medium)."
+        "purpose": "Tab-bar labels, chart ticks, helper text, field errors."
       }
     },
     "shadows": [
       {
-        "name": "card",
-        "value": "0 1px 1px 0 rgb(0 0 0 / 0.05)",
-        "purpose": "Contact shadow for cards on the secondary surface (0.14 in dark)."
+        "name": "float",
+        "value": "0 4px 24px 0 rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04)",
+        "purpose": "Light theme: menus, popovers and listboxes over content (--shadow-dropdown)."
       },
       {
-        "name": "sidebar",
-        "value": "0 1px 0 0 rgb(0 0 0 / 0.0196), 0 1px 12px 0 rgb(0 0 0 / 0.0588), 0 0 1px 0 rgb(0 0 0 / 0.3216)",
-        "purpose": "Floating desktop sidebar."
+        "name": "float-night",
+        "value": "0 4px 24px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06)",
+        "purpose": "Dark theme Float."
       },
       {
-        "name": "nav-selected",
-        "value": "0 0 0 1px var(--color-accent-500), inset 0 1px 0 0 rgb(255 255 255 / 0.251)",
-        "purpose": "Active nav row and the phone tab-bar action button."
+        "name": "sidebar-ring",
+        "value": "0 0 0 1px var(--color-separator-border)",
+        "purpose": "The floating sidebar's hairline edge; not a shadow in effect."
       },
       {
-        "name": "dropdown",
-        "value": "0 1px 1px 0 rgb(0 0 0 / 0.04), 0 4px 4px 0 rgb(0 0 0 / 0.02)",
-        "purpose": "Menus and popovers."
-      },
-      {
-        "name": "glass",
-        "value": "backdrop-filter: blur(calc(var(--glass) * 22px)) saturate(calc(1 + var(--glass) * 0.7))",
-        "purpose": "Frosted surfaces; --glass 0..1 per device, 0 = solid."
+        "name": "none",
+        "value": "0 0 #0000",
+        "purpose": "Cards, buttons, fields, nav rows and checkboxes: the ladder carries depth."
       }
     ],
     "motion": [
       {
-        "name": "ease-sheet",
-        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
-        "purpose": "Float-in of bulk-action bar and sheets (200ms)."
+        "name": "control-transition",
+        "value": "150ms ease",
+        "purpose": "Background, colour and border changes on buttons, fields and rows."
       },
       {
-        "name": "menu",
+        "name": "press",
+        "value": "scale(0.98)",
+        "purpose": "Press feedback on buttons and icon buttons; the phone Catat circle presses to 0.95."
+      },
+      {
+        "name": "menu-in-out",
         "value": "150ms ease-out; opacity 0, scale 0.95, blur 2px",
-        "purpose": "Dropdown open/close."
+        "purpose": "Menus open and close; off under Reduce Motion."
+      },
+      {
+        "name": "float-in",
+        "value": "200ms cubic-bezier(0.32, 0.72, 0, 1); opacity 0, translateY 8px",
+        "purpose": "Floating bulk-action bar entry; off under Reduce Motion."
+      },
+      {
+        "name": "tab-underline",
+        "value": "200ms ease on transform and width",
+        "purpose": "Tab selection indicator slide."
+      }
+    ],
+    "glass": [
+      {
+        "name": "glass-level",
+        "value": "0.6",
+        "purpose": "Per-device default (Settings, Appearance); 0 is solid and Reduce Transparency forces 0."
+      },
+      {
+        "name": "glass-blur",
+        "value": "calc(var(--glass) * 22px)",
+        "purpose": "Backdrop blur on bars and floating layers."
+      },
+      {
+        "name": "glass-saturate",
+        "value": "calc(1 + var(--glass) * 0.7)",
+        "purpose": "Backdrop saturation lift."
+      },
+      {
+        "name": "glass-clarity",
+        "value": "42% (8% on raised text-dense layers)",
+        "purpose": "How much shows through at full glass."
       }
     ],
     "breakpoints": [
       {
         "name": "sm",
-        "value": "640px"
+        "value": "640px",
+        "purpose": "Below it, medium buttons and fields grow to 44px (from 28/32px), icon buttons to 40px, inputs render at 16px; cards pad 16px from here up."
       },
       {
         "name": "lg",
-        "value": "1024px"
+        "value": "1024px",
+        "purpose": "Floating 232px sidebar replaces the phone top and tab bars."
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px",
+        "purpose": "Dashboard stat cards four up."
       }
-    ]
+    ],
+    "themes": {
+      "default": "dark",
+      "note": "Dark leads: only a saved light choice keeps the page light. Light tokens on :root, dark on .dark."
+    },
+    "source": {
+      "name": "shadcn.io Linear DESIGN.md",
+      "translations": [
+        "Lavender accent -> forest #0f3d33 (light) and lime #b8e08a (dark), from the user's finance-app reference",
+        "Light mode added, modelled on Linear's app light theme",
+        "Linear Display, Text and Mono -> Inter",
+        "Glass kept on the bars (user's earlier choice)",
+        "Dark canvas ships at #08090a rather than Linear's #010102"
+      ]
+    }
   },
   "components": [
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Main action: accent gradient, white label.",
-      "html": "<button class=\"ds-btn-primary\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z\"/></svg>Add transaction</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 8px 12px; border: 0; border-radius: 10px; color: #fff; font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc) 0%, var(--color-accent-700, #1447e6) 100%); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; outline: none; } .ds-btn-primary:hover { background-image: linear-gradient(180deg, var(--color-accent-400, #3392ff) 0%, var(--color-accent-500, #2b7fff) 100%); } .ds-btn-primary:active { background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc) 0%, var(--color-accent-700, #1447e6) 100%); } .ds-btn-primary:focus-visible { box-shadow: 0 0 0 2px var(--color-accent-500, #2b7fff); }"
+      "description": "The theme fill: Forest with white text in light, Lime with On-Lime text in dark. 28px (44px on phones), 6px corners.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:none; border-radius:6px; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:13px; line-height:20px; letter-spacing:-0.003em; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease, transform 150ms ease; } .ds-btn-primary:hover { background:var(--color-accent-solid-hover, #135243); } .ds-btn-primary:active { transform:scale(0.98); } .ds-btn-primary:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Neutral action: surface, hairline border.",
+      "description": "Surface 1 with a hairline edge; the quiet companion to Primary.",
       "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
-      "css": ".ds-btn-secondary { height: 36px; padding: 8px 12px; border: 1px solid var(--color-border-button-default, #ebebeb); border-radius: 10px; background: var(--color-background-primary-default, #fff); color: var(--color-text-primary, #0a0a0a); font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: pointer; outline: none; } .ds-btn-secondary:hover { background: var(--color-background-primary-hover, #f7f7f7); border-color: var(--color-border-button-hover, #d4d4d4); } .ds-btn-secondary:focus-visible { box-shadow: 0 0 0 2px var(--color-accent-500, #2b7fff); }"
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; height:28px; padding:0 10px; border:1px solid var(--color-border-button-default, #dcdee1); border-radius:6px; background:var(--color-background-primary-default, #ffffff); color:var(--color-text-primary, #1b1c1e); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:13px; line-height:20px; letter-spacing:-0.003em; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease, border-color 150ms ease; } .ds-btn-secondary:hover { background:var(--color-background-primary-hover, #f3f4f5); border-color:var(--color-border-button-hover, #c4c7cc); } .ds-btn-secondary:active { background:var(--color-background-primary-active, #eaebec); } .ds-btn-secondary:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
-      "name": "Text Field",
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Green text on transparent with a selection-tint hover; for low-emphasis actions.",
+      "html": "<button class=\"ds-btn-ghost\">View all</button>",
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; height:28px; padding:0 10px; border:none; border-radius:6px; background:transparent; color:var(--color-button-ghost-foreground, #1a6b52); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; font-size:13px; line-height:20px; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms ease; } .ds-btn-ghost:hover { background:var(--color-button-ghost-hover, #eef7e3); } .ds-btn-ghost:active { background:var(--color-button-ghost-active, #e2f1d0); } .ds-btn-ghost:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "A 28px ghost square (40px on phones, hit area extended 6px) that shows a surface on hover.",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"More\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M5 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm14 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-7 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z\"/></svg></button>",
+      "css": ".ds-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0; border:none; border-radius:8px; background:transparent; color:var(--color-foreground-icon-secondary, #62666d); cursor:pointer; outline:none; transition:background-color 150ms ease, color 150ms ease, transform 150ms ease; } .ds-icon-btn:hover { background:var(--color-background-secondary-hover, #eaebec); color:var(--color-foreground-icon-primary, #1b1c1e); } .ds-icon-btn:active { transform:scale(0.98); background:var(--color-background-tertiary-default, #eaebec); } .ds-icon-btn:focus-visible { box-shadow:0 0 0 2px var(--color-background-primary-default, #ffffff), 0 0 0 4px var(--color-border-focus-ring, #2f8a6b); }"
+    },
+    {
+      "name": "Text Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "36px field with an inset ring that strengthens on hover and focus.",
-      "html": "<label class=\"ds-field\"><input class=\"ds-input\" placeholder=\"Search transactions\" /></label>",
-      "css": ".ds-field { display: flex; height: 36px; padding: 8px; border-radius: 10px; background: var(--color-background-primary-default, #fff); box-shadow: inset 0 0 0 1px var(--color-border-button-default, #ebebeb); } .ds-field:hover { box-shadow: inset 0 0 0 2px var(--color-border-button-hover, #d4d4d4); } .ds-field:focus-within { box-shadow: inset 0 0 0 2px var(--color-border-focus-ring, #2b7fff); } .ds-input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--color-text-primary, #0a0a0a); font: 400 0.875rem/1.25rem Inter, system-ui, sans-serif; } .ds-input::placeholder { color: var(--color-text-placeholder, #a1a1a1); }"
+      "description": "32px field (44px on phones, 16px text there) with a 1px inset field edge that clears 3:1.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Description</span><input class=\"ds-input\" placeholder=\"Groceries at Superindo\" /></label>",
+      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-field-label { font-size:12px; line-height:16px; font-weight:500; color:var(--color-text-secondary, #3c3f44); } .ds-input { min-height:32px; padding:6px 8px; border:none; border-radius:8px; background:var(--color-background-primary-default, #ffffff); box-shadow:inset 0 0 0 1px var(--color-border-input, #8a8f98); color:var(--color-text-primary, #1b1c1e); font-family:inherit; font-size:13px; line-height:20px; outline:none; transition:box-shadow 150ms ease; } .ds-input::placeholder { color:var(--color-text-placeholder, #62666d); } .ds-input:focus-visible { box-shadow:inset 0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     },
     {
-      "name": "Sidebar Nav",
-      "kind": "nav",
-      "refersTo": "nav-item",
-      "description": "Desktop sidebar rows; active row is filled with the accent gradient.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-active\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M19 21H5a1 1 0 0 1-1-1v-9H1l10.33-9.39a1 1 0 0 1 1.34 0L23 11h-3v9a1 1 0 0 1-1 1zm-6-2h5V9.16l-6-5.45-6 5.45V19h5v-6h2z\"/></svg>Dashboard</a><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M16.05 12.05 21 17l-4.95 4.95-1.41-1.41L17.17 18H4v-2h13.17l-2.53-2.54zm-8.1-10 1.41 1.41L6.83 6H20v2H6.83l2.53 2.54-1.41 1.41L3 7z\"/></svg>Transactions<span class=\"ds-badge\">4</span></a></nav>",
-      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 236px; padding: 12px; border-radius: 24px; background: var(--color-background-secondary-default, #f7f7f7); } .ds-nav-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 10px; color: var(--color-text-secondary, #737373); font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; text-decoration: none; outline: none; transition: background-color 150ms; } .ds-nav-item:hover { background: var(--color-background-secondary-hover, #ebebeb); } .ds-nav-item:focus-visible { box-shadow: 0 0 0 2px var(--color-accent-500, #2b7fff); } .ds-nav-item.ds-active { color: #fff; background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc), var(--color-accent-700, #1447e6)); box-shadow: 0 0 0 1px var(--color-accent-500, #2b7fff), inset 0 1px 0 0 rgb(255 255 255 / 0.25); } .ds-badge { margin-inline-start: auto; padding: 0 6px; border-radius: 9999px; background: var(--color-background-tertiary-default, #ebebeb); color: var(--color-text-secondary, #737373); font: 500 0.75rem/1rem Inter, system-ui, sans-serif; }"
-    },
-    {
-      "name": "Glass Card",
+      "name": "Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "24px card with hairline border, frosted when glass is on.",
-      "html": "<section class=\"ds-card\"><header class=\"ds-card-head\"><div><h2 class=\"ds-card-title\">Spending this period</h2><p class=\"ds-card-desc\">1 – 24 Nov</p></div><a class=\"ds-card-link\" href=\"#\">View all</a></header><p class=\"ds-card-figure\">Rp 4.820.000</p></section>",
-      "css": ".ds-card { display: flex; flex-direction: column; gap: 16px; width: 320px; padding: 20px; border: 1px solid var(--color-border-button-default, #ebebeb); border-radius: 24px; background: color-mix(in oklab, var(--color-background-primary-default, #fff) 75%, transparent); backdrop-filter: blur(13px) saturate(1.4); } .ds-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; } .ds-card-title { margin: 0; color: var(--color-text-primary, #0a0a0a); font: 600 1rem/1.375rem Inter, system-ui, sans-serif; } .ds-card-desc { margin: 2px 0 0; color: var(--color-text-tertiary, #a1a1a1); font: 400 0.8125rem/1.125rem Inter, system-ui, sans-serif; } .ds-card-link { color: var(--color-accent-600, #155dfc); font: 500 0.8125rem/1.125rem Inter, system-ui, sans-serif; text-decoration: none; } .ds-card-link:hover { text-decoration: underline; } .ds-card-figure { margin: 0; color: var(--color-text-primary, #0a0a0a); font: 600 1.25rem/1.625rem Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; }"
+      "description": "Solid hairline panel, 12px corners, no shadow; Headline title and optional View all link.",
+      "html": "<section class=\"ds-card\"><header class=\"ds-card-head\"><div><h2 class=\"ds-card-title\">Recent</h2><p class=\"ds-card-desc\">Last 7 days</p></div><a class=\"ds-card-link\" href=\"#\">View all</a></header><p class=\"ds-card-body\">Rp 1.250.000 spent</p></section>",
+      "css": ".ds-card { display:flex; flex-direction:column; gap:16px; padding:16px; border:1px solid var(--color-separator-border, #e6e7e9); border-radius:12px; background:var(--color-background-primary-default, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; } .ds-card-title { margin:0; font-size:14px; line-height:20px; letter-spacing:-0.006em; font-weight:600; color:var(--color-text-primary, #1b1c1e); } .ds-card-desc { margin:2px 0 0; font-size:12px; line-height:16px; color:var(--color-text-tertiary, #62666d); } .ds-card-link { font-size:12px; line-height:16px; font-weight:500; color:var(--color-button-ghost-foreground, #1a6b52); text-decoration:none; border-radius:6px; outline:none; } .ds-card-link:hover { text-decoration:underline; } .ds-card-link:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); } .ds-card-body { margin:0; font-size:13px; line-height:20px; color:var(--color-text-secondary, #3c3f44); font-variant-numeric:tabular-nums; }"
     },
     {
-      "name": "Budget Bar",
-      "kind": "custom",
-      "refersTo": "category-tile",
-      "description": "Category tile, name, spent/budget, meter and remaining caption.",
-      "html": "<div class=\"ds-budget\"><span class=\"ds-tile\">🛒</span><div class=\"ds-budget-body\"><div class=\"ds-budget-row\"><span class=\"ds-budget-name\">Groceries</span><span class=\"ds-budget-amt\">Rp 2.160.000 / Rp 3.000.000</span></div><div class=\"ds-meter\"><span style=\"width:72%\"></span></div><span class=\"ds-budget-left\">Rp 840.000 left · 72%</span></div></div>",
-      "css": ".ds-budget { display: flex; align-items: center; gap: 12px; width: 360px; font-family: Inter, system-ui, sans-serif; } .ds-tile { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 12px; background: #dbeafe; font-size: 1rem; } .ds-budget-body { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6px; } .ds-budget-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; } .ds-budget-name { color: var(--color-text-primary, #0a0a0a); font: 500 0.875rem/1.25rem Inter, system-ui, sans-serif; } .ds-budget-amt, .ds-budget-left { color: var(--color-text-tertiary, #a1a1a1); font-variant-numeric: tabular-nums; } .ds-budget-amt { font: 400 0.8125rem/1.125rem Inter, system-ui, sans-serif; } .ds-budget-left { font: 500 0.75rem/1rem Inter, system-ui, sans-serif; letter-spacing: 0.15px; } .ds-meter { height: 6px; border-radius: 9999px; background: var(--color-chart-track, #ebebeb); overflow: hidden; } .ds-meter span { display: block; height: 100%; border-radius: inherit; background: var(--color-accent-500, #2b7fff); }"
+      "name": "Stat Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Neutral icon disc, label over a tabular value, and a hairline footnote with a Positive/Negative delta as text.",
+      "html": "<section class=\"ds-stat\"><span class=\"ds-stat-disc\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z\"/></svg></span><div class=\"ds-stat-main\"><p class=\"ds-stat-label\">Left this period</p><p class=\"ds-stat-value\">Rp 4.820.000</p></div><div class=\"ds-stat-foot\"><span>From last month</span><span class=\"ds-stat-delta\">+8.1%</span></div></section>",
+      "css": ".ds-stat { display:flex; flex-direction:column; padding:8px; border:1px solid var(--color-separator-border, #e6e7e9); border-radius:12px; background:var(--color-background-primary-default, #ffffff); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-stat-disc { display:flex; align-items:center; justify-content:center; width:28px; height:28px; margin:8px; border-radius:9999px; background:var(--color-background-secondary-default, #f3f4f5); color:var(--color-foreground-icon-primary, #1b1c1e); } .ds-stat-main { padding:10px 8px 14px; } .ds-stat-label { margin:0; font-size:13px; line-height:20px; font-weight:500; color:var(--color-text-secondary, #3c3f44); } .ds-stat-value { margin:2px 0 0; font-size:24px; line-height:30px; letter-spacing:-0.018em; font-weight:500; color:var(--color-text-primary, #1b1c1e); font-variant-numeric:tabular-nums; } .ds-stat-foot { display:flex; justify-content:space-between; gap:8px; margin:0 8px; padding:10px 0 6px; border-top:1px solid var(--color-separator-border, #e6e7e9); font-size:13px; line-height:20px; color:var(--color-text-secondary, #3c3f44); } .ds-stat-delta { font-size:12px; font-weight:600; color:var(--color-text-positive, #1e7a35); font-variant-numeric:tabular-nums; }"
     },
     {
-      "name": "Tab Bar Action",
-      "kind": "button",
-      "refersTo": "tab-bar-cta",
-      "description": "Raised 56px circle in the centre of the phone tab bar.",
-      "html": "<button class=\"ds-fab\" aria-label=\"Add\"><svg viewBox=\"0 0 24 24\" width=\"28\" height=\"28\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z\"/></svg></button>",
-      "css": ".ds-fab { display: grid; place-items: center; width: 56px; height: 56px; border: 0; border-radius: 9999px; color: #fff; background-image: linear-gradient(180deg, var(--color-accent-600, #155dfc), var(--color-accent-700, #1447e6)); box-shadow: 0 0 0 4px var(--color-background-full, #fff), 0 0 0 5px var(--color-accent-500, #2b7fff), inset 0 1px 0 0 rgb(255 255 255 / 0.25); cursor: pointer; outline: none; transition: scale 120ms; } .ds-fab:active { scale: 0.95; } .ds-fab:focus-visible { box-shadow: 0 0 0 4px var(--color-accent-500, #2b7fff); }"
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "button-primary",
+      "description": "Frosted 232px panel: the 32px Catat action on top, then 28px nav rows with 16px icons; the active row is a solid surface with a green icon.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-catat\" href=\"#\">Catat</a><a class=\"ds-nav-row is-active\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z\"/></svg><span>Dashboard</span></a><a class=\"ds-nav-row\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z\"/></svg><span>Transactions</span></a></nav>",
+      "css": ".ds-nav { display:flex; flex-direction:column; gap:2px; width:216px; padding:8px; border-radius:12px; background:color-mix(in oklab, var(--color-background-secondary-default, #f3f4f5) 75%, transparent); backdrop-filter:blur(13px) saturate(1.42); -webkit-backdrop-filter:blur(13px) saturate(1.42); box-shadow:0 0 0 1px var(--color-separator-border, #e6e7e9); font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-nav-catat { display:flex; align-items:center; justify-content:center; min-height:32px; margin-bottom:14px; padding:0 12px; gap:6px; border-radius:6px; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); font-size:13px; line-height:20px; font-weight:600; text-decoration:none; outline:none; transition:background-color 150ms, transform 150ms; } .ds-nav-catat:hover { background:var(--color-accent-solid-hover, #135243); } .ds-nav-catat:active { transform:scale(0.98); } .ds-nav-catat:focus-visible, .ds-nav-row:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); } .ds-nav-row { display:flex; align-items:center; gap:8px; height:28px; padding:0 8px; border-radius:6px; color:var(--color-text-secondary, #3c3f44); font-size:13px; line-height:20px; font-weight:500; text-decoration:none; outline:none; transition:background-color 150ms; } .ds-nav-row svg { color:var(--color-foreground-icon-secondary, #62666d); } .ds-nav-row:hover { background:var(--color-background-secondary-hover, #eaebec); } .ds-nav-row.is-active { background:var(--color-background-primary-default, #ffffff); color:var(--color-text-primary, #1b1c1e); font-weight:600; } .ds-nav-row.is-active svg { color:var(--color-button-ghost-foreground, #1a6b52); }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "button-secondary",
+      "description": "Pill toggle (reconcile account filter): hairline neutral at rest, theme fill when selected.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip is-on\" aria-pressed=\"true\">BCA</button><button class=\"ds-chip\" aria-pressed=\"false\">Jenius</button></div>",
+      "css": ".ds-chips { display:flex; gap:8px; font-family:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; } .ds-chip { padding:6px 12px; border:1px solid var(--color-border-button-default, #dcdee1); border-radius:9999px; background:var(--color-background-primary-default, #ffffff); color:var(--color-text-secondary, #3c3f44); font-family:inherit; font-size:12px; line-height:16px; font-weight:500; cursor:pointer; outline:none; transition:background-color 150ms; } .ds-chip:hover { background:var(--color-background-primary-hover, #f3f4f5); } .ds-chip.is-on { border-color:transparent; background:var(--color-accent-solid, #0f3d33); color:var(--color-on-accent, #ffffff); } .ds-chip:focus-visible { box-shadow:0 0 0 2px var(--color-border-focus-ring, #2f8a6b); }"
     }
   ],
   "narrative": {
-    "northStar": "The Quiet Dashboard",
-    "overview": "Finansial is a working tool that two people open several times a day, on a phone at the till and on a laptop at the end of the month. The interface stays quiet so the numbers can speak. Surfaces are neutral white and soft grey (near-black at night), type is Inter at small, even sizes, and color is held back. Blue appears only where you act or where something is selected. Data colors appear only in charts and category tiles.\n\nThe one atmospheric move is glass. Panels, the sidebar, the phone header and the tab bar are frosted over a faint wash of accent blue, purple and teal. A single per-device knob (--glass, 0 to 1, set in Settings → Appearance) controls blur, saturation and see-through together, and at 0 every surface renders exactly as its solid token. The system's Reduce Transparency setting overrides the knob. Glass is the signature, but it never costs legibility.\n\nComponents are soft and tactile: very round cards, gradient primary buttons with a light top highlight, and emoji category tiles that make every row recognizable at a glance. The tactility is in the shapes and the small details. Nothing is loud.",
+    "northStar": "The Night Ledger",
+    "overview": "**Creative North Star: \"The Night Ledger\"**\n\nFinansial wears Linear's precise, dark-led workspace, adapted for a two-person household that checks its money on phone and laptop, often at night. The source is the shadcn.io \"Linear\" DESIGN.md (Dov Azencot's packaging of Linear's marketing system), pinned by the user. From it the app takes the near-black surface ladder, hairlines in place of shadows, tightly tracked sans type, small controls, 12px cards and the discipline of a single chromatic accent. Dark is the default; light is a full peer theme for daytime.\n\nFour translations separate this build from the source file. **The accent:** Linear's lavender-blue became one green from the user's finance-app reference, forest (#0f3d33) as the fill in light and lime (#b8e08a) as the fill in dark, on a shared ramp. **Light mode:** the marketing file is dark only, so the light theme follows Linear's own app light theme: a pale grey page, white cards and grey hairlines. **Type:** Linear Display, Linear Text and Linear Mono are proprietary, so Inter (with its optical-size axis) stands in for all three. **Glass:** Linear has no frosted chrome, but the functional bars (the phone top and tab bars, the sidebar, sheets, menus and toasts) stay glass, a choice the user made before this world. One build divergence from the source: the dark canvas ships at #08090a, a step above Linear's #010102.\n\nDensity is Linear's own app scale: 13px body, 28px buttons and 32px fields on desktop, with phones growing the main buttons and fields to 44px for thumbs. Hierarchy comes from surface steps and hairlines, never from shadow or colour. Green means \"you can act here\" or \"this is selected\", and the Spent series is the only data that wears it.",
     "keyCharacteristics": [
-      "Neutral surfaces, with blue as the only accent and used only for action and selection.",
-      "Adjustable frosted glass over a soft color wash, solid at 0, honoring Reduce Transparency.",
-      "Large 24px card corners. Controls sit at 8–10px.",
-      "Small, even Inter type with tabular numbers for money.",
-      "Dark mode is first-class: every semantic token flips under .dark.",
-      "Category identity is an emoji on a tinted tile, defaulting by group (Needs blue, Wants orange, Savings purple, Income lime)."
+      "Dark-led: a #08090a canvas with a four-step surface ladder; light mode is a pale page with white cards.",
+      "One green, flipping per theme: forest fills in light, lime fills in dark.",
+      "Hairlines, not shadows; the only shadow belongs to floating menus.",
+      "Inter with tracking that tightens as size grows, and weight 500 for labels and controls.",
+      "6px buttons, 8px fields and icon controls, 12px cards, pills only for chips and the phone Catat button.",
+      "Glass on the bars only; content stays solid."
     ],
     "rules": [
       {
-        "name": "The One Voice Rule",
-        "body": "Blue means action or selection, and nothing else in the UI uses it. Content blues (charts, info chips) reference blue-* directly, never accent-*, so the accent can be re-tinted without recoloring data.",
+        "name": "The One Green Rule",
+        "body": "Green appears only on actions, selection and the Spent series. Icon discs, book icons other than the family book, chart series other than Spent and decoration stay neutral. Gains and losses are Positive and Negative text, never green fills.",
         "section": "colors"
       },
       {
-        "name": "The Token-Only Rule",
-        "body": "Every color is a BoardUI semantic token (text-text-*, bg-background-*, border-border-*, chart-*, accent-*). Raw palette classes and hex literals are banned, because the tokens are what make dark mode work.",
+        "name": "The Flip Rule",
+        "body": "Every accent fill goes through the theme-flipping fill and on-fill tokens (forest with white, lime with On-Lime). Fixed ramp steps (`accent-500`, `accent-600`) don't flip and must not carry text unless they are paired per theme.",
         "section": "colors"
       },
       {
         "name": "The AA Floor Rule",
-        "body": "Every text token clears 4.5:1 on every surface it sits on, in both themes, placeholders included. When a pair fails, change the token value, never a single component.",
+        "body": "Every text token clears 4.5:1 against the surfaces it sits on, in both themes. Slate reads 5.4:1 on Paper and Steel 5.2:1 on Surface 3; that margin is the floor, not a target to spend.",
         "section": "colors"
       },
       {
-        "name": "The Composite Rule",
-        "body": "Type is set only with BoardUI composite utilities (text-title-1-medium, text-body-2-regular, …), which set size, weight, line-height and tracking together. Never stack text-sm font-medium leading-5.",
-        "section": "typography"
-      },
-      {
         "name": "The Tabular Money Rule",
-        "body": "Every money figure uses tabular-nums so columns of amounts line up.",
+        "body": "Every amount, total, delta and count is set in tabular numerals so columns align and figures don't jitter as they update.",
         "section": "typography"
       },
       {
-        "name": "The Solid-at-Zero Rule",
-        "body": "Every glass surface must look correct as its solid token when --glass is 0 or Reduce Transparency is on. At 0, no backdrop filter runs at all.",
+        "name": "The Composite Utility Rule",
+        "body": "Type is applied only through the composite text utilities, which carry size, weight, line height and tracking together. A missing style is looked up in the typography file, never stacked from parts.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ladder Rule",
+        "body": "A surface that needs to read as raised steps up the ladder; it never gains a shadow. Shadow is for things that float over content.",
         "section": "elevation"
       },
       {
-        "name": "The Contact-Not-Lift Rule",
-        "body": "Shadows only anchor surfaces in place. They are never large ambient drop shadows used to make cards float.",
+        "name": "The Bars-Only Glass Rule",
+        "body": "Frost only the bars and floating layers. Cards, lists and panels are content and stay solid.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do use BoardUI semantic color tokens and composite type utilities only. Pick a different token rather than writing a dark: override with a raw color.",
-      "Do check every surface in dark mode as well as light. Dark mode is first-class.",
-      "Do keep the primary accent for action and selection: primary buttons, the active nav row, the Catat/add button, focus and checked states.",
-      "Do make every glass surface correct at --glass: 0 and under Reduce Transparency, and use .glass-raised for floating text-dense layers.",
-      "Do use 24px corners and a hairline border on cards and panels, and 8–12px corners on controls and rows.",
-      "Do set money in tabular-nums and start category rows with the category tile.",
-      "Do give every touch target 44px on phones (fields, footer buttons, the drawer close button's hit area, checkbox rows).",
+      "Do use BoardUI semantic colour tokens and composite type utilities only; pick a different token rather than writing a `dark:` override with a raw colour.",
+      "Do colour every accent fill with the theme fill and its on-fill text (Forest with white, Lime with On-Lime).",
+      "Do keep green for actions, selection and the Spent series; keep Catat the most saturated object on screen.",
+      "Do build hierarchy from the surface ladder and 1px hairlines: 12px cards, 8px fields, 6px buttons.",
+      "Do put icons on neutral discs with Ink glyphs.",
+      "Do show changes as Positive or Negative text with a direction arrow.",
+      "Do give every touch target 44px on phones (buttons, fields, triggers, icon-button hit areas, the tab bar).",
+      "Do set money in tabular numerals and start category rows with the category tile.",
       "Do offer Undo for deletes, and confirm only what can't be undone.",
-      "Do respect prefers-reduced-motion. Motion is short (150–200ms) with a cubic-bezier(0.32, 0.72, 0, 1) ease-out."
+      "Do show each field error inline under its field and repeat the summary in the sticky footer.",
+      "Do keep every text token at 4.5:1 or above and every field edge at 3:1, in both themes, and check every surface in dark (the default) and light.",
+      "Do respect Reduce Motion and Reduce Transparency."
     ],
     "donts": [
-      "Don't use raw palette classes (text-gray-500, bg-white) or hex/oklch literals in components.",
-      "Don't use accent blue for data, decoration or non-interactive emphasis. Charts use the chart-* tokens.",
-      "Don't add large ambient drop shadows to make cards float. Depth comes from glass and tonal layering.",
-      "Don't hand-build a control that BoardUI already ships, and don't use raw <input>/<select>.",
-      "Don't blur whole content areas. Glass is for chrome and containers, and scroll regions use the ScrollFade recipe at the top edge."
+      "Don't use gradients on any fill, in any state.",
+      "Don't put a shadow on cards, buttons, fields, nav rows or the sidebar; the Float shadow is for menus and popovers only.",
+      "Don't frost cards, lists or panels, and don't add a decorative wash or colour blob behind the glass.",
+      "Don't introduce a second accent, or use green for icon tiles, non-Spent data or decoration.",
+      "Don't put text on a fixed accent ramp step without a per-theme pair; use the flipping tokens.",
+      "Don't put status colours in tinted pills behind deltas.",
+      "Don't use raw palette classes or hex literals in components.",
+      "Don't hand-build a control that BoardUI already ships."
     ]
   }
 }

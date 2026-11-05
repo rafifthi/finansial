@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/application/theme/theme-toggle";
 import { Chip } from "@/components/base/badges/chip";
 import { ROLE_INFO } from "@/lib/auth/roles";
 import type { PublicUser } from "@/lib/auth/users";
 import { booksOf } from "@/lib/data/registry";
 import { BookIcon, KIND_LABEL } from "./book-switcher";
 import { Card, EmptyState } from "./card";
-import { GlassPreference } from "./glass-preference";
+import { ThemePreference } from "./theme-preference";
 import { StartPagePreference } from "./start-page-preference";
 import { PasswordCard, ProfileCard } from "./profile-forms";
 import type { SettingsSection } from "./settings-tabs";
@@ -64,10 +63,7 @@ export async function personalSections(me: PublicUser): Promise<SettingsSection[
       label: "Appearance",
       content: (
         <Card title="Appearance" description="Personal to this device and browser.">
-          <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-            <GlassPreference />
-            <ThemeToggle appearance="segmented" />
-          </div>
+          <ThemePreference />
           <div className="max-w-sm">
             <StartPagePreference />
           </div>

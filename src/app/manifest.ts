@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Household money tracker backed by Google Sheets",
     start_url: "/",
     display: "standalone",
-    background_color: "#f7f7f7",
-    theme_color: "#155dfc",
+    background_color: "#0f3d33",
+    theme_color: "#0f3d33",
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml" },
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

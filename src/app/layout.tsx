@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import "@/styles/app.css";
-import { glassBootScript } from "@/lib/glass";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], axes: ["opsz"] });
 
@@ -14,8 +13,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
-// Applies the saved BoardUI theme and glass level before first paint (no flash).
-const themeScript = `try{if(localStorage.getItem("boardui:theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}${glassBootScript}`;
+// Applies the theme before first paint (no flash).
+// Follows the system unless a "light" or "dark" choice is saved (Settings → Appearance).
+const themeScript = `try{var t=localStorage.getItem("boardui:theme");if(t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

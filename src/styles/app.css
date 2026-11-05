@@ -1,45 +1,28 @@
 /* ---------------------------------------------------------------------------
  * App-level surfaces on top of BoardUI.
  *
- * Glass: one knob, --glass (0 = solid … 1 = most glassy), set per device from
- * Settings → Appearance (lib/glass.ts writes it onto <html>, with
- * data-glass="off" at 0). Every glass surface derives from the three values
- * below, so the slider moves all of them together. At 0 a surface renders
- * exactly like its solid BoardUI token.
- *
- * Glass is for what floats over content: the phone top/tab bars, sheets and
- * drawers, menus, toasts, the bulk-action bar. Cards, lists and panels are
- * content and stay solid; a blur with nothing scrolling behind it only costs.
+ * Glass, Linear's way: only bars that content scrolls under (the phone top
+ * and tab bars) and floating layers frost. One fixed level for every device;
+ * the system's Reduce transparency turns it off.
  * --------------------------------------------------------------------------*/
 :root {
-  --glass: 0.6; /* lib/glass.ts DEFAULT_GLASS; the boot script overrides it before paint */
+  --glass: 0.6;
   --glass-clarity: 42%; /* how much shows through at full glass */
   --glass-blur: calc(var(--glass) * 22px);
   --glass-saturate: calc(1 + var(--glass) * 0.7);
 }
 
-/* The system's Reduce transparency beats the in-app level, live. */
+/* The system's Reduce transparency turns glass off, live. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --glass: 0 !important;
   }
 }
 
-/* Soft colour wash behind the glass so the blur has something to show. */
+/* No decorative wash behind the glass (Apple world): the bars frost whatever
+ * content scrolls beneath them, and that is the only thing they show. */
 body {
   isolation: isolate;
-}
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: var(--glass);
-  background:
-    radial-gradient(42rem 32rem at 8% -8%, color-mix(in oklab, var(--color-accent-400) 32%, transparent), transparent 70%),
-    radial-gradient(38rem 30rem at 100% 12%, color-mix(in oklab, var(--color-chart-5) 26%, transparent), transparent 70%),
-    radial-gradient(44rem 32rem at 45% 108%, color-mix(in oklab, var(--color-chart-1) 22%, transparent), transparent 70%);
 }
 
 /* Unlayered on purpose: it must beat the bg-* utility on the same element.
@@ -60,11 +43,6 @@ body::before {
  * busy content: same blur, almost opaque, so labels behind never read through. */
 .glass-raised {
   --glass-clarity: 8%;
-}
-/* Off means off: no backdrop pass at all (also no containing block for fixed children). */
-:root[data-glass="off"] .glass {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 @media (prefers-reduced-transparency: reduce) {
   .glass {

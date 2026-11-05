@@ -41,7 +41,7 @@ export default async function ReconcilePage({ params, searchParams }: PageProps<
     cx(
       "flex items-center gap-2 rounded-full border px-3 py-1.5 text-body-2-medium outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring",
       active
-        ? "border-transparent bg-linear-to-b from-accent-500 to-accent-600 text-white"
+        ? "border-transparent bg-accent-solid text-on-accent"
         : "border-border-button-default bg-background-primary-default text-text-secondary hover:bg-background-primary-hover",
     );
 

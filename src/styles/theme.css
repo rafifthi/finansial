@@ -961,3 +961,175 @@
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Linear world, in green (2026-11-05)
+ *
+ * The household's chosen look: shadcn.io's "Linear" DESIGN.md (near-black
+ * surface ladder, hairlines instead of shadows, tight Inter, 8px controls,
+ * 12px cards), with its lavender accent swapped for the forest + lime green
+ * of the user's reference. Dark leads; light is Linear's own app light theme.
+ * Green is for actions and selection only. These overrides sit last so they
+ * win over the BoardUI defaults above: light first, then dark.
+ * --------------------------------------------------------------------------- */
+@theme {
+  /* Inter stands in for Linear's proprietary sans (its documented substitute). */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif,
+               "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* The green ramp: lime at 300, focus at 500, link green at 600, forest at 700. */
+  --color-accent-50:  #f1f8ea;
+  --color-accent-100: #e2f1d0;
+  --color-accent-200: #cde8ac;
+  --color-accent-300: #b8e08a;
+  --color-accent-400: #8fc463;
+  --color-accent-500: #2f8a6b;
+  --color-accent-600: #1a6b52;
+  --color-accent-700: #0f3d33;
+  --color-accent-800: #0b2e26;
+  --color-accent-900: #082219;
+  --color-accent-950: #04140f;
+
+  /* Linear radii: 12px cards, 8px controls and fields, 6px small controls. */
+  --radius-3xl: 12px;
+  --radius-2xl: 12px;
+  --radius-2lg: 8px;
+  --radius-xl: 8px;
+  --radius-lg: 6px;
+
+  /* The surface ladder carries hierarchy: no shadows on chrome. */
+  --shadow-2xs: 0 0 #0000;
+  --shadow-xs: 0 0 #0000;
+  --shadow-card: 0 0 #0000;
+  --shadow-sidebar: 0 0 0 1px var(--color-separator-border);
+  --shadow-nav-selected: 0 0 #0000;
+  --shadow-checkbox-selected: 0 0 #0000;
+  /* The one shadow: floating layers (menus, popovers) over content. */
+  --shadow-dropdown: 0 4px 24px 0 rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04);
+}
+
+:root {
+  --color-text-primary:       #1b1c1e;
+  --color-text-secondary:     #3c3f44;
+  --color-text-tertiary:      #62666d;
+  --color-text-placeholder:   #62666d;
+  --color-foreground-icon-primary:    #1b1c1e;
+  --color-foreground-icon-secondary:  #62666d;
+  --color-foreground-icon-tertiary:   #8a8f98;
+
+  /* Linear's two planes: the canvas the sidebar sits on, and the work panel (background-full). */
+  --color-background-canvas:            #eef0f1;
+  --color-background-full:              #f7f8f8;
+  --color-background-primary-default:   #ffffff;
+  --color-background-inner-default:     #ffffff;
+  --color-background-primary-hover:     #f3f4f5;
+  --color-background-primary-active:    #eaebec;
+  --color-background-secondary-default: #f3f4f5;
+  --color-background-secondary-hover:   #eaebec;
+  --color-background-tertiary-default:  #eaebec;
+  --color-background-tertiary-hover:    #dfe0e3;
+
+  --color-border-button-default: #dcdee1;
+  --color-border-button-hover:   #c4c7cc;
+  --color-border-button-active:  #8a8f98;
+  --color-border-button-white:   #e6e7e9;
+  --color-border-table:          #e6e7e9;
+  --color-separator-border:      #e6e7e9;
+  --color-separator-border-strong: #dcdee1;
+  /* Text fields need a 3:1 edge (WCAG 1.4.11). */
+  --color-border-input:          #8a8f98;
+  --color-border-focus-ring:     #2f8a6b;
+
+  /* Accent fills and what sits on them; they flip per theme (forest in light, lime in dark). */
+  --color-accent-solid:          #0f3d33;
+  --color-accent-solid-hover:    #135243;
+  --color-on-accent:             #ffffff;
+
+  --color-segmented-control-background:          #eaebec;
+  --color-segmented-control-selected-background: #ffffff;
+  --color-dropdown-item-hover-background:        #f3f4f5;
+  --color-pill-tab-blue-selected-background:     #eef7e3;
+  --color-button-ghost-foreground:               #1a6b52;
+  --color-button-ghost-background:               transparent;
+  --color-button-ghost-hover:                    #eef7e3;
+  --color-button-ghost-active:                   #e2f1d0;
+  --color-chart-track:                           #eaebec;
+  --color-chart-neutral:                         #dcdee1;
+  --color-text-positive:                         #1e7a35;
+  --color-text-negative:                         #c5221f;
+
+  --gradient-button-primary-default:  linear-gradient(#0f3d33, #0f3d33);
+  --gradient-button-primary-hover:    linear-gradient(#135243, #135243);
+  --gradient-button-primary-active:   linear-gradient(#0b2e26, #0b2e26);
+  --gradient-button-primary-disabled: linear-gradient(#eaebec, #eaebec);
+  --color-button-primary-disabled-foreground: #8a8f98;
+  --gradient-button-danger-default:   linear-gradient(var(--color-red-600), var(--color-red-600));
+  --gradient-button-danger-hover:     linear-gradient(var(--color-red-700), var(--color-red-700));
+  --gradient-button-danger-active:    linear-gradient(var(--color-red-800), var(--color-red-800));
+}
+
+.dark {
+  --color-text-primary:       #f7f8f8;
+  --color-text-secondary:     #d0d6e0;
+  --color-text-tertiary:      #8a8f98;
+  --color-text-placeholder:   #8a8f98;
+  --color-foreground-icon-primary:    #f7f8f8;
+  --color-foreground-icon-secondary:  #8a8f98;
+  --color-foreground-icon-tertiary:   #62666d;
+
+  /* Linear's ladder: canvas → surface 1 → 2 → 3. */
+  --color-background-canvas:            #08090a;
+  --color-background-full:              #0d0e0f;
+  --color-background-primary-default:   #0f1011;
+  --color-background-inner-default:     #0f1011;
+  --color-background-primary-hover:     #141516;
+  --color-background-primary-active:    #18191a;
+  --color-background-secondary-default: #141516;
+  --color-background-secondary-hover:   #1c1d1f;
+  --color-background-tertiary-default:  #1c1d1f;
+  --color-background-tertiary-hover:    #232427;
+
+  --color-border-button-default: #23252a;
+  --color-border-button-hover:   #34343a;
+  --color-border-button-active:  #3e3e44;
+  --color-border-button-white:   #1c1d1f;
+  --color-border-table:          #23252a;
+  --color-separator-border:      #23252a;
+  --color-separator-border-strong: #34343a;
+  --color-border-input:          #6b6f78;
+  --color-border-focus-ring:     #b8e08a;
+
+  --color-accent-solid:          #b8e08a;
+  --color-accent-solid-hover:    #c9e8a5;
+  --color-on-accent:             #0f2a22;
+
+  --color-segmented-control-background:          #141516;
+  --color-segmented-control-selected-background: #232427;
+  --color-dropdown-item-hover-background:        #1c1d1f;
+  --color-pill-tab-blue-selected-background:     #13362d;
+  --color-button-ghost-foreground:               #b8e08a;
+  --color-button-ghost-background:               transparent;
+  --color-button-ghost-hover:                    #13362d;
+  --color-button-ghost-active:                   #174235;
+  --color-chart-track:                           #34343a;
+  --color-chart-neutral:                         #3e3e44;
+  --color-text-positive:                         #4cc06a;
+  --color-text-negative:                         #ff6b6b;
+
+  --gradient-button-primary-default:  linear-gradient(#b8e08a, #b8e08a);
+  --gradient-button-primary-hover:    linear-gradient(#c9e8a5, #c9e8a5);
+  --gradient-button-primary-active:   linear-gradient(#a6d473, #a6d473);
+  --gradient-button-primary-disabled: linear-gradient(#1c1d1f, #1c1d1f);
+  --color-button-primary-disabled-foreground: #62666d;
+  --shadow-dropdown: 0 4px 24px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+@theme inline {
+  --color-background-canvas: var(--color-background-canvas);
+  --color-border-input: var(--color-border-input);
+  --color-text-positive: var(--color-text-positive);
+  --color-text-negative: var(--color-text-negative);
+  --color-accent-solid: var(--color-accent-solid);
+  --color-accent-solid-hover: var(--color-accent-solid-hover);
+  --color-on-accent: var(--color-on-accent);
+}

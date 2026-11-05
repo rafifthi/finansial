@@ -14,6 +14,7 @@ export function starterRows(kind: "family" | "personal"): { categories: Category
     color,
     emoji,
     archived: false,
+    position: 0,
   });
   const categories: Category[] = [
     c("salary", "Salary", "Income", "💼", "lime"),

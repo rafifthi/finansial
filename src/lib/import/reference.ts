@@ -110,6 +110,7 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
       color: "",
       emoji: "",
       archived: false,
+      position: 0,
     });
   };
   column(g.setup, "Income Sources").forEach((n) => addCategory(n, "Income"));

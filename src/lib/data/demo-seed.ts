@@ -11,6 +11,7 @@ import type {
   User,
 } from "@/lib/sheets/schema";
 import { hashPasswordSync } from "@/lib/auth/password";
+import { budgetMonth, closeMonthPlan } from "@/lib/finance/budget";
 import { addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
 
 export const DEMO_PASSWORD = "demo1234";
@@ -116,6 +117,7 @@ export function demoSeed() {
     color,
     emoji,
     archived: false,
+    position: 0,
   });
 
   const categories: Category[] = [
@@ -218,6 +220,24 @@ export function demoSeed() {
     }
   }
 
+  // Last month is already closed: its leftovers covered any overspend and went to Rumah,
+  // so the dashboard has a month-end sweep to show.
+  const lastMonth = addMonths(thisMonth, -1);
+  const closed = budgetMonth({ month: lastMonth, budgets, categories, txns: transactions });
+  const name = (id: string) => categories.find((c) => c.id === id)?.name ?? "";
+  for (const m of closeMonthPlan(closed.lines, "rumah")) {
+    transactions.push(
+      tx({
+        date: dayInMonth(lastMonth, 31),
+        type: "transfer",
+        amount: m.amount,
+        category_id: m.to,
+        from_category_id: m.from,
+        description: m.reason === "cover" ? `Covers ${name(m.to)} overspend` : `Leftover from ${name(m.from)}`,
+      }),
+    );
+  }
+
   const goals: Goal[] = [
     { id: "g-travel", name: "Travel", target_amount: 30_000_000, target_date: dayInMonth(addMonths(thisMonth, 1), 30), starting_amount: 18_000_000, archived: false },
     { id: "g-house", name: "House", target_amount: 50_000_000, target_date: dayInMonth(addMonths(thisMonth, 2), 31), starting_amount: 28_000_000, archived: false },
@@ -261,6 +281,7 @@ function demoPersonalSeed() {
     color: "",
     emoji: "",
     archived: false,
+    position: 0,
   });
   const categories = [
     c("p-allowance", "Allowance", "Income"),

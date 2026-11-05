@@ -43,7 +43,7 @@ export async function fetchReferencePlan(
   return { plan: planImport(grids, { year, now: opts.now ?? new Date().toISOString() }), year };
 }
 
-export const IMPORT_TABLES = ["accounts", "goals", "categories", "budgets", "installments", "transactions"] as const satisfies TableName[];
+export const IMPORT_TABLES = ["categories", "budgets", "installments", "transactions"] as const satisfies TableName[];
 
 /** What the plan would add to a book, given what's already there (ids are deterministic, so re-runs add nothing). */
 export function importDelta(plan: ImportPlan, existing: Pick<Snapshot, (typeof IMPORT_TABLES)[number] | "settings">) {

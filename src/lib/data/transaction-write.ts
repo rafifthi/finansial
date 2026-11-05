@@ -1,9 +1,9 @@
 import "server-only";
 import { z } from "zod";
-import { accountOfCategory, overridesAllowed, pocketsOf } from "@/lib/finance/accounts";
+import { canTransfer } from "@/lib/finance/ledger";
 import { FieldErrors, type BookActionContext } from "@/lib/data/action";
 import { newId } from "@/lib/data/store";
-import { TXN_TYPES, type Transaction } from "@/lib/sheets/schema";
+import { TXN_TYPES, type Category, type Transaction } from "@/lib/sheets/schema";
 
 export const TxnInput = z
   .object({
@@ -15,8 +15,6 @@ export const TxnInput = z
     category_id: z.string().default(""),
     /** Transfers only: the category the money comes from. */
     from_category_id: z.string().default(""),
-    account_id: z.string().default(""),
-    to_account_id: z.string().default(""),
     member: z.string().default(""),
     description: z.string().trim().min(1, "Enter a description").max(200),
     verified: z.boolean().default(false),
@@ -30,16 +28,23 @@ export const TxnInput = z
     path: ["category_id"],
   });
 
+/** Field errors for a transfer's two categories: both must exist, differ, and not be income. */
+export function transferErrors(categories: Category[], from: string, to: string): Record<string, string> {
+  const errors: Record<string, string> = {};
+  const check = (field: string, id: string, missing: string) => {
+    const category = categories.find((c) => c.id === id);
+    if (!id) errors[field] = missing;
+    else if (category && !canTransfer(category)) errors[field] = "Income can't be moved. Pick a Needs, Wants or Savings category.";
+  };
+  check("from_category_id", from, "Pick where the money comes from");
+  check("category_id", to, "Pick where the money goes");
+  if (from && from === to) errors.category_id = "Pick two different categories";
+  return errors;
+}
+
 /** Inserts or updates one transaction from the manual form; returns its id. */
 export async function writeTransaction({ id, ...input }: z.infer<typeof TxnInput>, { user, store }: Pick<BookActionContext, "user" | "store">): Promise<string> {
   const now = new Date().toISOString();
-  const settings = await store.settings();
-  const categories = await store.rows("categories");
-  const pockets = pocketsOf(settings);
-  const accountOf = (categoryId: string) => {
-    const category = categories.find((c) => c.id === categoryId);
-    return category ? accountOfCategory(category, pockets) : "";
-  };
   // Books made before transfers had a source category lack the column; add it first.
   const headers = (await store.snapshot()).transactions.headers.map(String);
   if (!headers.includes("from_category_id")) {
@@ -47,25 +52,12 @@ export async function writeTransaction({ id, ...input }: z.infer<typeof TxnInput
     store.invalidate();
   }
 
-  let values: Omit<Transaction, "id" | "recurring_id" | "created_at" | "updated_at" | "created_by" | "updated_by">;
   if (input.type === "transfer") {
-    // A transfer moves money between categories; each category's account says where it physically goes.
-    const account_id = accountOf(input.from_category_id);
-    const to_account_id = accountOf(input.category_id);
-    if (!account_id) throw new FieldErrors({ from_category_id: "This category has no account yet. Set one in Settings → Categories." });
-    if (!to_account_id) throw new FieldErrors({ category_id: "This category has no account yet. Set one in Settings → Categories." });
-    values = { ...input, account_id, to_account_id, installment_id: "" };
-  } else {
-    let account_id = input.account_id;
-    if (!overridesAllowed(settings)) {
-      // The category decides the account. An edit that keeps its category keeps its account,
-      // so balances of past transactions don't shift when the category's account changes later.
-      const existing = id ? (await store.rows("transactions")).find((t) => t.id === id) : undefined;
-      account_id = existing && existing.type !== "transfer" && existing.category_id === input.category_id ? existing.account_id : "";
-    }
-    if (!account_id) account_id = accountOf(input.category_id);
-    values = { ...input, account_id, to_account_id: "", from_category_id: "" };
+    const errors = transferErrors(await store.rows("categories"), input.from_category_id, input.category_id);
+    if (Object.keys(errors).length) throw new FieldErrors(errors);
   }
+  const values: Omit<Transaction, "id" | "recurring_id" | "created_at" | "updated_at" | "created_by" | "updated_by"> =
+    input.type === "transfer" ? { ...input, installment_id: "" } : { ...input, from_category_id: "" };
   if (id) {
     await store.update("transactions", id, { ...values, updated_at: now, updated_by: user.email });
     return id;

@@ -107,8 +107,6 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
       amount: r.amount,
       category: opts.categories.find((c) => c.id === r.category_id)?.name ?? "",
       from_category: opts.categories.find((c) => c.id === r.from_category_id)?.name ?? "",
-      account: opts.accounts.find((a) => a.id === r.account_id)?.name ?? "",
-      to_account: opts.accounts.find((a) => a.id === r.to_account_id)?.name ?? "",
       description: r.description,
       member: r.member,
     }));
@@ -160,7 +158,7 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
     if (!nextId || nextId === bookId) return;
     const fromOptions = options;
     setBookId(nextId);
-    // Re-pick categories and accounts from the new book's lists.
+    // Re-pick categories from the new book's lists.
     if (rows.length) ask(nextId, turns, [], true, fromOptions);
   }
 
@@ -178,8 +176,6 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
           amount: r.amount,
           category_id: r.category_id,
           from_category_id: r.type === "transfer" ? r.from_category_id : "",
-          account_id: r.type === "transfer" ? "" : r.account_id,
-          to_account_id: "",
           member: r.member,
           description: r.description,
           verified: false,
@@ -338,9 +334,8 @@ function DraftRow({
   const kind = row.type === "income" ? "income" : "expense";
   const categoryOptions =
     row.type === "transfer"
-      ? options.categories.map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }))
+      ? options.categories.filter((c) => c.kind === "expense").map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }))
       : options.categories.filter((c) => c.kind === kind).map((c) => ({ id: c.id, label: `${c.name} · ${c.group}` }));
-  const accountOptions = options.accounts.map((a) => ({ id: a.id, label: a.name }));
   const issue = problem(row);
   let date = null;
   try {
@@ -392,31 +387,7 @@ function DraftRow({
           size="sm"
           searchable
         />
-        {row.type === "transfer" ? null : (
-          <SelectField
-            aria-label="Account"
-            value={row.account_id}
-            onChange={(v) => onChange({ account_id: v })}
-            options={accountOptions}
-            allowEmpty="Category default"
-            placeholder="Account"
-            size="sm"
-            className="col-span-2 sm:col-span-2"
-          />
-        )}
-        {row.type === "transfer" ? (
-          options.members.length ? (
-            <SelectField
-              aria-label="Member"
-              value={row.member}
-              onChange={(v) => onChange({ member: v })}
-              options={options.members.map((m) => ({ id: m, label: m }))}
-              allowEmpty="Household"
-              size="sm"
-              className="col-span-2"
-            />
-          ) : null
-        ) : options.members.length ? (
+        {options.members.length ? (
           <SelectField
             aria-label="Member"
             value={row.member}

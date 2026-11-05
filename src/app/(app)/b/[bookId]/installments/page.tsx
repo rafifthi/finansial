@@ -51,7 +51,7 @@ export default async function InstallmentsPage({ params }: PageProps<"/b/[bookId
               <Card
                 key={i.id}
                 title={i.name}
-                description={[data.accountById.get(i.account_id)?.name, i.note].filter(Boolean).join(" · ") || undefined}
+                description={i.note || undefined}
                 action={<EntityFormButton table="installments" title="Installment" trigger="icon" fields={specs.installments} money={data.money} initial={i} />}
               >
                 <div className="flex items-end justify-between gap-3">

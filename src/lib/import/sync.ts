@@ -5,14 +5,12 @@
  * since) is never offered again. Add-only: the old sheet clears its Spending
  * tab every month, so a row missing there says nothing about this book.
  */
-import { accountOfCategory, type CategoryGroup } from "@/lib/finance/accounts";
-import type { Account, Category, Installment, Transaction } from "@/lib/sheets/schema";
+import type { Category, Installment, Transaction } from "@/lib/sheets/schema";
 import type { ImportPlan } from "./reference";
 
 export interface SyncExisting {
   transactions: Pick<Transaction, "id" | "date" | "type" | "amount" | "description">[];
   categories: Category[];
-  accounts: Pick<Account, "id">[];
   installments: Pick<Installment, "id">[];
 }
 
@@ -73,12 +71,11 @@ export function previewSync(plan: ImportPlan, existing: SyncExisting): SyncPrevi
 
 /**
  * The rows to write for the picked ids: the transactions, pointed at this
- * book's categories and accounts, plus any category the book doesn't have yet.
+ * book's categories, plus any category the book doesn't have yet.
  */
-export function syncRows(plan: ImportPlan, ids: string[], existing: SyncExisting, pockets: Record<CategoryGroup, string>, now: string) {
+export function syncRows(plan: ImportPlan, ids: string[], existing: SyncExisting, now: string) {
   const wanted = new Set(ids);
   const have = new Set(existing.transactions.map((t) => t.id));
-  const accounts = new Set(existing.accounts.map((a) => a.id));
   const installments = new Set(existing.installments.map((i) => i.id));
   const resolve = categoryResolver(plan, existing);
   const added = new Map<string, Category>();
@@ -89,15 +86,14 @@ export function syncRows(plan: ImportPlan, ids: string[], existing: SyncExisting
     const { own, planned } = resolve(t.category_id);
     let category = own ?? added.get(t.category_id);
     if (!category && planned) {
-      // New in the old sheet since the import: bring the category over, minus links to accounts this book lacks.
-      category = { ...planned, default_account_id: accounts.has(planned.default_account_id) ? planned.default_account_id : "", goal_id: "" };
+      // New in the old sheet since the import: bring the category over.
+      category = { ...planned };
       added.set(planned.id, category);
     }
     if (!category) continue;
     transactions.push({
       ...t,
       category_id: category.id,
-      account_id: accountOfCategory(category, pockets),
       installment_id: installments.has(t.installment_id) ? t.installment_id : "",
       created_at: now,
       updated_at: now,

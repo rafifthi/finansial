@@ -94,7 +94,7 @@ export async function provisionBook(deps: ProvisionDeps, book: Book, opts: Provi
     },
     async seed() {
       const existing = await store.snapshot();
-      const has = (name: "accounts" | "categories", id: string) => existing[name].rows.some((r) => r.data.id === id);
+      const has = (name: "categories", id: string) => existing[name].rows.some((r) => r.data.id === id);
       let members = "";
       if (opts.start === "import" && opts.importFrom) {
         const plan = await deps.loadImportPlan(opts.importFrom);
@@ -103,7 +103,6 @@ export async function provisionBook(deps: ProvisionDeps, book: Book, opts: Provi
         members = plan.settings.find((s) => s.key === "members")?.value ?? "";
       } else {
         const starter = starterRows(book.kind);
-        await store.insert("accounts", starter.accounts.filter((a) => !has("accounts", a.id)));
         await store.insert("categories", starter.categories.filter((c) => !has("categories", c.id)));
       }
       const settings = new Set(existing.settings.rows.map((r) => r.data.key));

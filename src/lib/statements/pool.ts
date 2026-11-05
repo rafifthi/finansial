@@ -15,7 +15,6 @@ export interface PoolBook {
   transactions: Transaction[];
   installments: Installment[];
   categoryName: Map<string, string>;
-  accountName: Map<string, string>;
 }
 
 export interface TxnPool {
@@ -50,7 +49,6 @@ export async function loadPool(userId: string): Promise<TxnPool> {
           transactions: rows("transactions"),
           installments: rows("installments"),
           categoryName: new Map(rows("categories").map((c) => [c.id, c.name])),
-          accountName: new Map(rows("accounts").map((a) => [a.id, a.name])),
         } satisfies PoolBook;
       } catch (err) {
         // One unreachable sheet shouldn't hide the others.

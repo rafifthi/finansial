@@ -15,7 +15,7 @@ Household money tracker whose only databases are Google Sheets you own. Built wi
 
 | Role   | Can, in that book |
 |--------|-------------------|
-| Admin  | Everything, including Members, Book settings, money accounts and categories |
+| Admin  | Everything, including Members, Book settings and categories |
 | Member | Add and edit transactions, budgets, goals, installments, recurring rules; reconcile |
 | Viewer | Read-only |
 
@@ -28,7 +28,7 @@ Every server action re-checks the session and the role in the book it touches. P
 | Spreadsheet | Tabs |
 |---|---|
 | **Registry** (one per deployment, `REGISTRY_SPREADSHEET_ID`) | `Users` (email, name, scrypt password hash, system-admin flag), `Books` (name, kind, spreadsheet id, owner, setup status), `Memberships` (user × book → role, household member), `Invites` |
-| **Book** (one per book; the user creates it in Drive) | `Transactions`, `Accounts`, `Categories`, `Budgets`, `Goals`, `Installments`, `Recurring`, `Settings` (currency, locale, cut-off day, household members), `_meta` (marks which book owns the sheet) |
+| **Book** (one per book; the user creates it in Drive) | `Transactions`, `Categories`, `Budgets`, `Goals`, `Installments`, `Recurring`, `Settings` (currency, locale, cut-off day, household members), `_meta` (marks which book owns the sheet) |
 
 - **Schema:** the schema lives in [`src/lib/sheets/schema.ts`](src/lib/sheets/schema.ts).
 - **Columns:** they're matched **by name**, so you can reorder them or add your own columns; the app preserves them.

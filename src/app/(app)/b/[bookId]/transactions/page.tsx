@@ -20,7 +20,6 @@ export default async function TransactionsPage({ params: route, searchParams }: 
     q: str(params.q),
     type: str(params.type),
     category: str(params.category),
-    account: str(params.account),
     member: str(params.member),
     verified: str(params.verified),
   };
@@ -29,8 +28,7 @@ export default async function TransactionsPage({ params: route, searchParams }: 
   const rows: TxnRow[] = data.transactions
     .filter((t) => periodOf(t.date, data.cutoffDay) === month)
     .filter((t) => !filters.type || t.type === filters.type)
-    .filter((t) => !filters.category || t.category_id === filters.category)
-    .filter((t) => !filters.account || t.account_id === filters.account || t.to_account_id === filters.account)
+    .filter((t) => !filters.category || t.category_id === filters.category || t.from_category_id === filters.category)
     .filter((t) => !filters.member || t.member === filters.member)
     .filter((t) => !filters.verified || String(t.verified) === filters.verified)
     .filter((t) => !q || t.description.toLowerCase().includes(q) || data.categoryById.get(t.category_id)?.name.toLowerCase().includes(q))
@@ -40,8 +38,7 @@ export default async function TransactionsPage({ params: route, searchParams }: 
       group: data.categoryById.get(t.category_id)?.group ?? "",
       categoryEmoji: data.categoryById.get(t.category_id)?.emoji ?? "",
       categoryColor: data.categoryById.get(t.category_id)?.color ?? "",
-      accountName: data.accountById.get(t.account_id)?.name ?? "",
-      toAccountName: data.accountById.get(t.to_account_id)?.name ?? "",
+      fromCategoryName: data.categoryById.get(t.from_category_id)?.name ?? "",
     }));
 
   const options = formOptions(data);

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
@@ -12,22 +12,22 @@ import {
   RiCalendarScheduleLine,
   RiCheckDoubleLine,
   RiExpandUpDownLine,
-  RiFlagLine,
   RiGroupLine,
   RiHomeLine,
   RiLogoutBoxRLine,
   RiMoreLine,
   RiPieChartLine,
+  RiSafe2Line,
   RiRepeatLine,
   RiSettings4Line,
   RiShieldUserLine,
   RiUserLine,
-  RiWallet3Line,
 } from "@remixicon/react";
 import { ThemeToggle } from "@/components/application/theme/theme-toggle";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { Badge } from "@/components/base/badges/badge";
 import { Drawer } from "@/components/base/drawer/drawer";
+import { SpinnerGlyph } from "@/components/base/spinner/spinner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,9 +59,8 @@ const BOOK_NAV: NavEntry[] = [
   { path: "/reconcile", label: "Reconcile", icon: RiCheckDoubleLine, badgeKey: "unverified" },
   { path: "/bill-check", label: "Bill check", icon: RiBankCard2Line },
   { path: "/budget", label: "Budget", icon: RiPieChartLine },
-  { path: "/goals", label: "Goals", icon: RiFlagLine },
+  { path: "/savings", label: "Savings", icon: RiSafe2Line },
   { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine },
-  { path: "/accounts", label: "Accounts", icon: RiWallet3Line },
   { path: "/recurring", label: "Recurring", icon: RiRepeatLine },
   { path: "/members", label: "Members", icon: RiGroupLine, admins: true },
   { path: "/settings", label: "Settings", icon: RiSettings4Line },
@@ -162,7 +161,7 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
                   <item.icon className={cx("size-4 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
                   <span className={cx(active ? "text-body-medium text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
                 </span>
-                {item.badge ? <Badge color="neutral">{item.badge}</Badge> : null}
+                <NavTrailing badge={item.badge} />
               </Link>
             );
           })}
@@ -246,8 +245,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
     );
   const tabLink = (item: ResolvedNav) => (
     <Link key={item.href} href={item.href} className={tab(isActive(pathname, item))} aria-current={isActive(pathname, item) ? "page" : undefined}>
-      <item.icon className="size-6" aria-hidden />
-      <span className="truncate">{item.label === "Your books" ? "Books" : item.label}</span>
+      <TabContent icon={item.icon} label={item.label === "Your books" ? "Books" : item.label} />
     </Link>
   );
 
@@ -308,5 +306,23 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
         </div>
       </Drawer>
     </>
+  );
+}
+
+/** A sidebar item's end: a spinner while its page is on the way, else its badge. Must render inside the Link. */
+function NavTrailing({ badge }: { badge?: string | number }) {
+  const { pending } = useLinkStatus();
+  if (pending) return <SpinnerGlyph size="xs" />;
+  return badge ? <Badge color="neutral">{badge}</Badge> : null;
+}
+
+/** A tab bar item that dims and pulses while its page is on the way. Must render inside the Link. */
+function TabContent({ icon: Icon, label }: { icon: RemixiconComponentType; label: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span className={cx("flex min-w-0 flex-col items-center gap-0.5 transition-opacity", pending && "animate-pulse opacity-60 motion-reduce:animate-none")}>
+      <Icon className="size-6" aria-hidden />
+      <span className="truncate">{label}</span>
+    </span>
   );
 }

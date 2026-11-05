@@ -107,6 +107,10 @@ describe("ledger", () => {
     expect(t.byCategory.get("date")).toBe(240);
     expect(t.byCategory.get("transport")).toBe(-40);
     expect(t.byCategory.get("travel")).toBe(1150);
+    // What was really spent, apart from what moved to savings.
+    expect(t.spentBy.get("meals")).toBe(300);
+    expect(t.toSavingsBy.get("meals")).toBe(150);
+    expect(t.toSavingsBy.has("date")).toBe(false); // went to Transport, not savings
   });
 
   it("takes money out of a savings pot", () => {

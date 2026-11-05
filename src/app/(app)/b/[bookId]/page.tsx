@@ -83,7 +83,15 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
   const trendMonths = monthsEnding(month, 6);
   const trend = trendMonths.map((m) => {
     const b = budgetMonth({ month: m, budgets, categories, txns, cutoff });
-    return { label: monthLabel(m, "en-GB", "short").split(" ")[0], spent: b.spent, budget: b.budgetedExpenses, income: b.actualIncome };
+    // Unspent = income not spent on Needs + Wants: what went to savings, plus the rest (unallocated or not yet moved).
+    const saved = Math.max(b.saved, 0);
+    return {
+      label: monthLabel(m, "en-GB", "short").split(" ")[0],
+      spent: b.spent,
+      saved,
+      rest: Math.max(b.actualIncome - b.spent - saved, 0),
+      income: b.actualIncome,
+    };
   });
 
   const expenseLines = bm.lines
@@ -127,7 +135,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
       <DashboardStats stats={stats} />
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card title="Spending vs budget" description="Needs + Wants, last 6 months" className="xl:col-span-2">
+        <Card title="Spent vs unspent" description="Needs + Wants spending against what was left of income, last 6 months" className="xl:col-span-2">
           <TrendChart data={trend} money={money} />
         </Card>
         <Card title="Where it went" description={monthLabel(month)}>
@@ -151,7 +159,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
           ) : (
             <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
               {expenseLines.map((l) => (
-                <BudgetBar key={l.category.id} name={l.category.name} category={l.category} actual={l.actual} budget={l.budget} money={money} />
+                <BudgetBar key={l.category.id} name={l.category.name} category={l.category} actual={l.actual} spent={l.spent} toSavings={l.toSavings} budget={l.budget} money={money} />
               ))}
             </div>
           )}

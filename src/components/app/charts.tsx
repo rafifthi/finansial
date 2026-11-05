@@ -74,35 +74,42 @@ export function GroupDonut({
   );
 }
 
-/** Monthly spending against budget, newest month on the right. */
+/**
+ * Monthly spending against what stayed unspent, newest month on the right.
+ * Unspent stacks what went to savings under the rest of the income.
+ */
 export function TrendChart({
   data,
   money,
 }: {
-  data: { label: string; spent: number; budget: number; income: number }[];
+  data: { label: string; spent: number; saved: number; rest: number; income: number }[];
   money: MoneyFormat;
 }) {
   const [active, setActive] = useState<number | null>(null);
   const point = active !== null ? data[active] : data[data.length - 1];
+  const unspent = (point?.saved ?? 0) + (point?.rest ?? 0);
+  const legend = [
+    { label: "Spent", className: "bg-accent-solid" },
+    { label: "Saved", className: "bg-chart-5" },
+    { label: "Not spent", className: "bg-chart-neutral" },
+  ];
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-body-2-medium text-text-tertiary">{point?.label}</span>
-          <span className="text-title-2-medium text-text-primary tabular-nums">{formatMoney(point?.spent ?? 0, money)}</span>
+          <span className="text-title-2-medium text-text-primary tabular-nums">{formatMoney(point?.spent ?? 0, money)} spent</span>
           <span className="text-body-2-regular text-text-tertiary tabular-nums">
-            of {formatMoney(point?.budget ?? 0, money)} budgeted
+            {formatMoney(unspent, money)} unspent · {formatMoney(point?.saved ?? 0, money)} saved
           </span>
         </div>
-        <dl className="flex items-center gap-4 text-body-2-medium text-text-secondary">
-          <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-accent-solid" aria-hidden />
-            <dt>Spent</dt>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-chart-neutral" aria-hidden />
-            <dt>Budget</dt>
-          </div>
+        <dl className="flex flex-wrap items-center gap-4 text-body-2-medium text-text-secondary">
+          {legend.map((l) => (
+            <div key={l.label} className="flex items-center gap-1.5">
+              <span className={`size-2 rounded-full ${l.className}`} aria-hidden />
+              <dt>{l.label}</dt>
+            </div>
+          ))}
         </dl>
       </div>
       <div className="h-56 w-full">
@@ -128,8 +135,9 @@ export function TrendChart({
             />
             <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={10} tick={{ fontSize: 12, fill: "var(--color-text-tertiary)" }} />
             <Tooltip content={() => null} cursor={{ fill: "var(--color-chart-track)", opacity: 0.5 }} />
-            <Bar dataKey="budget" fill="var(--color-chart-neutral)" radius={[4, 4, 0, 0]} />
             <Bar dataKey="spent" fill="var(--color-accent-solid)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="saved" stackId="unspent" fill="var(--color-chart-5)" />
+            <Bar dataKey="rest" stackId="unspent" fill="var(--color-chart-neutral)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

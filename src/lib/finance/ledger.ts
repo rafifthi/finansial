@@ -55,6 +55,10 @@ export interface MonthTotals {
   saved: number;
   /** Per category: what counts against its budget (spending plus budget moved out, minus budget moved in). */
   byCategory: Map<string, number>;
+  /** Per category: real spending only (expenses booked to it). */
+  spentBy: Map<string, number>;
+  /** Per Needs/Wants category: budget it sent to Savings pots (net of anything taken back). */
+  toSavingsBy: Map<string, number>;
   /** Real spending per group, and net saved; budget moved between Needs and Wants doesn't show here. */
   byGroup: Record<Group, number>;
 }
@@ -67,12 +71,20 @@ export function monthTotals(txns: Transaction[], categories: Category[], month: 
     spent: 0,
     saved: 0,
     byCategory: new Map(),
+    spentBy: new Map(),
+    toSavingsBy: new Map(),
     byGroup: { Needs: 0, Wants: 0, Savings: 0, Income: 0 },
   };
-  const add = (id: string, delta: number) => totals.byCategory.set(id, (totals.byCategory.get(id) ?? 0) + delta);
+  const bump = (map: Map<string, number>, id: string, delta: number) => map.set(id, (map.get(id) ?? 0) + delta);
+  const add = (id: string, delta: number) => bump(totals.byCategory, id, delta);
   for (const t of txns) {
     if (periodOf(t.date, cutoff) !== month) continue;
     if (t.type === "transfer") {
+      const from = catById.get(t.from_category_id);
+      const to = catById.get(t.category_id);
+      // Budget a spending category hands to a savings pot (or takes back from one).
+      if (from && to && from.group !== "Savings" && to.group === "Savings") bump(totals.toSavingsBy, from.id, t.amount);
+      if (from && to && from.group === "Savings" && to.group !== "Savings" && canTransfer(to)) bump(totals.toSavingsBy, to.id, -t.amount);
       for (const [id, delta] of transferEffects(t, catById)) {
         add(id, delta);
         if (catById.get(id)?.group === "Savings") {
@@ -84,6 +96,7 @@ export function monthTotals(txns: Transaction[], categories: Category[], month: 
     }
     const cat = catById.get(t.category_id);
     if (t.category_id) add(t.category_id, t.amount);
+    if (t.category_id && t.type === "expense") bump(totals.spentBy, t.category_id, t.amount);
     if (t.type === "income") {
       totals.income += t.amount;
       totals.byGroup.Income += t.amount;

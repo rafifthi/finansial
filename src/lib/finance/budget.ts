@@ -6,6 +6,10 @@ export interface BudgetLine {
   budget: number;
   /** Spending plus budget moved out, minus budget moved in (for Savings: net saved). */
   actual: number;
+  /** Real spending (expenses) only. */
+  spent: number;
+  /** Needs/Wants: budget sent to savings pots. The rest of `actual − spent` went to other categories. */
+  toSavings: number;
   /** actual / budget; 0 when there is no budget. */
   usage: number;
   remaining: number;
@@ -47,7 +51,15 @@ export function budgetMonth(input: {
   const toLine = (category: Category): BudgetLine => {
     const budget = budgets.get(category.id) ?? 0;
     const actual = totals.byCategory.get(category.id) ?? 0;
-    return { category, budget, actual, usage: budget > 0 ? actual / budget : 0, remaining: budget - actual };
+    return {
+      category,
+      budget,
+      actual,
+      spent: totals.spentBy.get(category.id) ?? 0,
+      toSavings: totals.toSavingsBy.get(category.id) ?? 0,
+      usage: budget > 0 ? actual / budget : 0,
+      remaining: budget - actual,
+    };
   };
 
   // Show active categories plus any archived one that still has data this month.

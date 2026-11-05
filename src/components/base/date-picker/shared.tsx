@@ -311,7 +311,7 @@ export function DateChipInput({
 /** Shared trigger-button chrome for both pickers (Figma's "Primary" button —
  *  calendar icon + formatted-value text, white surface, radius/2lg). */
 export const triggerButtonClassName = cx(
-  "inline-flex shrink-0 cursor-pointer items-center gap-0.5 rounded-2lg border border-border-button-default bg-background-primary-default p-2 shadow-xs outline-none max-sm:min-h-11",
+  "inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-0.5 rounded-2lg border border-border-button-default bg-background-primary-default px-2.5 py-2 outline-none",
   "transition-[background-color,border-color,box-shadow] duration-150 ease",
   "hover:bg-background-primary-hover hover:border-border-button-hover",
   "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus-ring",

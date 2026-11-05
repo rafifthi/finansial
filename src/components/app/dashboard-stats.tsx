@@ -22,16 +22,7 @@ export interface DashboardStat {
   tone: StatTone;
 }
 
-const TONE_BG: Record<StatTone, string> = {
-  blue: "from-blue-500 to-blue-600",
-  orange: "from-orange-400 to-orange-500",
-  purple: "from-purple-500 to-purple-600",
-  pink: "from-pink-500 to-pink-600",
-  sky: "from-sky-400 to-sky-500",
-  emerald: "from-emerald-500 to-emerald-600",
-};
-
-const DELTA_TEXT = { lime: "text-status-lime-text", rose: "text-status-rose-text", neutral: "text-text-tertiary" } as const;
+const DELTA_TEXT = { lime: "text-text-positive", rose: "text-text-negative", neutral: "text-text-secondary" } as const;
 
 /**
  * Server-friendly wrapper: icons are resolved here because components can't
@@ -42,13 +33,13 @@ export function DashboardStats({ stats }: { stats: DashboardStat[] }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-2.5 sm:hidden">
-        {stats.map(({ key, label, value, delta, deltaColor, caption, tone }) => {
+        {stats.map(({ key, label, value, delta, deltaColor, caption }) => {
           const Icon = ICONS[key];
           return (
-            <section key={key} className="flex min-w-0 flex-col gap-2 rounded-2xl bg-background-secondary-default p-3">
+            <section key={key} className="flex min-w-0 flex-col gap-2 rounded-3xl border border-separator-border bg-background-primary-default p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className={cx("flex size-7 items-center justify-center rounded-lg bg-linear-to-b", TONE_BG[tone])}>
-                  <Icon className="size-4 text-white" aria-hidden />
+                <span className="flex size-8 items-center justify-center rounded-full bg-background-secondary-default">
+                  <Icon className="size-4 text-foreground-icon-primary" aria-hidden />
                 </span>
                 <span className={cx("text-caption-1-semibold tabular-nums", DELTA_TEXT[deltaColor])}>{delta}</span>
               </div>

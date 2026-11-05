@@ -1,300 +1,357 @@
 ---
 name: Finansial
-description: Household money tracker backed by Google Sheets. Quiet neutral surfaces under adjustable glass, with blue reserved for action.
+description: An Apple-native household money app. Parchment ground, white cards, one Action Blue for every action.
 colors:
-  accent-blue: "#2b7fff"
-  accent-blue-deep: "#155dfc"
-  accent-blue-bright: "#3392ff"
-  ink: "#0a0a0a"
-  ink-muted: "#525252"
-  ink-faint: "#666666"
-  placeholder: "#737373"
-  paper: "#ffffff"
-  paper-soft: "#f7f7f7"
-  hairline: "#ebebeb"
-  night-ground: "#121212"
-  night-panel: "#171717"
-  night-surface: "#262626"
-  night-hairline: "#262626"
-  error-red: "#fb2c36"
-  warning-amber: "#f0b100"
-  chart-teal: "#00d5be"
-  chart-lime: "#9ae600"
-  chart-pink: "#fb64b6"
-  chart-sky: "#00bcff"
-  chart-purple: "#c27aff"
+  action-blue: "#0066cc"
+  action-blue-hover: "#0058b0"
+  action-blue-pressed: "#004a94"
+  focus-blue: "#0071e3"
+  sky-link-blue: "#2997ff"
+  selected-tint: "#e8f2fc"
+  ink: "#1d1d1f"
+  graphite: "#424245"
+  slate: "#636366"
+  placeholder-grey: "#6e6e73"
+  field-edge: "#86868b"
+  parchment: "#f5f5f7"
+  card-white: "#ffffff"
+  mist: "#e8e8ed"
+  control-hairline: "#d2d2d7"
+  card-hairline: "#e0e0e0"
+  system-green: "#248a3d"
+  system-red: "#d70015"
+  night: "#000000"
+  night-card: "#1c1c1e"
+  night-inset: "#2c2c2e"
+  night-raised: "#3a3a3c"
+  night-ink: "#f5f5f7"
+  night-graphite: "#c7c7cc"
+  night-slate: "#a1a1a6"
+  night-placeholder: "#98989d"
+  night-field-edge: "#7c7c80"
+  night-green: "#30d158"
+  night-red: "#ff453a"
+  night-selected-tint: "#0a2a4d"
 typography:
+  large-title:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
+    fontSize: "2.125rem"
+    fontWeight: 600
+    lineHeight: "2.5625rem"
+    letterSpacing: "-0.015em"
   title-1:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 500
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
+    fontSize: "1.75rem"
+    fontWeight: 600
     lineHeight: "2.125rem"
+    letterSpacing: "-0.015em"
   title-2:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
+    fontSize: "1.375rem"
+    fontWeight: 600
+    lineHeight: "1.75rem"
+    letterSpacing: "-0.012em"
+  title-3:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 600
-    lineHeight: "1.625rem"
+    lineHeight: "1.5625rem"
+    letterSpacing: "-0.012em"
   headline:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1rem"
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
+    fontSize: "1.0625rem"
     fontWeight: 600
     lineHeight: "1.375rem"
+    letterSpacing: "-0.022em"
   body:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.875rem"
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
+    fontSize: "1.0625rem"
+    fontWeight: 400
+    lineHeight: "1.375rem"
+    letterSpacing: "-0.022em"
+  subhead:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
+    fontSize: "0.9375rem"
     fontWeight: 400
     lineHeight: "1.25rem"
-  body-strong:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 500
-    lineHeight: "1.25rem"
-  body-2:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    letterSpacing: "-0.016em"
+  footnote:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
     fontSize: "0.8125rem"
     fontWeight: 400
     lineHeight: "1.125rem"
+    letterSpacing: "-0.006em"
   caption:
-    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
     fontSize: "0.75rem"
-    fontWeight: 500
+    fontWeight: 400
     lineHeight: "1rem"
-    letterSpacing: "0.15px"
+    letterSpacing: "0em"
+  money:
+    fontFamily: "-apple-system, BlinkMacSystemFont, SF Pro Text, SF Pro Display, Inter, system-ui, sans-serif"
+    fontFeature: "\"tnum\""
 rounded:
-  sm: "4px"
-  lg: "8px"
-  2lg: "10px"
-  xl: "12px"
-  2xl: "16px"
-  3xl: "24px"
-  full: "9999px"
+  tile-sm: "8px"
+  control: "12px"
+  sheet: "14px"
+  card: "18px"
+  pill: "9999px"
 spacing:
-  1: "4px"
-  2: "8px"
-  3: "12px"
-  4: "16px"
-  5: "20px"
-  6: "24px"
+  xs: "4px"
+  sm: "8px"
+  grid: "10px"
+  md: "16px"
+  lg: "20px"
+  xl: "24px"
 components:
   button-primary:
-    backgroundColor: "{colors.accent-blue-deep}"
-    textColor: "{colors.paper}"
-    rounded: "{rounded.2lg}"
-    height: "36px"
-    padding: "8px"
-    typography: "{typography.body-strong}"
-  button-primary-hover:
-    backgroundColor: "{colors.accent-blue-deep}"
-  button-secondary:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.2lg}"
-    height: "36px"
-    padding: "8px"
-  button-secondary-hover:
-    backgroundColor: "{colors.paper-soft}"
-  input:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.2lg}"
-    height: "36px"
+    backgroundColor: "{colors.action-blue}"
+    textColor: "{colors.card-white}"
     typography: "{typography.body}"
-  card:
-    backgroundColor: "{colors.paper}"
-    rounded: "{rounded.3xl}"
-    padding: "16px"
-  nav-item:
-    textColor: "{colors.ink-muted}"
-    rounded: "{rounded.2lg}"
-    padding: "8px"
-    typography: "{typography.body-strong}"
-  nav-item-active:
-    backgroundColor: "{colors.accent-blue}"
-    textColor: "{colors.paper}"
-  sidebar:
-    backgroundColor: "{colors.paper-soft}"
-    rounded: "{rounded.3xl}"
-    width: "260px"
-    padding: "12px"
-  tab-bar-cta:
-    backgroundColor: "{colors.accent-blue}"
-    textColor: "{colors.paper}"
-    rounded: "{rounded.full}"
-    size: "56px"
-  category-tile:
-    rounded: "{rounded.xl}"
+    rounded: "{rounded.pill}"
+    padding: "0 16px"
+    height: "44px"
+  button-primary-hover:
+    backgroundColor: "{colors.action-blue-hover}"
+  button-primary-active:
+    backgroundColor: "{colors.action-blue-pressed}"
+  button-secondary:
+    backgroundColor: "{colors.mist}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.pill}"
+    padding: "0 16px"
+    height: "44px"
+  button-secondary-hover:
+    backgroundColor: "{colors.control-hairline}"
+  button-ghost:
+    textColor: "{colors.action-blue}"
+    typography: "{typography.body}"
+    rounded: "{rounded.pill}"
+    padding: "0 16px"
+    height: "44px"
+  button-ghost-hover:
+    backgroundColor: "{colors.selected-tint}"
+  icon-button:
+    backgroundColor: "{colors.parchment}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
     size: "36px"
+  input-text:
+    backgroundColor: "{colors.card-white}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.control}"
+    padding: "8px 10px"
+    height: "44px"
+  select-trigger:
+    backgroundColor: "{colors.card-white}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.control}"
+    padding: "8px 12px"
+    height: "44px"
+  card:
+    backgroundColor: "{colors.card-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.card}"
+    padding: "16px"
+  catat-pill:
+    backgroundColor: "{colors.action-blue}"
+    textColor: "{colors.card-white}"
+    typography: "{typography.body}"
+    rounded: "{rounded.pill}"
+    padding: "0 16px"
+    height: "44px"
+  catat-tab-button:
+    backgroundColor: "{colors.action-blue}"
+    textColor: "{colors.card-white}"
+    rounded: "{rounded.pill}"
+    size: "56px"
+  stat-icon-disc:
+    backgroundColor: "{colors.parchment}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    size: "40px"
+  switch-track-off:
+    backgroundColor: "{colors.mist}"
+    rounded: "{rounded.pill}"
+  switch-track-on:
+    backgroundColor: "{colors.action-blue}"
+    rounded: "{rounded.pill}"
 ---
 
 # Design System: Finansial
 
 ## Overview
 
-**Creative North Star: "The Quiet Dashboard"**
+**Creative North Star: "The Quiet Apple Ledger"**
 
-Finansial is a working tool that two people open several times a day, on a phone at the till and on a laptop at the end of the month. The interface stays quiet so the numbers can speak. Surfaces are neutral white and soft grey (near-black at night), type is Inter at small, even sizes, and color is held back. Blue appears only where you act or where something is selected. Data colors appear only in charts and category tiles.
+Finansial is a two-person money app that should feel like it shipped with the phone. The world is adopted, by the household's choice, from the shadcn.io "Apple" DESIGN.md (author Dov Azencot, a reading of apple.com's marketing system): a parchment ground, near-black ink, a muted grey text ladder, SF Pro type with tight tracking, no weight 500, no gradients, no shadows on chrome, and one Action Blue that is every action and nothing else. Credit for the palette, the type stance and the single-accent discipline belongs to that source.
 
-The one atmospheric move is **glass**. Panels, the sidebar, the phone header and the tab bar are frosted over a faint wash of accent blue, purple and teal. A single per-device knob (`--glass`, 0 to 1, set in Settings → Appearance) controls blur, saturation and see-through together, and at 0 every surface renders exactly as its solid token. The system's Reduce Transparency setting overrides the knob. Glass is the signature, but it never costs legibility.
+Apple's file describes marketing pages; Finansial is an app, so several patterns are translated rather than copied. Full-bleed alternating light and dark product tiles became white cards on a parchment ground, edged by hairlines, because an app screen is many small containers, not one product per viewport. The source's single product-photo shadow has no product photo to sit under here; that one shadow is kept for things that float over content (menus, popovers, listboxes), and nothing at rest carries one. The marketing display ramp gave way to the iOS text styles (Body 17, Subhead 15, Footnote 13, Caption 12, Headline 17 semibold, Title 1 to 3 at 28/22/20), since this is reading and logging, not a hero headline. Frosted glass from Apple's sticky bars stays, but only on the functional layer that floats over scrolling content.
 
-Components are soft and tactile: very round cards, gradient primary buttons with a light top highlight, and emoji category tiles that make every row recognizable at a glance. The tactility is in the shapes and the small details. Nothing is loud.
+Density is calm and even. Each screen is a page title, then a grid of white cards. The blue Catat pill is meant to be the only saturated object in view; every other icon sits on a grey disc, and good or bad changes are coloured text, not tinted chips. Dark mode is first-class: a true black ground with #1c1c1e cards, the iOS system greys, and the brighter link and focus blue.
 
 **Key Characteristics:**
-- Neutral surfaces, with blue as the only accent and used only for action and selection.
-- Adjustable frosted glass over a soft color wash, solid at 0, honoring Reduce Transparency.
-- Large 24px card corners. Controls sit at 8–10px.
-- Small, even Inter type with tabular numbers for money.
-- Dark mode is first-class: every semantic token flips under `.dark`.
-- Category identity is an emoji on a tinted tile, defaulting by group (Needs blue, Wants orange, Savings purple, Income lime).
+- One Action Blue for every action and selection; the Catat pill is the only saturated object on screen.
+- Parchment ground, white cards with hairline edges at 18px; flat at rest.
+- SF Pro through the system stack (Inter elsewhere) on the iOS text styles, weights 400, 600 and 700 only.
+- Pills for every button, circles for every icon control, 44px touch targets.
+- Glass only on bars, sheets, menus and toasts that float over content.
+- Money in tabular numerals; changes in Apple system green and red, as text.
 
 ## Colors
 
-The palette is near-neutral with a single blue accent ramp and a separate set of data colors for charts and categories.
+A near-monochrome Apple palette: parchment, white and four greys, with one blue for action and two system colours for change.
 
 ### Primary
-- **Action Blue** (`accent-blue`, accent-500): focus rings, checked controls, selection edges. It's the only hue that means "do this" or "you are here".
-- **Deep Action Blue** (`accent-blue-deep`, accent-600): top stop of every white-label fill (primary button, active nav row, tab-bar action, gradient 600 → 700), so white text clears 4.5:1 (5.3:1).
-- **Bright Action Blue** (`accent-blue-bright`, accent-400, a deliberate primitive override): one of the three glass-wash blobs. Never under white text.
+- **Action Blue** (action-blue): every primary button, the Catat pill and tab button, checked checkboxes, radios, switches and slider fills, ghost-button and link text, the active nav icon. White text on it clears 5.57:1.
+- **Action Blue Hover and Pressed** (action-blue-hover, action-blue-pressed): the flat hover and press steps of the same fill. One colour per state, never a light-to-dark gradient.
+- **Focus Blue** (focus-blue): the 2px focus ring in light mode, and the primary button fill in dark mode.
+- **Sky Link Blue** (sky-link-blue): links, ghost text and the focus ring on dark surfaces, where Action Blue would sink.
+- **Selected Tint** (selected-tint; night-selected-tint in dark): ghost-button hover and selected pill-tab backgrounds.
 
 ### Neutral
-- **Ink** (`ink`, neutral-950): primary text and primary icons in light mode.
-- **Muted Ink** (`ink-muted`, neutral-600): secondary text, idle nav labels, badges on grey.
-- **Faint Ink** (`ink-faint`, a 60/40 mix of neutral-500 and 600): tertiary text, descriptions, helper lines, money sub-lines. It clears 4.5:1 even on #ebebeb.
-- **Placeholder** (`placeholder`, neutral-500): placeholders only, on the white field (4.7:1). In dark mode, secondary is neutral-400 and tertiary and placeholder are a 60/40 mix of neutral-400 and 500 (≥4.6:1 on neutral-800).
-- **Paper** (`paper`): page ground and primary surfaces (cards, inputs) in light mode.
-- **Soft Paper** (`paper-soft`, neutral-100 override): secondary surface (sidebar, sheets) and hover on primary surfaces.
-- **Hairline** (`hairline`, neutral-200 override): card borders, separators, table rules.
-- **Night Ground / Night Panel / Night Surface** (`night-ground` neutral-925, `night-panel` neutral-900, `night-surface` neutral-800): dark-mode page ground, secondary surfaces and primary surfaces. Text flips to neutral-50.
+- **Ink** (ink; night-ink in dark): primary text and primary icons.
+- **Graphite** (graphite; night-graphite): secondary text, stat footnotes, neutral deltas.
+- **Slate** (slate; night-slate): tertiary text, descriptions and helper lines.
+- **Placeholder Grey** (placeholder-grey; night-placeholder): field placeholders and secondary icons.
+- **Field Edge** (field-edge; night-field-edge): the 1px edge on text inputs, textareas and the off switch track, kept at 3:1 for non-text contrast. Also the tertiary icon colour and control hover edge.
+- **Parchment** (parchment; night in dark): the page ground, the icon-button and stat-icon discs, and secondary insets.
+- **Card White** (card-white; night-card in dark): cards, panels, fields and dropdowns.
+- **Mist** (mist; night-raised in dark): the grey secondary capsule, segmented-control track, chart track, pressed rows.
+- **Control Hairline** (control-hairline): the edge on select and date triggers, secondary capsule hover.
+- **Card Hairline** (card-hairline; night-inset in dark): card edges, table rules and separators.
 
-### Status and data
-- **Error Red** (`error-red`, red-500): over-budget remainders, destructive text, field errors.
-- **Warning Amber** (`warning-amber`, yellow-500): the "items to reconcile" dot, and the meter tone at 90% or more of a budget.
-- **Chart set** (`chart-teal`, `chart-lime`, `chart-pink`, `chart-sky`, `chart-purple`, plus chart-6…9): the data palette, each with an `-active` (500) variant. These are used only in charts, the glass wash and category tints, never on controls.
+### Status
+- **System Green** (system-green; night-green in dark): good changes, as text only.
+- **System Red** (system-red; night-red in dark): bad changes, as text only. Errors keep BoardUI's red error tokens.
 
 ### Named Rules
-**The One Voice Rule.** Blue means action or selection, and nothing else in the UI uses it. Content blues (charts, info chips) reference `blue-*` directly, never `accent-*`, so the accent can be re-tinted without recoloring data.
+**The One Blue Rule.** Action Blue means "you can press this" or "this is selected". It never decorates, never marks data, and never tints an icon tile. Charts use the `chart-*` tokens.
 
 **The AA Floor Rule.** Every text token clears 4.5:1 on every surface it sits on, in both themes, placeholders included. When a pair fails, change the token value, never a single component.
 
-**The Token-Only Rule.** Every color is a BoardUI semantic token (`text-text-*`, `bg-background-*`, `border-border-*`, `chart-*`, `accent-*`). Raw palette classes and hex literals are banned, because the tokens are what make dark mode work.
+**The Flat Fill Rule.** Every fill is one colour. Buttons, checkboxes, radios, the Catat pill and the logo carry no gradient in any state.
 
 ## Typography
 
-**Body Font:** Inter (via `next/font`, with the optical-size axis), falling back to ui-sans-serif and system-ui
-**Mono Font:** JetBrains Mono, rarely used
+**Display Font:** SF Pro Display through `-apple-system` (Inter via next/font on non-Apple devices)
+**Body Font:** SF Pro Text through the same system stack
+**Label/Mono Font:** JetBrains Mono, for code only
 
-**Character:** a single neutral sans at small, tightly stepped sizes. Hierarchy comes from weight (400 / 500 / 600) more than size, which suits dense money rows.
+**Character:** Apple's own voice: tight negative tracking, regular weight for reading, semibold for anything that names a thing. Weight 500 is absent; the BoardUI `-medium` utilities render at 400 for text sizes and 600 for titles and headlines.
 
 ### Hierarchy
-- **Title 1** (500, 1.5rem / 2.125rem): page titles from `sm` up.
-- **Title 2** (600, 1.25rem / 1.625rem): page titles on phones, and large figures.
-- **Headline** (600, 1rem / 1.375rem): card titles.
-- **Body** (400 or 500, 0.875rem / 1.25rem): rows, nav labels, inputs and buttons. 500 is for names and labels.
-- **Body 2** (400 or 500, 0.8125rem / 1.125rem): descriptions, "spent / budget" amounts, secondary links.
-- **Caption** (500 or 600, 0.75rem / 1rem, +0.15px): meter sub-lines ("Rp… left · 72%"), badges, xs buttons.
+- **Large Title** (600, 34px, 41px, -0.015em): the headline figure on footer stat cards (BoardUI's Display 4 utility renders at this size).
+- **Title 1** (600, 28px, 34px, -0.015em): page titles from small screens up, and the transaction amount field.
+- **Title 2** (600, 22px, 28px, -0.012em): page titles on phones.
+- **Title 3** (600, 20px, 25px, -0.012em): wizard, setup and dialog titles, and summary figures (budget totals, bill-check totals).
+- **Headline** (600, 17px, 22px, -0.022em): card titles.
+- **Body** (400, 17px, 22px, -0.022em): row labels, field values, button labels at medium size.
+- **Subhead** (400, 15px, 20px, -0.016em): descriptions, small buttons, semibold deltas.
+- **Footnote** (400, 13px, 18px, -0.006em): captions, field messages, tab-bar labels.
+- **Caption** (400, 12px, 16px): the smallest text; badges and dense meta.
 
 ### Named Rules
-**The Composite Rule.** Type is set only with BoardUI composite utilities (`text-title-1-medium`, `text-body-2-regular`, …), which set size, weight, line-height and tracking together. Never stack `text-sm font-medium leading-5`.
+**The No 500 Rule.** Text is 400, titles and names are 600, and 700 is for rare emphasis. Never stack a medium weight back in.
 
-**The Tabular Money Rule.** Every money figure uses `tabular-nums` so columns of amounts line up.
+**The Tabular Money Rule.** Every money figure uses tabular numerals so columns of amounts line up.
 
 ## Layout
 
-- **Desktop (`lg` and up):** a floating 260px sidebar inset 12px from the viewport edges (sticky, full height minus 24px), next to a fluid main column with 24px side padding. Page sections stack with 24px gaps.
-- **Phone (below `lg`):** a sticky glass header with the book switcher and avatar, a fixed glass bottom tab bar (max width 32rem) with a raised 56px circular center button, and a "More" bottom sheet for everything else. Main content has 16px side padding and 20px gaps, and its bottom padding clears the tab bar plus the safe-area inset.
-- **Cards** pad 16px on phones and 20px from `sm` up, with 16px between header and body.
-- **Page headers** stack on phones and sit title-left, actions-right from `sm` up.
-- **Safe areas** (`env(safe-area-inset-*)`) are respected on the header, tab bar and sheets. The viewport uses `viewport-fit=cover`.
-- **Direction:** use logical properties only (`ms`/`me`, `ps`/`pe`, `start`/`end`).
+Phones get a single column with 16px side padding, a frosted top bar and a frosted bottom tab bar with the raised Catat button in the centre. From the large breakpoint the app becomes a 260px frosted sidebar inset 12px from the window, beside a content column with 24px side padding. Page content stacks with 20px gaps (24px from small screens up). Cards pad 16px (20px from small screens up) and space their contents 16px apart. Stat cards tile two across on phones with 10px gaps. Forms open in a right-side drawer on desktop and a bottom sheet on phones, with a sticky footer.
 
 ## Elevation & Depth
 
-Depth comes from **glass plus tonal layering**, with shadows kept to small contact cues. A fixed, `pointer-events-none` color wash sits behind the page: three radial gradients of accent-400, chart-5 and chart-1 at 22–32% strength, with opacity tied to `--glass`. Glass surfaces mix their solid token toward transparent (up to 42% clarity), add a blur of up to 22px, and saturate up to 1.7×. Floating, text-dense surfaces (menus, toasts) use `.glass-raised` at 24% clarity so text stays readable.
+Flat by default. Cards, buttons, fields and the sidebar sit on tonal steps (parchment ground, white card, grey inset) and are edged by 1px hairlines, not shadows. Real depth appears only where something floats over content: bars, sheets and drawers frost what scrolls under them with backdrop blur, and menus, popovers and listboxes add the one shadow.
 
 ### Shadow Vocabulary
-- **Card contact** (`0 1px 1px 0 rgb(0 0 0 / 0.05)`; 0.14 in dark mode): white cards sitting on the secondary surface.
-- **Sidebar elevation** (three layers: `0 1px 0` at 2%, `0 1px 12px` at 6%, `0 0 1px` at 32%): the floating desktop sidebar.
-- **Selected nav** (`0 0 0 1px accent-500` plus `inset 0 1px 0 rgb(255 255 255 / 0.25)`): the active nav item and the phone Catat/add button. It gives a crisp blue edge with a lit top lip.
-- **Dropdown** (`0 1px 1px` at 4%, plus `0 4px 4px` at 2%): menus and popovers.
-- **Button xs** (Tailwind `shadow-xs`): primary and secondary buttons at rest.
+- **Float** (`box-shadow: 0 5px 30px 0 rgb(0 0 0 / 0.16), 0 0 0 1px rgb(0 0 0 / 0.04)`; dark `0 5px 30px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06)`): dropdown menus, popovers, listboxes and calendars. Apple's product-photo shadow, moved to the things that float.
+- **Sidebar ring** (`box-shadow: 0 0 0 1px` card hairline): the sidebar's edge, drawn as a ring.
 
 ### Named Rules
-**The Solid-at-Zero Rule.** Every glass surface must look correct as its solid token when `--glass` is 0 or Reduce Transparency is on. At 0, no backdrop filter runs at all.
+**The One Shadow Rule.** There is one shadow, and it belongs to floating layers. Nothing at rest casts one.
 
-**The Contact-Not-Lift Rule.** Shadows only anchor surfaces in place. They are never large ambient drop shadows used to make cards float.
+**The Glass Is Chrome Rule.** Glass is for what floats over content: the phone bars, sheets and drawers, menus, toasts, the bulk-action bar and the desktop sidebar. Cards, lists and panels are content and stay solid. Every glass surface must read correctly at `--glass: 0` and under Reduce Transparency, and text-dense floating layers use the 8% raised clarity.
 
 ## Shapes
 
-The shapes are soft. Containers are the roundest element on screen, controls are moderately rounded, and anything circular is a person or the main action.
-
-- **24px** (`rounded-3xl`): cards, the desktop sidebar, top-rounded bottom sheets.
-- **20px** (`rounded-2-5xl`): large inset panels.
-- **10px** (`rounded-2lg`): medium buttons, inputs, nav items, the account row.
-- **8px** (`rounded-lg`) for small buttons, and **4px** (`rounded-sm`) for xs buttons.
-- **Category tiles** step with size: 28px at 8px radius, 36px at 12px, 48px at 16px.
-- **Full** (`rounded-full`): avatars, the 56px tab-bar action button, status dots, pills.
-- Borders are 1px hairlines (`border-border-button-default`). The sidebar uses a white inner edge (`border-border-button-white`) so its glass reads as a pane of material.
+Two shapes carry the world: the capsule and the soft rectangle. Every button is a full pill and every icon control a circle. Cards and panels round at 18px. Fields, select and date triggers, and nav rows round at 12px. Sheets and chat bubbles round at 14px. Category tiles step with size: 28px at 8px, 36px at 12px, 48px at 14px. Edges are always 1px.
 
 ## Components
 
 ### Buttons
-- **Shape:** gently rounded (10px at medium/36px tall, 8px at small/32px tall, 4px at xs/24px tall).
-- **Primary:** a vertical gradient from accent-600 to accent-700, with white text and `shadow-xs`. Hover flattens it to solid 600, and active deepens it to 700 → 800. Disabled is a neutral 200 → 300 gradient.
-- **Secondary:** primary surface with a 1px hairline border and `shadow-xs`. Hover moves to the primary hover surface.
-- **Ghost / Link:** accent-tinted text on a transparent background, used for quiet actions.
-- **Danger:** a red gradient matching the primary recipe (red-600 → 700).
-- **Focus:** `outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring` (accent-500) on every interactive element.
-- **Icons:** Remixicon, passed as component references (`leadingIcon={RiAddLine}`).
+Quiet capsules that press in.
+- **Shape:** full pill (9999px). Medium 44px tall with 16px side padding and Body type; small 36px with Subhead; xs 28px with semibold Footnote. Icon-only buttons are circles of the same height.
+- **Primary:** a flat Action Blue fill with white text. Hover steps to Action Blue Hover and press to Action Blue Pressed. In dark mode the fill is Focus Blue.
+- **Secondary:** the grey capsule: a Mist fill with ink text, no edge and no shadow. Hover deepens to Control Hairline.
+- **Ghost:** Action Blue text on transparent (Sky Link Blue in dark), with a Selected Tint hover.
+- **Danger:** a flat red fill on the same recipe.
+- **Press:** buttons scale to 95% on press with a 420ms ease back.
+- **Focus:** a 2px Focus Blue ring with a 2px offset on every interactive element.
+
+### Icon Buttons
+A grey Parchment disc with an ink icon, 36px at medium. Hover deepens to Mist, press scales to 95%. On phones the hit area extends 6px past the disc to reach 44px.
 
 ### Cards / Containers
-- **Corner style:** 24px.
-- **Background:** the primary surface, frosted with `.glass`.
-- **Border:** 1px `border-border-button-default`.
-- **Header:** a headline-semibold title with an optional body-2 tertiary description, and an optional action or "View all" link (accent-600, accent-400 in dark mode).
-- **Empty state:** centered body-2 tertiary text with 24px vertical padding.
+- **Corner Style:** 18px.
+- **Background:** Card White (Night Card in dark), solid, never glass.
+- **Shadow Strategy:** none; see Elevation & Depth.
+- **Border:** 1px Card Hairline.
+- **Internal Padding:** 16px, 20px from small screens up, with a 16px gap.
+- **Header:** a Headline title, an optional Subhead description in Slate, and an optional ghost action.
+
+### Stat Cards (signature)
+A white card with a 40px grey icon disc and an ink icon, the label in Graphite Body and the value in tabular Large Title, then a footnote row under a hairline: the comparison caption in Graphite on the start side and the change on the end side as a direction arrow plus semibold tabular Subhead in System Green, System Red or Graphite. No tinted pill behind the change.
 
 ### Inputs / Fields
-- **One field family:** text inputs, number and money fields, selects and date triggers all share the raised look: primary surface, a 1px hairline edge (`border-button-default`), `shadow-xs`, 10px radius, 36px tall (44px on phones). Text inputs are not filled grey wells.
-- **Hover / Focus:** the edge strengthens to `border-button-hover` on hover. Focus is a 2px accent ring (`border-focus-ring`). The placeholder keeps its colour on focus.
-- **Error:** the field turns `background-tertiary-error` with a red edge, and the message sits directly under it in caption type. Required fields carry a red asterisk on the label.
-- **Forms:** every drawer form validates on the client first and shows each message under its field. The sticky footer repeats the problem ("Enter an amount", or "3 fields need attention."), and focus moves to the first invalid field after a submit. ⌘/Ctrl+Enter saves from anywhere. Server issues come back per field in plain words, never as schema text.
-- **Money:** the transaction amount is a display-size field (`text-title-1-semibold`). Money fields ignore the scroll wheel and never round what was typed.
-- **Popovers:** listboxes, calendars and menus use `.glass-raised` at 8% clarity, so labels behind them never read through.
+- **Text inputs and textareas:** Card White, 12px radius, 44px tall, a 1px inset Field Edge so the control clears 3:1.
+- **Selects and date triggers:** Card White, 12px radius, 44px tall, a 1px Control Hairline edge that strengthens to Field Edge on hover.
+- **Focus:** a 2px Focus Blue ring.
+- **Error:** the field takes the red error surface and edge, and the message sits directly under it in Footnote. Required fields carry a red asterisk on the label.
+- **Forms:** every drawer form validates on the client first and shows each message under its field. The sticky footer repeats the problem ("Enter an amount", or "3 fields need attention."), and focus moves to the first invalid field after a submit. Server issues come back per field in plain words.
+- **Money:** the transaction amount is a Title 1 field. Money fields ignore the scroll wheel and never round what was typed.
+
+### Switches
+On: a flat Action Blue track. Off: a Mist track with a 1px inset Field Edge ring, so the off state still reads as a control.
 
 ### Navigation
-- **Desktop sidebar:** the book switcher on top, then rows with a 20px icon and a body-medium label at 10px radius. Idle rows use muted ink and hover to the secondary hover surface. The **active** row is filled with the accent gradient, with white icon and label and the selected-nav shadow. Badges (unverified count) sit at the end of the row. The footer holds the account menu row and a quiet theme toggle.
-- **Phone:** a glass header, a glass bottom tab bar with 24px icons and short labels, and a raised 56px accent circle in the center (4px ring in the page-ground color, scales to 95% on press). An amber dot on "More" marks items to reconcile.
+- **Desktop sidebar:** a frosted 260px panel, 18px radius, inset 12px. The Catat pill sits on top: 44px Action Blue capsule, Body label, press to 95%. Nav rows are 12px-radius rows with a 20px Placeholder Grey icon and Graphite Body label; the active row is a white raised row with an Action Blue icon and a semibold Ink label. Solid blue stays reserved for Catat.
+- **Phone:** a frosted top bar and frosted tab bar with 24px icons and Footnote labels, Ink at rest and Action Blue when active. Catat is a raised 56px Action Blue circle in the centre with a 4px ring in the page-ground colour, pressing to 95%.
 
-### Budget Bar (signature)
-One line per budget category: the category tile, its name and "spent / budget" in tabular body-2, a small meter, and a caption showing "left · %" or "over · %". Meter tone is accent below 90%, warning from 90%, and error over 100%. Savings lines go to success at 100% instead of warning.
-
-### Category Tile (signature)
-The category's emoji on a tile tinted with its chosen chip color (blue, cyan, green, yellow, orange, red, purple, gray). It falls back to the group color, and to the name's first letter when no emoji is set. Every transaction and budget row starts with one.
-
-### Category Picker (signature)
-Quick capture picks a category from tiles, not a list: the seven most used in the last 90 days plus an "All" tile that opens every category grouped by Needs / Wants / Savings / Income, with search. The selected tile gets the selected-pill background and a 2px accent ring.
+### Category Tiles and Picker (signature)
+A category's emoji on a tile tinted with its chosen chip colour, falling back to its group colour and then to the name's first letter. Every transaction and budget row starts with one. Quick capture picks a category from tiles, not a list: the seven most used in the last 90 days plus an "All" tile that opens every category grouped by Needs, Wants, Savings and Income, with search.
 
 ### Deletes
-Deletes happen at once and show an Undo toast for 8 seconds that names what went ("Deleted Meals · Rp 25.000"). Only actions that can't be undone (removing a member, resetting a password, deleting an account with moves) ask first, in an AlertDialog that names the consequence. In drawer footers, Delete is a quiet red text button set apart from the primary actions, and never the bottom-most button on a phone.
+Deletes happen at once and show an Undo toast for 8 seconds that names what went. Only actions that can't be undone (removing a member, resetting a password, deleting an account with moves) ask first, in a dialog that names the consequence.
 
 ### Menus
-shadcn/Radix dropdowns styled to BoardUI's menu motion: a 150ms fade with a scale from 95% and a 2px blur, both opening and closing, and no motion under Reduce Motion.
+Dropdowns, listboxes and calendars are almost-opaque glass (8% clarity) with the Float shadow. They open and close with a 150ms fade, a scale from 95% and a 2px blur, and do not animate under Reduce Motion.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** use BoardUI semantic color tokens and composite type utilities only. Pick a different token rather than writing a `dark:` override with a raw color.
-- **Do** check every surface in dark mode as well as light. Dark mode is first-class.
-- **Do** keep the primary accent for action and selection: primary buttons, the active nav row, the Catat/add button, focus and checked states.
-- **Do** make every glass surface correct at `--glass: 0` and under Reduce Transparency, and use `.glass-raised` for floating text-dense layers.
-- **Do** use 24px corners and a hairline border on cards and panels, and 8–12px corners on controls and rows.
-- **Do** set money in `tabular-nums` and start category rows with the category tile.
-- **Do** give every touch target 44px on phones (fields, footer buttons, the drawer close button's hit area, checkbox rows).
+- **Do** use BoardUI semantic colour tokens and composite type utilities only; pick a different token rather than writing a `dark:` override with a raw colour.
+- **Do** keep Action Blue for action and selection, and keep the Catat pill the only saturated object on screen.
+- **Do** put cards on the parchment ground as white panels with an 18px radius and a 1px Card Hairline edge.
+- **Do** make every button a pill and every icon control a circle, with flat single-colour fills.
+- **Do** put icons on grey discs (Parchment) with ink glyphs.
+- **Do** show changes as System Green or System Red text with a direction arrow.
+- **Do** give every touch target 44px on phones (buttons, fields, triggers, footer buttons, icon-button hit areas).
+- **Do** set money in tabular numerals and start category rows with the category tile.
 - **Do** offer Undo for deletes, and confirm only what can't be undone.
-- **Do** respect `prefers-reduced-motion`. Motion is short (150–200ms) with a `cubic-bezier(0.32, 0.72, 0, 1)` ease-out.
+- **Do** show each field error inline under its field and repeat the summary in the sticky footer.
+- **Do** check every surface in dark mode and keep every text token at 4.5:1 or above in both themes.
+- **Do** respect Reduce Motion and Reduce Transparency.
 
 ### Don't:
-- **Don't** use raw palette classes (`text-gray-500`, `bg-white`) or hex/oklch literals in components.
-- **Don't** use accent blue for data, decoration or non-interactive emphasis. Charts use the `chart-*` tokens.
-- **Don't** add large ambient drop shadows to make cards float. Depth comes from glass and tonal layering.
-- **Don't** hand-build a control that BoardUI already ships, and don't use raw `<input>`/`<select>`.
-- **Don't** blur whole content areas. Glass is for chrome and containers, and scroll regions use the `ScrollFade` recipe at the top edge.
+- **Don't** use gradients on any fill, in any state.
+- **Don't** put a shadow on cards, buttons, fields or the sidebar; the Float shadow is for menus and popovers only.
+- **Don't** frost cards, lists or panels, and don't add a decorative wash or colour blob behind the glass.
+- **Don't** use weight 500.
+- **Don't** use Action Blue, or any saturated colour, for icon tiles, data or decoration.
+- **Don't** put status colours in tinted pills behind deltas.
+- **Don't** use raw palette classes or hex literals in components.
+- **Don't** hand-build a control that BoardUI already ships.

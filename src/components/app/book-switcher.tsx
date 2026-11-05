@@ -28,8 +28,8 @@ export function BookIcon({ kind, className }: { kind: ShellBook["kind"]; classNa
   return (
     <span
       className={cx(
-        "flex size-8 shrink-0 items-center justify-center rounded-xl bg-linear-to-b text-white",
-        kind === "personal" ? "from-purple-600 to-purple-700" : "from-accent-600 to-accent-700",
+        "flex size-8 shrink-0 items-center justify-center rounded-xl text-white",
+        kind === "personal" ? "bg-purple-600" : "bg-accent-600",
         className,
       )}
     >

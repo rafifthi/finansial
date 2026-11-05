@@ -154,9 +154,9 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
           {unverified > 0 ? (
             <Link
               href={data.href("/reconcile")}
-              className="flex items-center gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-4 outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+              className="flex items-center gap-3 rounded-3xl border border-separator-border bg-background-primary-default p-4 outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
             >
-              <span className="flex size-10 items-center justify-center rounded-2lg bg-linear-to-b from-yellow-400 to-yellow-500">
+              <span className="flex size-10 items-center justify-center rounded-2lg bg-yellow-400">
                 <RiCheckDoubleLine className="size-5 text-white" aria-hidden />
               </span>
               <span className="flex flex-col">

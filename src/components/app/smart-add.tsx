@@ -254,7 +254,7 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
                 className={cx(
                   "max-w-[85%] rounded-2xl px-3 py-2 text-body-regular",
                   t.role === "user"
-                    ? "bg-linear-to-b from-accent-500 to-accent-600 text-text-white"
+                    ? "bg-accent-600 text-text-white"
                     : t.failed
                       ? "border border-border-error-default bg-background-primary-default text-text-error-primary"
                       : "border border-border-button-default bg-background-primary-default text-text-primary",
@@ -278,7 +278,7 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
         <section
           ref={draftsRef}
           aria-label="Drafts"
-          className="glass flex flex-col gap-3 rounded-3xl border border-border-button-default bg-background-primary-default p-3 sm:p-4"
+          className="flex flex-col gap-3 rounded-3xl border border-separator-border bg-background-primary-default p-3 sm:p-4"
         >
           <header className="flex flex-wrap items-center justify-between gap-2 px-1">
             <h2 className="text-headline-semibold text-text-primary">

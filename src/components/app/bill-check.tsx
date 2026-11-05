@@ -555,7 +555,7 @@ export function BillRows({ views, pickable, options }: { views: LineView[]; pick
           <p className="text-body-medium text-text-secondary">{filter === "check" ? "Every row is accounted for." : "Nothing here."}</p>
         </div>
       ) : (
-        <ul className="glass divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
+        <ul className="divide-y divide-separator-border overflow-hidden rounded-3xl border border-separator-border bg-background-primary-default">
           {shown.map((v) => (
             <BillRow key={v.line.id} view={v} money={money} onOpen={canWrite ? () => setOpenLine(v.line.id) : undefined} />
           ))}

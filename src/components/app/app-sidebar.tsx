@@ -133,8 +133,8 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
             onClick={onNavigate}
             aria-current={onCatat ? "page" : undefined}
             className={cx(
-              "flex items-center justify-center gap-2 rounded-xl bg-linear-to-b from-accent-600 to-accent-700 px-3 py-2.5 text-white shadow-nav-selected outline-none transition",
-              "hover:from-accent-400 hover:to-accent-500 focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-[0.98]",
+              "flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent-600 px-4 text-body-regular text-white outline-none transition-[background-color,transform] duration-150",
+              "hover:bg-accent-700 focus-visible:ring-2 focus-visible:ring-border-focus-ring active:scale-95",
               onCatat && "ring-2 ring-accent-300 ring-offset-2 ring-offset-background-secondary-default",
             )}
           >
@@ -253,7 +253,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
 
   return (
     <>
-      <aside className="sticky top-3 hidden h-[calc(100dvh-24px)] w-[260px] shrink-0 overflow-y-auto rounded-3xl border border-border-button-white bg-background-secondary-default p-3 shadow-sidebar lg:block">
+      <aside className="glass glass-secondary sticky top-3 hidden h-[calc(100dvh-24px)] w-[260px] shrink-0 overflow-y-auto rounded-3xl border border-border-button-white bg-background-secondary-default p-3 shadow-sidebar lg:block">
         <SidebarPanel {...props} />
       </aside>
 
@@ -280,7 +280,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
                 aria-current={onCatat ? "page" : undefined}
                 className="-mt-5 flex flex-col items-center gap-0.5 rounded-full pb-1.5 outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
               >
-                <span className="flex size-14 items-center justify-center rounded-full bg-linear-to-b from-accent-600 to-accent-700 text-white shadow-nav-selected ring-4 ring-background-full active:scale-95">
+                <span className="flex size-14 items-center justify-center rounded-full bg-accent-600 text-white ring-4 ring-background-full active:scale-95">
                   <RiSparkling2Fill className="size-7" aria-hidden />
                 </span>
                 <span className="text-caption-1-medium text-button-ghost-foreground">Catat</span>

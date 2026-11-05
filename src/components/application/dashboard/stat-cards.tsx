@@ -105,53 +105,23 @@ const DEFAULT_FOOTER_STATS: Stat[] = [
   },
 ];
 
-/** Gradient stops for the footer variant's icon tile, keyed by tone. */
-const TILE_TONES: Record<StatTone, string> = {
-  blue: "from-blue-500 to-blue-600",
-  orange: "from-orange-400 to-orange-500",
-  purple: "from-purple-500 to-purple-600",
-  pink: "from-pink-500 to-pink-600",
-  sky: "from-sky-400 to-sky-500",
-  emerald: "from-emerald-500 to-emerald-600",
+/** Good and bad read as Apple's system green and red, as text; the arrow follows the sign. */
+const DELTA_TEXT: Record<Stat["deltaColor"], string> = {
+  lime: "text-text-positive",
+  rose: "text-text-negative",
+  neutral: "text-text-secondary",
 };
 
-const DELTA_STYLES: Record<
-  Stat["deltaColor"],
-  { icon: IconComponent; className: string; pill: string }
-> = {
-  lime: {
-    icon: RiArrowUpCircleFill,
-    className: "text-status-lime-text",
-    pill: "bg-status-lime-background",
-  },
-  rose: {
-    icon: RiArrowDownCircleFill,
-    className: "text-status-rose-text",
-    pill: "bg-status-rose-background",
-  },
-  neutral: {
-    icon: RiIndeterminateCircleFill,
-    className: "text-text-secondary",
-    pill: "bg-background-secondary-default",
-  },
-};
-
-/** Tinted pill with a direction glyph — the footer band's delta readout, in
- *  the same lime and rose the chart cards use for their trend chips. */
 function DeltaPill({ delta, deltaColor }: Pick<Stat, "delta" | "deltaColor">) {
   const localize = useTemplateCopy();
-  const { icon: Icon, className, pill } = DELTA_STYLES[deltaColor];
+  const text = String(delta ?? "");
+  // Arrow from the sign of the change; a flat change gets the level glyph.
+  const sign = text.trim().startsWith("-") || text.trim().startsWith("−") ? -1 : Number.parseFloat(text.replace(/[^\d.,]/g, "").replace(",", ".")) === 0 ? 0 : 1;
+  const Icon = sign < 0 ? RiArrowDownCircleFill : sign === 0 ? RiIndeterminateCircleFill : RiArrowUpCircleFill;
   return localize((
-    <span
-      className={cx(
-        "flex shrink-0 items-center gap-1 rounded-full py-0.5 pe-2 ps-1",
-        pill,
-      )}
-    >
-      <Icon className={cx("size-4 shrink-0", className)} aria-hidden />
-      <span className={cx("text-body-medium whitespace-nowrap tabular-nums", className)}>
-        {delta}
-      </span>
+    <span className={cx("flex shrink-0 items-center gap-1", DELTA_TEXT[deltaColor])}>
+      <Icon className="size-4 shrink-0" aria-hidden />
+      <span className="text-body-2-semibold whitespace-nowrap tabular-nums">{delta}</span>
     </span>
   ));
 }
@@ -182,7 +152,7 @@ function StatHint({ label, hint }: { label: string; hint: string }) {
 function PlainStatCard({ stat }: { stat: Stat }) {
   const localize = useTemplateCopy();
   return localize((
-    <section className="flex h-[132px] min-w-0 flex-col items-start justify-between rounded-2xl bg-background-secondary-default p-4">
+    <section className="flex h-[132px] min-w-0 flex-col items-start justify-between rounded-3xl border border-separator-border bg-background-primary-default p-4">
       <span className="flex items-center rounded-md bg-stat-card-icon-background p-1.5">
         <stat.icon className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
       </span>
@@ -202,16 +172,12 @@ function PlainStatCard({ stat }: { stat: Stat }) {
 function FooterStatCard({ stat }: { stat: Stat }) {
   const localize = useTemplateCopy();
   return localize((
-    <section className="flex min-w-0 flex-col rounded-2xl bg-background-secondary-default p-2">
+    <section className="flex min-w-0 flex-col rounded-3xl border border-separator-border bg-background-primary-default p-2">
       {/* Icon tile + optional info glyph, both hanging from the same top inset */}
       <div className="flex w-full items-start justify-between gap-2.5 p-2">
-        <span
-          className={cx(
-            "flex size-10 shrink-0 items-center justify-center rounded-2lg bg-linear-to-b",
-            TILE_TONES[stat.tone ?? "blue"],
-          )}
-        >
-          <stat.icon className="size-5 shrink-0 text-white" aria-hidden />
+        {/* A quiet grey disc: Catat stays the only saturated object on screen. */}
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background-secondary-default">
+          <stat.icon className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
         </span>
         {stat.hint && <StatHint label={stat.label} hint={stat.hint} />}
       </div>
@@ -224,8 +190,8 @@ function FooterStatCard({ stat }: { stat: Stat }) {
         </p>
       </div>
 
-      {/* Footer band: comparison caption + delta pill on an inner tile */}
-      <div className="mt-auto flex w-full items-center justify-between gap-2 rounded-2lg bg-background-inner-default py-1.5 pe-1.5 ps-2.5 shadow-card">
+      {/* Footnote row under a hairline: comparison caption + the change */}
+      <div className="mx-2 mt-auto flex items-center justify-between gap-2 border-t border-separator-border pt-2.5 pb-1.5">
         <p className="truncate text-body-regular text-text-secondary">
           {stat.caption ?? "From last month"}
         </p>

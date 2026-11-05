@@ -877,7 +877,8 @@
     transform 420ms cubic-bezier(0.4, 0, 0.2, 1);
 
   &:active:not(:disabled):not([aria-disabled="true"]) {
-    transform: scale(0.98);
+    /* Apple's press: the whole capsule shrinks a little. */
+    transform: scale(0.95);
     transition-duration: 150ms, 150ms, 150ms, 150ms, 220ms;
   }
 
@@ -960,4 +961,151 @@
   &[aria-disabled="true"]::before {
     display: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Apple world (2026-11-05)
+ *
+ * The household's chosen look: shadcn.io's "Apple" DESIGN.md, translated from
+ * marketing pages to an app. One Action Blue for every action, parchment
+ * ground with white cards, hairlines instead of shadows, SF Pro through the
+ * system stack, no gradients. These overrides sit last so they win over the
+ * BoardUI defaults above; light first, then dark.
+ * --------------------------------------------------------------------------- */
+@theme {
+  /* SF Pro on Apple devices; Inter (next/font) everywhere else. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", var(--font-inter), system-ui, sans-serif,
+               "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Action Blue and its siblings. 600 is the button and link colour (#0066cc),
+   * 500 the focus ring (#0071e3), 400 the link colour on dark (#2997ff). */
+  --color-accent-400: #2997ff;
+  --color-accent-500: #0071e3;
+  --color-accent-600: #0066cc;
+  --color-accent-700: #0058b0;
+  --color-accent-800: #004a94;
+
+  /* Radii: cards and panels at Apple's 18px; controls at 12px. */
+  --radius-3xl: 18px;
+  --radius-2xl: 14px;
+  --radius-2lg: 12px;
+
+  /* No shadows on chrome: buttons, inputs and cards are flat and edged by hairlines. */
+  --shadow-2xs: 0 0 #0000;
+  --shadow-xs: 0 0 #0000;
+  --shadow-card: 0 0 #0000;
+  --shadow-sidebar: 0 0 0 1px var(--color-separator-border);
+  --shadow-nav-selected: 0 0 #0000;
+  --shadow-checkbox-selected: 0 0 #0000;
+  /* The one shadow, kept for things that float over content (menus, popovers). */
+  --shadow-dropdown: 0 5px 30px 0 rgb(0 0 0 / 0.16), 0 0 0 1px rgb(0 0 0 / 0.04);
+}
+
+:root {
+  --color-text-primary:       #1d1d1f;
+  --color-text-secondary:     #424245;
+  --color-text-tertiary:      #636366;
+  --color-text-placeholder:   #6e6e73;
+  --color-foreground-icon-primary:    #1d1d1f;
+  --color-foreground-icon-secondary:  #6e6e73;
+  --color-foreground-icon-tertiary:   #86868b;
+
+  --color-background-full:              #f5f5f7;
+  --color-background-primary-default:   #ffffff;
+  --color-background-inner-default:     #ffffff;
+  --color-background-primary-hover:     #f5f5f7;
+  --color-background-primary-active:    #e8e8ed;
+  --color-background-secondary-default: #f5f5f7;
+  --color-background-secondary-hover:   #e8e8ed;
+  --color-background-tertiary-default:  #e8e8ed;
+  --color-background-tertiary-hover:    #d2d2d7;
+
+  --color-border-button-default: #d2d2d7;
+  --color-border-button-hover:   #86868b;
+  --color-border-button-active:  #6e6e73;
+  --color-border-button-white:   #e0e0e0;
+  --color-border-table:          #e0e0e0;
+  --color-separator-border:      #e0e0e0;
+  --color-separator-border-strong: #d2d2d7;
+  /* Form fields need a 3:1 edge (WCAG 1.4.11); Apple's own forms use #86868b. */
+  --color-border-input:          #86868b;
+  --color-border-focus-ring:     #0071e3;
+
+  --color-segmented-control-background:          #e8e8ed;
+  --color-segmented-control-selected-background: #ffffff;
+  --color-dropdown-item-hover-background:        #f5f5f7;
+  --color-pill-tab-blue-selected-background:     #e8f2fc;
+  --color-button-ghost-foreground:               #0066cc;
+  --color-button-ghost-background:               transparent;
+  --color-button-ghost-hover:                    #e8f2fc;
+  --color-button-ghost-active:                   #d6e8fa;
+  --color-chart-track:                           #e8e8ed;
+  /* Apple system green and red, for good and bad changes (text only). */
+  --color-text-positive:                         #248a3d;
+  --color-text-negative:                         #d70015;
+
+  /* Flat fills: one colour, no light-to-dark gradient. */
+  --gradient-button-primary-default:  linear-gradient(#0066cc, #0066cc);
+  --gradient-button-primary-hover:    linear-gradient(#0058b0, #0058b0);
+  --gradient-button-primary-active:   linear-gradient(#004a94, #004a94);
+  --gradient-button-primary-disabled: linear-gradient(#e8e8ed, #e8e8ed);
+  --gradient-button-danger-default:   linear-gradient(var(--color-red-600), var(--color-red-600));
+  --gradient-button-danger-hover:     linear-gradient(var(--color-red-700), var(--color-red-700));
+  --gradient-button-danger-active:    linear-gradient(var(--color-red-800), var(--color-red-800));
+}
+
+.dark {
+  --color-text-primary:       #f5f5f7;
+  --color-text-secondary:     #c7c7cc;
+  --color-text-tertiary:      #a1a1a6;
+  --color-text-placeholder:   #98989d;
+  --color-foreground-icon-primary:    #f5f5f7;
+  --color-foreground-icon-secondary:  #a1a1a6;
+  --color-foreground-icon-tertiary:   #8e8e93;
+
+  --color-background-full:              #000000;
+  --color-background-primary-default:   #1c1c1e;
+  --color-background-inner-default:     #1c1c1e;
+  --color-background-primary-hover:     #2c2c2e;
+  --color-background-primary-active:    #3a3a3c;
+  /* One step lighter than cards, so insets (stat footers, read-only rows) still show. */
+  --color-background-secondary-default: #2c2c2e;
+  --color-background-secondary-hover:   #3a3a3c;
+  --color-background-tertiary-default:  #3a3a3c;
+  --color-background-tertiary-hover:    #48484a;
+
+  --color-border-button-default: #3a3a3c;
+  --color-border-button-hover:   #636366;
+  --color-border-button-active:  #8e8e93;
+  --color-border-button-white:   #2c2c2e;
+  --color-border-table:          #2c2c2e;
+  --color-separator-border:      #2c2c2e;
+  --color-separator-border-strong: #3a3a3c;
+  --color-border-input:          #7c7c80;
+  --color-border-focus-ring:     #2997ff;
+
+  --color-segmented-control-background:          #2c2c2e;
+  --color-segmented-control-selected-background: #636366;
+  --color-dropdown-item-hover-background:        #2c2c2e;
+  --color-pill-tab-blue-selected-background:     #0a2a4d;
+  --color-button-ghost-foreground:               #2997ff;
+  --color-button-ghost-background:               transparent;
+  --color-button-ghost-hover:                    #0a2a4d;
+  --color-button-ghost-active:                   #0d3561;
+  /* Budget bars and legend dots must stay visible on #1c1c1e cards. */
+  --color-chart-track:                           #48484a;
+  --color-text-positive:                         #30d158;
+  --color-text-negative:                         #ff453a;
+
+  --gradient-button-primary-default:  linear-gradient(#0071e3, #0071e3);
+  --gradient-button-primary-hover:    linear-gradient(#0066cc, #0066cc);
+  --gradient-button-primary-active:   linear-gradient(#0058b0, #0058b0);
+  --gradient-button-primary-disabled: linear-gradient(#2c2c2e, #2c2c2e);
+  --shadow-dropdown: 0 5px 30px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+@theme inline {
+  --color-border-input: var(--color-border-input);
+  --color-text-positive: var(--color-text-positive);
+  --color-text-negative: var(--color-text-negative);
 }

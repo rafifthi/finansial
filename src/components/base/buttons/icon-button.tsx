@@ -49,15 +49,16 @@ export interface IconLinkButtonProps
 
 const styles = sortCx({
   base: [
-    "relative inline-flex shrink-0 items-center justify-center overflow-visible rounded-2lg",
-    "bg-background-primary-default text-foreground-icon-primary",
-    "border border-border-button-default shadow-xs",
+    // Apple's circular control: a quiet grey disc, with a 44px hit area on phones.
+    "relative inline-flex shrink-0 items-center justify-center overflow-visible rounded-full",
+    "bg-background-secondary-default text-foreground-icon-primary",
+    "max-sm:after:absolute max-sm:after:-inset-1.5 max-sm:after:content-['']",
     "select-none cursor-pointer",
-    "transition-[background-color,border-color,box-shadow,color] duration-150 ease",
+    "transition-[background-color,color,transform] duration-150 ease",
     "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus-ring",
-    "hover:bg-background-primary-hover hover:border-border-button-hover",
-    "active:bg-background-primary-active active:border-border-button-active",
-    "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:border-border-button-default disabled:text-icon-button-disabled-foreground disabled:opacity-60 disabled:shadow-none",
+    "hover:bg-background-tertiary-default",
+    "active:scale-95 active:bg-background-tertiary-hover",
+    "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:text-icon-button-disabled-foreground disabled:opacity-60",
   ].join(" "),
   size: {
     medium: "size-9",

@@ -45,7 +45,7 @@ const STEPS = ["About", "Spreadsheet", "History", "Create"] as const;
 
 function Panel({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-5 sm:p-6">
+    <section className="flex flex-col gap-5 rounded-3xl border border-separator-border bg-background-primary-default p-5 sm:p-6">
       <header className="flex flex-col gap-1">
         <h2 className="text-title-3-semibold text-text-primary">{title}</h2>
         {description ? <p className="text-body-regular text-text-secondary">{description}</p> : null}
@@ -209,7 +209,7 @@ export function NewBookWizard({
   /* Success */
   if (provision?.ok && bookId) {
     return (
-      <section className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 rounded-3xl border border-border-button-default bg-background-primary-default p-8 text-center">
+      <section className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 rounded-3xl border border-separator-border bg-background-primary-default p-8 text-center">
         <RiCheckboxCircleFill className="size-12 text-status-lime-text" aria-hidden />
         <div className="flex flex-col gap-1">
           <h2 className="text-title-2-semibold text-text-primary">{name || resume?.name} is ready</h2>
@@ -258,7 +258,7 @@ export function NewBookWizard({
                 aria-current={i === step ? "step" : undefined}
                 className={cx(
                   "flex size-7 shrink-0 items-center justify-center rounded-full text-caption-1-semibold",
-                  i < step ? "bg-linear-to-b from-accent-600 to-accent-700 text-white" : i === step ? "border-2 border-accent-500 text-accent-600" : "border border-border-button-default text-text-tertiary",
+                  i < step ? "bg-accent-600 text-white" : i === step ? "border-2 border-accent-500 text-accent-600" : "border border-border-button-default text-text-tertiary",
                 )}
               >
                 {i < step ? "✓" : i + 1}

@@ -39,7 +39,7 @@ const dotStyles = {
     dot: "size-3.5",
     inner: "size-[5px]",
     selected:
-      "bg-gradient-to-b from-accent-500 to-accent-600 shadow-[inset_0px_0px_0px_0.875px_var(--color-accent-500),inset_0px_1.75px_0px_0px_rgba(255,255,255,0.25)]",
+      "bg-accent-600",
     border: "border-[0.875px]",
     gap: "gap-2",
     label: "text-body-2-medium",
@@ -48,7 +48,7 @@ const dotStyles = {
     dot: "size-4",
     inner: "size-1.5",
     selected:
-      "bg-gradient-to-b from-accent-500 to-accent-600 shadow-[inset_0px_0px_0px_1px_var(--color-accent-500),inset_0px_2px_0px_0px_rgba(255,255,255,0.25)]",
+      "bg-accent-600",
     border: "border",
     gap: "gap-2",
     label: "text-body-medium",

@@ -36,7 +36,7 @@ export function FormDrawer({
       size={size}
       aria-label={ariaLabel}
       overlayClassName={mobile ? "p-0 pt-10" : undefined}
-      className={cx("glass glass-full", mobile && "rounded-b-none pb-[max(1.5rem,env(safe-area-inset-bottom))]")}
+      className={cx("glass glass-full", mobile && "glass-raised rounded-b-none pb-[max(1.5rem,env(safe-area-inset-bottom))]")}
     >
       {children}
     </Drawer>

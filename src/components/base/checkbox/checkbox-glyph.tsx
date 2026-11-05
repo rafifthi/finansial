@@ -43,8 +43,8 @@ export function CheckboxGlyph({
         s.box,
         isMarked
           ? cx(
-              "bg-linear-to-b shadow-checkbox-selected",
-              hover ? "from-accent-400 to-accent-500" : "from-accent-500 to-accent-600",
+              
+              hover ? "bg-accent-700" : "bg-accent-600",
             )
           : cx(
               "border bg-background-primary-default shadow-xs",

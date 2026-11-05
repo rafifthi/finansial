@@ -114,7 +114,7 @@ export function Select<T extends object>({
             ref={triggerRef}
             className={cx(
               "flex w-full cursor-pointer items-center justify-between rounded-2lg",
-              "border border-border-button-default bg-background-primary-default shadow-xs",
+              "border border-border-button-default bg-background-primary-default",
               "text-text-primary",
               "transition-[background-color,border-color,box-shadow,padding,font-size] duration-200 ease",
               "hover:bg-background-primary-hover hover:border-border-button-hover",
@@ -122,7 +122,7 @@ export function Select<T extends object>({
               "disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:text-text-tertiary disabled:shadow-none",
               size === "sm"
                 ? "gap-1 px-[7px] py-1 text-body-2-medium"
-                : "gap-1.5 px-2.5 py-2 text-body-medium max-sm:min-h-11",
+                : "min-h-11 gap-1.5 px-3 py-2 text-body-regular",
               triggerClassName,
             )}
           >

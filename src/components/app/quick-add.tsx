@@ -12,7 +12,7 @@ export function QuickAdd({ options }: { options: FormOptions }) {
   if (!useCan("data:write")) return null;
   return (
     <>
-      <Button variant="primary" leadingIcon={RiAddLine} onClick={() => setOpen(true)}>
+      <Button variant="secondary" leadingIcon={RiAddLine} onClick={() => setOpen(true)}>
         Add
       </Button>
       <TransactionDrawer options={options} isOpen={open} onOpenChange={setOpen} />

@@ -85,9 +85,10 @@ const styles = sortCx({
 
   // Base shape per size (used when label is present OR medium icon-only).
   size: {
-    medium: "h-9 rounded-2lg p-2 text-body-medium",
-    small:  "h-8 rounded-lg px-2 py-1.5 text-body-medium",
-    xs:     "h-6 rounded-sm px-2 text-caption-1-semibold",
+    // Apple pills: every button is a capsule; 44px is the touch target.
+    medium: "h-11 rounded-full px-4 text-body-regular",
+    small:  "h-9 rounded-full px-3 text-body-2-regular",
+    xs:     "h-7 rounded-full px-2.5 text-caption-1-semibold",
   },
 
   // Icon-only override:
@@ -97,9 +98,9 @@ const styles = sortCx({
   //   Xs     → forces 24×24, content-centered — used for the calendar
   //            template's edit-icon buttons (timezone/participants/reminder).
   iconOnlySize: {
-    medium: "",                // base size already produces 36×36 with a 20px icon
-    small:  "size-8 p-0",      // hard 32×32, content-centered
-    xs:     "size-6 p-0",      // hard 24×24, content-centered
+    medium: "size-11 p-0",     // 44×44 circle
+    small:  "size-9 p-0",      // 36×36 circle
+    xs:     "size-7 p-0",      // 28×28 circle
   },
 
   icon: {
@@ -116,22 +117,22 @@ const styles = sortCx({
 
   variant: {
     primary: [
-      "bg-button-primary text-text-white shadow-xs",
+      "bg-button-primary text-text-white",
       "disabled:text-button-primary-disabled-foreground disabled:shadow-none",
       "aria-disabled:text-button-primary-disabled-foreground aria-disabled:shadow-none",
     ].join(" "),
     danger: [
-      "bg-button-danger text-text-white shadow-xs",
+      "bg-button-danger text-text-white",
       "disabled:text-foreground-disabled-danger disabled:shadow-none",
       "aria-disabled:text-foreground-disabled-danger aria-disabled:shadow-none",
     ].join(" "),
     secondary: [
-      "bg-background-primary-default text-text-primary",
-      "border border-border-button-default shadow-xs",
-      "hover:bg-background-primary-hover  hover:border-border-button-hover",
-      "active:bg-background-primary-active active:border-border-button-active",
-      "disabled:bg-background-primary-disabled disabled:border-border-button-default disabled:text-text-tertiary disabled:shadow-none",
-      "aria-disabled:bg-background-primary-disabled aria-disabled:border-border-button-default aria-disabled:text-text-tertiary aria-disabled:shadow-none",
+      // Apple's grey capsule: a quiet fill, no edge, no shadow.
+      "bg-background-tertiary-default text-text-primary",
+      "hover:bg-background-tertiary-hover",
+      "active:bg-background-tertiary-hover",
+      "disabled:bg-background-primary-disabled disabled:text-text-tertiary",
+      "aria-disabled:bg-background-primary-disabled aria-disabled:text-text-tertiary",
     ].join(" "),
     ghost: [
       "bg-button-ghost-background text-button-ghost-foreground",

@@ -101,8 +101,9 @@ export function SwitchTrack({
         s.track,
         s.trackRadius[shape],
         state.isSelected
-          ? cx("bg-linear-to-b from-accent-500 to-accent-600", s.onShadow)
-          : "bg-background-tertiary-default",
+          ? cx("bg-accent-600", s.onShadow)
+          : // A 3:1 edge so the off state still reads as a control (WCAG 1.4.11).
+            "bg-background-tertiary-default ring-1 ring-inset ring-border-input",
         state.isDisabled && "opacity-50",
         state.isFocusVisible && "ring-2 ring-border-focus-ring ring-offset-2",
       )}

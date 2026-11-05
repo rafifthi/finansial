@@ -236,7 +236,7 @@ export function TransactionsView({
         <div className="flex flex-wrap items-end gap-2">
           <SearchField
             aria-label="Search"
-            placeholder="Search description or category"
+            placeholder="Search transactions"
             defaultValue={filters.q}
             onSubmit={(v) => setFilter("q", v)}
             onClear={() => setFilter("q", "")}
@@ -402,7 +402,7 @@ export function TransactionsView({
                     {dayFlow.out ? <span className="text-text-secondary">−{money(dayFlow.out)}</span> : null}
                   </span>
                 </div>
-                <ul className="divide-y divide-separator-border overflow-hidden rounded-3xl border border-border-button-default bg-background-primary-default">
+                <ul className="divide-y divide-separator-border overflow-hidden rounded-3xl border border-separator-border bg-background-primary-default">
                   {items.map((r) => (
                     <TxnListItem
                       key={r.txn.id}

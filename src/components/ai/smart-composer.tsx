@@ -10,7 +10,7 @@ import {
   RiMicLine,
   RiCloseLine,
 } from "@remixicon/react";
-import { useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent } from "react";
+import { useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -36,8 +36,11 @@ export function SmartComposer({
   placeholder = "e.g. makan padang 35rb pakai jago, kopi 18rb",
   speechLang = "id-ID",
   onError,
+  tools,
 }: {
   onSend: (text: string, attachments: Attachment[]) => void;
+  /** Extra controls placed before the mic (e.g. the book to save to). */
+  tools?: ReactNode;
   busy?: boolean;
   placeholder?: string;
   speechLang?: string;
@@ -181,7 +184,8 @@ export function SmartComposer({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="ms-auto flex items-center gap-1.5">
+        <div className="ms-auto flex min-w-0 items-center gap-1.5">
+          {tools}
           {speech.supported ? (
             <Button
               aria-label={speech.listening ? "Stop listening" : "Speak"}

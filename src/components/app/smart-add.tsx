@@ -195,21 +195,13 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <SelectField
-          label="Save to"
-          value={bookId}
-          onChange={switchBook}
-          options={books.map((b) => ({ id: b.id, label: b.name }))}
-          className="sm:w-64"
-          size="sm"
-        />
-        {turns.length ? (
+      {turns.length ? (
+        <div className="flex justify-end">
           <Button variant="ghost" size="small" onClick={() => (setTurns([]), setRows([]))} disabled={thinking || saving}>
             Start over
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {turns.length === 0 ? (
         <section className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border-button-default px-4 py-10 text-center">
@@ -308,6 +300,17 @@ function SmartAddSession({ books, initialBookId }: { books: SmartAddBook[]; init
         speechLang={options.money.locale}
         placeholder={rows.length ? "Correct a draft, e.g. “yang kedua Wants”, or add more" : undefined}
         onError={(m) => toast(m, { status: "error" })}
+        tools={
+          // Which book the drafts go to, right where you type them.
+          <SelectField
+            aria-label="Save to book"
+            value={bookId}
+            onChange={switchBook}
+            options={books.map((b) => ({ id: b.id, label: `Save to ${b.name}` }))}
+            className="w-auto min-w-0 max-w-48"
+            size="sm"
+          />
+        }
       />
       <p className="text-center text-caption-1-medium text-text-tertiary">
         Messages and images are read by DeepSeek. Prefer the form?{" "}

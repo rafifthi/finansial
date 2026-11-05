@@ -9,9 +9,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { HouseholdSettings, MyMember } from "@/components/app/settings-form";
 import { SettingsTabs } from "@/components/app/settings-tabs";
 import { Chip } from "@/components/base/badges/chip";
-import { loadAdjustments, loadAppData } from "@/lib/data/app-data";
-import { savingsBalances } from "@/lib/finance/ledger";
-import { formatMoney } from "@/lib/finance/money";
+import { loadAppData } from "@/lib/data/app-data";
 import { fieldSpecs } from "@/lib/data/field-specs";
 import { usingDemoDb } from "@/lib/data/store";
 import { CATEGORY_GROUPS } from "@/lib/sheets/schema";
@@ -25,7 +23,6 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
   const [data, [account, appearance]] = await Promise.all([loadAppData(ctx), personalSections(ctx.user)]);
   const specs = fieldSpecs(data);
   const sheetId = data.book.spreadsheet_id;
-  const balances = savingsBalances(data.categories, data.transactions, await loadAdjustments(data));
 
   const book = (
     <>
@@ -132,17 +129,7 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
                     <li key={c.id} className={cx("flex items-center gap-2 py-2", c.archived && "opacity-50")}>
                       <div className="flex min-w-0 flex-1 items-center gap-3">
                         <CategoryIcon name={c.name} emoji={c.emoji} color={c.color} group={c.group} />
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <span className="truncate text-body-medium text-text-primary">{c.name}</span>
-                          <span className="truncate text-body-2-regular text-text-tertiary">
-                            {[
-                              c.group === "Savings" && `Pot ${formatMoney(balances.get(c.id) ?? 0, data.money)}`,
-                              c.group === "Savings" && c.target_amount > 0 && `target ${formatMoney(c.target_amount, data.money)}`,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </span>
-                        </div>
+                        <span className="min-w-0 flex-1 truncate text-body-medium text-text-primary">{c.name}</span>
                         <EntityFormButton
                           table="categories"
                           title="Category"

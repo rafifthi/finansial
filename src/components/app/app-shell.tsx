@@ -8,6 +8,7 @@ import type { ShellBook } from "./book-switcher";
 import { PermissionsProvider } from "./permissions";
 import { RememberBook } from "./remember-book";
 import { SetupNotice } from "./setup-notice";
+import { ShellProvider } from "./shell-context";
 
 async function signOutAction() {
   "use server";
@@ -43,22 +44,25 @@ export async function AppShell({ user, current, children }: { user: PublicUser; 
   }
   const currentShell = current ? books.find((b) => b.id === current.book.id) : undefined;
 
+  const shell = {
+    user: { name: user.name, email: user.email, isSystemAdmin: user.is_system_admin },
+    books,
+    current: currentShell,
+    badges: { unverified },
+    signOutAction,
+  };
+
   const frame = (
+    <ShellProvider {...shell}>
     <div className="flex min-h-dvh flex-col gap-2 lg:flex-row lg:bg-background-canvas lg:p-2">
-      <AppSidebar
-        user={{ name: user.name, email: user.email, isSystemAdmin: user.is_system_admin }}
-        books={books}
-        current={currentShell}
-        badges={{ unverified }}
-        signOutAction={signOutAction}
-        quickAdd={quickAdd}
-      />
+      <AppSidebar {...shell} quickAdd={quickAdd} />
       {/* Bottom padding clears the phone tab bar (and the home indicator). */}
       {/* Desktop: Linear's work panel, a lifted plane with a hairline edge beside the flat sidebar. */}
       <main className="flex min-w-0 flex-1 flex-col gap-4 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-4 lg:rounded-3xl lg:border lg:border-separator-border lg:bg-background-full lg:px-5 lg:pt-4 lg:pb-8">
         {setupError ? <SetupNotice message={setupError} /> : children}
       </main>
     </div>
+    </ShellProvider>
   );
 
   if (!current) return frame;

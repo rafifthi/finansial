@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import {
   type RemixiconComponentType,
   RiAddLine,
@@ -26,7 +26,6 @@ import {
 import { ThemeToggle } from "@/components/application/theme/theme-toggle";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { Badge } from "@/components/base/badges/badge";
-import { Drawer } from "@/components/base/drawer/drawer";
 import { SpinnerGlyph } from "@/components/base/spinner/spinner";
 import {
   DropdownMenu,
@@ -36,11 +35,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PortalContainer } from "@/components/ui/portal-container";
 import { ROLE_INFO } from "@/lib/auth/roles";
 import type { FormOptions } from "@/lib/data/app-data";
 import { cx } from "@/utils/cx";
 import { BookSwitcher, type ShellBook } from "./book-switcher";
+import type { ShellValue } from "./shell-context";
 import { useCan } from "./permissions";
 
 interface NavEntry {
@@ -66,22 +65,9 @@ const BOOK_NAV: NavEntry[] = [
   { path: "/settings", label: "Settings", icon: RiSettings4Line },
 ];
 
-export interface SidebarUser {
-  name: string;
-  email: string;
-  isSystemAdmin: boolean;
-}
+type ShellProps = ShellValue;
 
-interface ShellProps {
-  user: SidebarUser;
-  books: ShellBook[];
-  /** The open book, or none on account pages (profile, books, admin). */
-  current?: ShellBook;
-  badges: { unverified?: number };
-  signOutAction: () => Promise<void>;
-}
-
-interface ResolvedNav {
+export interface ResolvedNav {
   href: string;
   label: string;
   icon: RemixiconComponentType;
@@ -89,7 +75,7 @@ interface ResolvedNav {
   exact?: boolean;
 }
 
-function navFor({ current, user, badges }: Pick<ShellProps, "current" | "user" | "badges">): ResolvedNav[] {
+export function navFor({ current, user, badges }: Pick<ShellProps, "current" | "user" | "badges">): ResolvedNav[] {
   if (current) {
     return BOOK_NAV.filter((n) => !n.admins || current.role === "admin").map((n) => ({
       href: `/b/${current.id}${n.path}`,
@@ -107,7 +93,10 @@ function navFor({ current, user, badges }: Pick<ShellProps, "current" | "user" |
 }
 
 /** Where the avatar goes: the Account tab of whichever Settings page applies. */
-const accountHref = (current?: ShellBook) => (current ? `/b/${current.id}/settings?tab=account` : "/settings?tab=account");
+/** The phone's More page: everything the tab bar has no room for. */
+export const moreHref = (current?: ShellBook) => (current ? `/b/${current.id}/more` : "/more");
+
+export const accountHref = (current?: ShellBook) => (current ? `/b/${current.id}/settings?tab=account` : "/settings?tab=account");
 
 const isActive = (pathname: string, item: ResolvedNav) =>
   item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -224,8 +213,6 @@ function AccountMenu({
 const TAB_PATHS = ["", "/transactions", "/budget"];
 
 export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: FormOptions }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [sheet, setSheet] = useState<HTMLDivElement | null>(null);
   const pathname = usePathname();
   const canAdd = useCan("data:write") && Boolean(quickAdd && props.current);
   const nav = navFor(props);
@@ -287,24 +274,15 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
             </div>
           ) : null}
           {tabs.slice(2).map(tabLink)}
-          <button type="button" onClick={() => setMenuOpen(true)} className={cx(tab(inMore), "relative cursor-pointer")}>
-            <RiMoreLine className="size-6" aria-hidden />
-            <span>More</span>
+          <Link href={moreHref(props.current)} className={cx(tab(inMore), "relative")} aria-current={inMore ? "page" : undefined}>
+            <TabContent icon={RiMoreLine} label="More" />
             {props.badges.unverified ? (
               <span className="absolute end-[calc(50%-1.1rem)] top-1 size-2 rounded-full bg-accent-solid" aria-label="Items to reconcile" />
             ) : null}
-          </button>
+          </Link>
         </div>
       </nav>
 
-      <Drawer isOpen={menuOpen} onOpenChange={setMenuOpen} placement="bottom" aria-label="Menu" overlayClassName="p-0 pt-10">
-        <div ref={setSheet} className="glass glass-secondary max-h-full overflow-y-auto rounded-t-3xl bg-background-secondary-default p-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {/* Menus opened from the sheet render inside it: the Drawer makes everything else inert. */}
-          <PortalContainer value={sheet}>
-            <SidebarPanel {...props} onNavigate={() => setMenuOpen(false)} />
-          </PortalContainer>
-        </div>
-      </Drawer>
     </>
   );
 }

@@ -1,21 +1,20 @@
-import type { Account, Category } from "@/lib/sheets/schema";
+import type { Category } from "@/lib/sheets/schema";
 
 /** What a fresh book starts with; deterministic ids so re-running a setup step adds nothing. */
-export function starterRows(kind: "family" | "personal"): { accounts: Account[]; categories: Category[] } {
-  const accounts: Account[] = [
-    { id: "starter-bank", name: "Bank", type: "bank", opening_balance: 0, institution: "", archived: false },
-    { id: "starter-cash", name: "Cash", type: "cash", opening_balance: 0, institution: "", archived: false },
-  ];
+export function starterRows(kind: "family" | "personal"): { categories: Category[] } {
   const c = (slug: string, name: string, group: Category["group"], emoji: string, color: string): Category => ({
     id: `starter-${slug}`,
     name,
     kind: group === "Income" ? "income" : "expense",
     group,
-    default_account_id: "starter-bank",
     goal_id: "",
+    starting_balance: 0,
+    target_amount: 0,
+    target_date: "",
     color,
     emoji,
     archived: false,
+    position: 0,
   });
   const categories: Category[] = [
     c("salary", "Salary", "Income", "💼", "lime"),
@@ -32,5 +31,5 @@ export function starterRows(kind: "family" | "personal"): { accounts: Account[];
     c("savings", kind === "family" ? "Family savings" : "Savings", "Savings", "🐷", "purple"),
   ];
   if (kind === "family") categories.splice(5, 0, c("kids", "Kids", "Needs", "👶", "yellow"));
-  return { accounts, categories };
+  return { categories };
 }

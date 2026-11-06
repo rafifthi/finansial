@@ -2,24 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { RiArrowGoBackLine, RiArrowRightLine, RiArrowRightSLine, RiFileCopyLine, RiPriceTag3Line, RiSave3Line } from "@remixicon/react";
-import { copyPreviousMonth, saveBudgets } from "@/actions/budget";
+import { RiArrowGoBackLine, RiArrowRightLine, RiArrowRightSLine, RiFileCopyLine, RiPriceTag3Line, RiSave3Line, RiSafe2Line } from "@remixicon/react";
+import { closeMonth, copyPreviousMonth, saveBudgets } from "@/actions/budget";
 import { Chip } from "@/components/base/badges/chip";
 import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { Meter } from "@/components/base/meter/meter";
-import { AlertDialog } from "@/components/base/modal/modal";
+import { AlertDialog, Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
 import { toast } from "@/components/base/toast/toast";
 import {
   formatMoney,
   formatPercent,
   type MoneyFormat,
 } from "@/lib/finance/money";
+import { closeMonthPlan } from "@/lib/finance/budget";
 import { cx } from "@/utils/cx";
-import type { Account } from "@/lib/sheets/schema";
-import { AccountLogo } from "./account-logo";
 import { usageTone } from "./budget-bar";
 import { CategoryIcon } from "./category-icon";
-import { MoneyField } from "./fields";
+import { MoneyField, SelectField } from "./fields";
 import { undoToast } from "./undo";
 import { useBookHref, useBookId, useCan } from "./permissions";
 
@@ -30,20 +30,20 @@ export interface EditorLine {
   emoji: string;
   color: string;
   budget: number;
+  /** Spending plus budget moved out, minus budget moved in; for Savings, net saved this month. */
   actual: number;
-  /** Account the category's money is kept in (its own default, else the group's pocket). */
-  accountId: string;
+  /** Savings only: what the pot holds today. */
+  balance?: number;
 }
 
-export interface PocketAccount {
-  id: string;
-  name: string;
-  type: Account["type"];
-  institution: string;
-  balance: number;
+/** Whether the month can be closed: past and current periods only, with days left in the current one. */
+export interface CloseState {
+  open: boolean;
+  /** Days left in the period; 0 on its last day or for a past period. */
+  daysLeft: number;
+  /** The 28th–31st of the month in the current period: time to close it. */
+  remind: boolean;
 }
-
-type Group = EditorLine["group"];
 
 const SECTIONS = [
   {
@@ -54,7 +54,7 @@ const SECTIONS = [
   {
     group: "Savings",
     title: "Savings",
-    hint: "Set aside first — these feed your goals",
+    hint: "Set aside first — these fill your savings pots",
   },
   { group: "Needs", title: "Needs", hint: "Bills and essentials" },
   { group: "Wants", title: "Wants", hint: "Everything else" },
@@ -64,12 +64,12 @@ export function BudgetEditor({
   month,
   lines,
   money,
-  accounts,
+  close,
 }: {
   month: string;
   lines: EditorLine[];
   money: MoneyFormat;
-  accounts: PocketAccount[];
+  close: CloseState;
 }) {
   const [values, setValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(lines.map((l) => [l.categoryId, l.budget])),
@@ -137,8 +137,6 @@ export function BudgetEditor({
       return { ok: true };
     });
   };
-
-  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name;
 
   // Unsaved figures survive neither a reload nor closing the tab without a warning.
   useEffect(() => {
@@ -242,6 +240,7 @@ export function BudgetEditor({
           ) : null}
           {canWrite ? (
             <>
+              {close.open ? <MonthClose month={month} lines={lines} money={money} daysLeft={close.daysLeft} remind={close.remind} dirty={dirty} /> : null}
               <Button variant="secondary" leadingIcon={RiFileCopyLine} onClick={askCopy} disabled={pending}>
                 Copy last month
               </Button>
@@ -258,13 +257,6 @@ export function BudgetEditor({
         </div>
       </div>
 
-      <PocketPlan
-        lines={lines}
-        values={values}
-        accounts={accounts}
-        money={money}
-        settingsHref={canEditCategories ? bookHref("/settings?tab=categories#categories") : undefined}
-      />
 
       {/* Below lg: a save bar floats above the tab bar once something changed */}
       {canWrite && dirty ? (
@@ -311,7 +303,7 @@ export function BudgetEditor({
                     {fmt(total)}
                   </span>
                   <span className="text-body-2-regular text-text-tertiary tabular-nums">
-                    {section.group === "Income" ? "received" : "used"}{" "}
+                    {section.group === "Income" ? "received" : section.group === "Savings" ? "saved" : "used"}{" "}
                     {fmt(actual)}
                   </span>
                 </div>
@@ -339,8 +331,10 @@ export function BudgetEditor({
                               {l.name}
                             </span>
                             <span className="flex min-w-0 justify-between gap-2 text-caption-1-medium text-text-tertiary">
-                              <span className="truncate">{l.accountId ? accountName(l.accountId) : null}</span>
-                              <span className="shrink-0 tabular-nums">{fmt(l.actual)}</span>
+                              <span className="truncate tabular-nums">{l.balance !== undefined ? `Pot ${fmt(l.balance)}` : null}</span>
+                              <span className="shrink-0 tabular-nums">
+                                {section.group === "Income" || section.group === "Savings" ? fmt(l.actual) : `${fmt(Math.max(budget - l.actual, 0))} left`}
+                              </span>
                             </span>
                           </div>
                           {section.group !== "Income" ? (
@@ -395,92 +389,158 @@ export function BudgetEditor({
 }
 
 /**
- * Per account: what this month's plan keeps there, what's still to be spent
- * from it, and whether its balance covers that. Read as the payday transfer list.
+ * Month-end close: what's left on Needs and Wants first covers the lines that
+ * went over, and the rest moves to a savings pot, so every budget ends at zero.
+ * A toolbar button opens it in a popup; from the 28th it's highlighted as a
+ * reminder while there's still something to move. The preview uses the saved
+ * budget; the server re-plans from the sheet on confirm.
  */
-function PocketPlan({
+function MonthClose({
+  month,
   lines,
-  values,
-  accounts,
   money,
-  settingsHref,
+  daysLeft,
+  remind,
+  dirty,
 }: {
+  month: string;
   lines: EditorLine[];
-  values: Record<string, number>;
-  accounts: PocketAccount[];
   money: MoneyFormat;
-  /** Where admins set each category's account. */
-  settingsHref?: string;
+  daysLeft: number;
+  remind: boolean;
+  dirty: boolean;
 }) {
+  const bookId = useBookId();
   const fmt = (n: number) => formatMoney(n, money);
-  const rows = new Map<string, { planned: number; remaining: number; groups: Set<Group> }>();
-  for (const l of lines) {
-    if (l.group === "Income") continue;
-    const planned = values[l.categoryId] ?? 0;
-    if (!planned) continue;
-    const row = rows.get(l.accountId) ?? { planned: 0, remaining: 0, groups: new Set<Group>() };
-    row.planned += planned;
-    // What hasn't been spent (or, for savings, set aside) yet still has to be there.
-    row.remaining += Math.max(planned - l.actual, 0);
-    row.groups.add(l.group);
-    rows.set(l.accountId, row);
-  }
-  if (rows.size === 0) return null;
-  const ordered = [...rows.entries()].sort(([a], [b]) => (a ? (b ? 0 : -1) : 1));
+  const pots = lines.filter((l) => l.group === "Savings");
+  const [saveTo, setSaveTo] = useState(() => [...pots].sort((a, b) => (b.balance ?? 0) - (a.balance ?? 0))[0]?.categoryId ?? "");
+  const [skip, setSkip] = useState<Set<string>>(() => new Set());
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  const spending = lines.filter((l) => l.group === "Needs" || l.group === "Wants");
+  const asPlan = (list: EditorLine[]) => list.map((l) => ({ category: { id: l.categoryId, group: l.group }, remaining: l.budget - l.actual }));
+  const leftovers = spending.filter((l) => l.budget - l.actual > 0);
+  const over = spending.filter((l) => l.budget - l.actual < 0);
+  const moves = closeMonthPlan(asPlan(spending.filter((l) => !skip.has(l.categoryId))), saveTo);
+  const covered = moves.filter((m) => m.reason === "cover").reduce((s, m) => s + m.amount, 0);
+  const saved = moves.filter((m) => m.reason === "save").reduce((s, m) => s + m.amount, 0);
+  const stillOver = over.reduce((s, l) => s + (l.actual - l.budget), 0) - covered;
+  const name = (id: string) => lines.find((l) => l.categoryId === id)?.name ?? "";
+  const todo = leftovers.length > 0 || over.length > 0;
+  const highlight = remind && todo;
+  const left = leftovers.reduce((s, l) => s + (l.budget - l.actual), 0);
+
+  const book = () =>
+    startTransition(async () => {
+      const res = await closeMonth(bookId, { month, save_to: saveTo, skip: [...skip] });
+      if (!res.ok) return void toast("Couldn't close the month", { status: "error", description: res.error });
+      toast(res.data?.saved ? `Moved ${fmt(res.data.saved)} to ${name(saveTo)}` : "Overspending covered", { status: "success" });
+      setOpen(false);
+    });
 
   return (
-    <section className="flex flex-col gap-3 rounded-3xl border border-separator-border bg-background-primary-default p-4 sm:p-5">
-      <div className="flex flex-col gap-0.5">
-        <h2 className="text-headline-semibold text-text-primary">Pockets</h2>
-        <p className="text-body-2-regular text-text-tertiary">
-          Where this month&apos;s budget is kept, from each category&apos;s account. Move these amounts on payday.
-        </p>
-      </div>
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {ordered.map(([id, row]) => {
-          const account = accounts.find((a) => a.id === id);
-          const short = account ? row.remaining - account.balance : 0;
-          return (
-            <li key={id || "none"} className="flex flex-col gap-1 rounded-2xl bg-background-secondary-default p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-2">
-                  {account ? <AccountLogo account={account} size="sm" /> : null}
-                  <span className={cx("truncate text-body-medium", account ? "text-text-primary" : "text-text-tertiary")}>
-                    {account?.name ?? "No account set"}
-                  </span>
-                </span>
-                <span className="shrink-0 text-body-semibold text-text-primary tabular-nums">{fmt(row.planned)}</span>
-              </div>
-              <span className="text-body-2-regular text-text-tertiary">{[...row.groups].join(" · ")}</span>
-              {account ? (
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-body-2-regular text-text-secondary tabular-nums">Balance {fmt(account.balance)}</span>
-                  {short > 0 ? (
-                    <Chip color="rose" variant="caption">
-                      Short {fmt(short)}
-                    </Chip>
-                  ) : (
-                    <Chip color="lime" variant="caption">
-                      Covered
-                    </Chip>
-                  )}
-                </div>
-              ) : (
-                <span className="text-body-2-regular text-text-secondary">
-                  {settingsHref ? (
-                    <Link href={settingsHref} className="text-button-ghost-foreground hover:underline">
-                      Set these categories&apos; accounts
-                    </Link>
-                  ) : (
-                    "Ask an admin to set these categories' accounts."
-                  )}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <>
+      <Button
+        variant={highlight ? "primary" : "secondary"}
+        leadingIcon={RiSafe2Line}
+        onClick={() => setOpen(true)}
+        aria-description={highlight ? `${fmt(left)} left in ${periodName(month)} to move` : undefined}
+      >
+        Close the month
+      </Button>
+      <Modal isOpen={open} onOpenChange={setOpen} size="lg" aria-label="Close the month">
+        <ModalHeader
+          icon={RiSafe2Line}
+          title={`Close ${periodName(month)}`}
+          description={
+            todo
+              ? `Leftovers on Needs and Wants first cover what went over budget. The rest goes to savings.${
+                  daysLeft > 0 ? ` ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left in this period, so it's best done on the last day.` : ""
+                }`
+              : "Every Needs and Wants budget is used up. Nothing to move."
+          }
+        />
+        {todo ? (
+          <ModalBody className="flex flex-col gap-3">
+            {leftovers.length > 0 ? (
+              <ul className="flex flex-col divide-y divide-separator-border rounded-2xl border border-border-button-default">
+                {leftovers.map((l) => (
+                  <li key={l.categoryId} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <Checkbox
+                      isSelected={!skip.has(l.categoryId)}
+                      onChange={(on) =>
+                        setSkip((s) => {
+                          const next = new Set(s);
+                          if (on) next.delete(l.categoryId);
+                          else next.add(l.categoryId);
+                          return next;
+                        })
+                      }
+                      className="min-h-11 min-w-0 sm:min-h-0"
+                    >
+                      <span className="truncate">{l.name}</span>
+                    </Checkbox>
+                    <span className="shrink-0 text-body-2-medium text-text-primary tabular-nums">{fmt(l.budget - l.actual)} left</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {moves.length > 0 ? (
+              <ul className="flex flex-col gap-1.5">
+                {moves.map((m) => (
+                  <li key={`${m.from}-${m.to}`} className="flex items-center justify-between gap-3 text-body-2-regular text-text-secondary">
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate">{name(m.from)}</span>
+                      <RiArrowRightLine className="size-3.5 shrink-0 text-foreground-icon-tertiary rtl:rotate-180" aria-label="to" />
+                      <span className="truncate text-text-primary">{name(m.to)}</span>
+                      {m.reason === "cover" ? (
+                        <Chip color="yellow" variant="caption">
+                          Covers overspend
+                        </Chip>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 text-body-2-medium text-text-primary tabular-nums">{fmt(m.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {stillOver > 0 ? (
+              <p className="text-body-2-medium text-text-error-primary">
+                {fmt(stillOver)} is still over budget with no leftover to cover it. Move it from savings with a transfer if you need to.
+              </p>
+            ) : null}
+
+            {pots.length > 0 ? (
+              <SelectField
+                label="Send leftovers to"
+                value={saveTo}
+                onChange={setSaveTo}
+                options={pots.map((p) => ({ id: p.categoryId, label: p.name }))}
+              />
+            ) : (
+              <p className="text-body-2-regular text-text-secondary">Add a Savings category to send leftovers to.</p>
+            )}
+            {dirty ? <p className="text-body-2-regular text-text-tertiary">Save your budget changes first.</p> : null}
+            <p className="text-caption-1-regular text-text-tertiary">
+              Booked as transfers dated {daysLeft > 0 ? "today" : "the last day of the period"}.
+            </p>
+          </ModalBody>
+        ) : null}
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setOpen(false)} disabled={pending}>
+            {todo ? "Cancel" : "Close"}
+          </Button>
+          {todo ? (
+            <Button variant="primary" leadingIcon={RiSafe2Line} onClick={book} disabled={pending || dirty || moves.length === 0}>
+              {pending ? "Booking…" : saved > 0 ? `Move ${fmt(saved)} to savings` : "Cover overspend"}
+            </Button>
+          ) : null}
+        </ModalFooter>
+      </Modal>
+    </>
   );
 }
 

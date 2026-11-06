@@ -1,5 +1,4 @@
 import type {
-  Account,
   Book,
   Budget,
   Category,
@@ -12,6 +11,7 @@ import type {
   User,
 } from "@/lib/sheets/schema";
 import { hashPasswordSync } from "@/lib/auth/password";
+import { budgetMonth, closeMonthPlan } from "@/lib/finance/budget";
 import { addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
 
 export const DEMO_PASSWORD = "demo1234";
@@ -70,6 +70,19 @@ export function demoRegistrySeed() {
 }
 
 /** Seed for a demo book spreadsheet, by id. Unknown ids start empty (new books). */
+/** A couple of interest and fee corrections on the family book's pots. */
+export function demoSavingsSeed(spreadsheetId: string) {
+  if (spreadsheetId !== DEMO_FAMILY_SHEET) return {};
+  const month = monthOf(today());
+  const prev = addMonths(month, -1);
+  return {
+    adjustments: [
+      { id: "adj-1", category_id: "rumah", date: dayInMonth(prev, 28), amount: 186_500, note: "Bunga deposito", created_at: "", created_by: "" },
+      { id: "adj-2", category_id: "dana-darurat", date: dayInMonth(prev, 30), amount: -6_500, note: "Biaya admin bank", created_at: "", created_by: "" },
+    ],
+  };
+}
+
 export function demoBookSeed(spreadsheetId: string) {
   if (spreadsheetId === DEMO_FAMILY_SHEET) return demoSeed();
   if (spreadsheetId === DEMO_PERSONAL_SHEET) return demoPersonalSeed();
@@ -84,54 +97,49 @@ export function demoSeed() {
   const now = today();
   const thisMonth = monthOf(now);
 
-  const accounts: Account[] = [
-    { id: "jenius", name: "Jenius", type: "bank", opening_balance: 4_000_000, institution: "", archived: false },
-    { id: "jago", name: "Jago", type: "bank", opening_balance: 6_500_000, institution: "", archived: false },
-    { id: "cash", name: "Cash", type: "cash", opening_balance: 500_000, institution: "", archived: false },
-    { id: "bibit", name: "Bibit", type: "investment", opening_balance: 61_000_000, institution: "", archived: false },
-    { id: "cc-cimb", name: "CC CIMB Niaga", type: "credit_card", opening_balance: 0, institution: "", archived: false },
-  ];
-
   const c = (
     id: string,
     name: string,
     group: Category["group"],
-    default_account_id: string,
     color: string,
     emoji: string,
     goal_id = "",
+    starting_balance = 0,
   ): Category => ({
     id,
     name,
     kind: group === "Income" ? "income" : "expense",
     group,
-    default_account_id,
     goal_id,
+    starting_balance,
+    target_amount: 0,
+    target_date: "",
     color,
     emoji,
     archived: false,
+    position: 0,
   });
 
   const categories: Category[] = [
-    c("monthly-kanza", "Monthly Kanza", "Income", "jago", "lime", "💼"),
-    c("bonus-kanza", "Bonus Kanza", "Income", "jago", "yellow", "🎁"),
-    c("monthly-rafif", "Monthly Rafif", "Income", "jenius", "cyan", "💼"),
-    c("tambal", "Tambal", "Income", "jago", "neutral", "🪙"),
-    c("billing", "Billing", "Needs", "jenius", "blue", "🧾"),
-    c("kuota", "Kuota", "Needs", "jago", "cyan", "📶"),
-    c("infaq", "Infaq", "Needs", "jago", "lime", "🤲"),
-    c("groceries", "Groceries", "Needs", "jago", "lime", "🛒"),
-    c("transport", "Transport", "Needs", "jago", "yellow", "🚗"),
-    c("insurance", "Insurance", "Needs", "jago", "blue", "🛡️"),
-    c("meals", "Meals", "Needs", "jenius", "orange", "🍜"),
-    c("cicilan-mobil", "Cicilan Mobil", "Needs", "jago", "neutral", "🚙"),
-    c("petty-cash", "Petty Cash", "Wants", "jenius", "orange", "💸"),
-    c("date", "Date", "Wants", "jago", "rose", "💕"),
-    c("subscription", "Subscription", "Wants", "jenius", "purple", "📺"),
-    c("anak", "Anak", "Savings", "jago", "yellow", "👶", "g-anak"),
-    c("dana-darurat", "Dana Darurat", "Savings", "jago", "rose", "🚨", "g-dandur"),
-    c("travel", "Travel", "Savings", "jago", "cyan", "✈️", "g-travel"),
-    c("rumah", "Rumah", "Savings", "jago", "purple", "🏠", "g-house"),
+    c("monthly-kanza", "Monthly Kanza", "Income", "lime", "💼"),
+    c("bonus-kanza", "Bonus Kanza", "Income", "yellow", "🎁"),
+    c("monthly-rafif", "Monthly Rafif", "Income", "cyan", "💼"),
+    c("tambal", "Tambal", "Income", "neutral", "🪙"),
+    c("billing", "Billing", "Needs", "blue", "🧾"),
+    c("kuota", "Kuota", "Needs", "cyan", "📶"),
+    c("infaq", "Infaq", "Needs", "lime", "🤲"),
+    c("groceries", "Groceries", "Needs", "lime", "🛒"),
+    c("transport", "Transport", "Needs", "yellow", "🚗"),
+    c("insurance", "Insurance", "Needs", "blue", "🛡️"),
+    c("meals", "Meals", "Needs", "orange", "🍜"),
+    c("cicilan-mobil", "Cicilan Mobil", "Needs", "neutral", "🚙"),
+    c("petty-cash", "Petty Cash", "Wants", "orange", "💸"),
+    c("date", "Date", "Wants", "rose", "💕"),
+    c("subscription", "Subscription", "Wants", "purple", "📺"),
+    c("anak", "Anak", "Savings", "yellow", "👶", "g-anak", 24_000_000),
+    c("dana-darurat", "Dana Darurat", "Savings", "rose", "🚨", "g-dandur", 13_000_000),
+    c("travel", "Travel", "Savings", "cyan", "✈️", "g-travel", 18_000_000),
+    c("rumah", "Rumah", "Savings", "purple", "🏠", "g-house", 28_000_000),
   ];
 
   const plan: Record<string, number> = {
@@ -161,8 +169,6 @@ export function demoSeed() {
   const tx = (p: Partial<Transaction> & Pick<Transaction, "date" | "amount" | "category_id">): Transaction => ({
     id: `t${++n}`,
     type: "expense",
-    account_id: categories.find((x) => x.id === p.category_id)?.default_account_id ?? "jago",
-    to_account_id: "",
     from_category_id: "",
     member: "",
     description: "",
@@ -199,10 +205,11 @@ export function demoSeed() {
     push(3, { amount: 333_000, category_id: "billing", description: "Wifi", recurring_id: "r-wifi" });
     push(3, { amount: 100_000, category_id: "billing", description: "IPL" });
     push(5, { amount: 2_000_000, category_id: "cicilan-mobil", description: "Cicilan Mobil", installment_id: "i-mobil" });
-    push(2, { type: "transfer", amount: 1_000_000, category_id: "travel", to_account_id: "bibit", from_category_id: "", description: "Tabungan Travel" });
-    push(2, { type: "transfer", amount: 1_400_000, category_id: "dana-darurat", to_account_id: "bibit", from_category_id: "", description: "Dana Darurat" });
-    push(2, { type: "transfer", amount: 342_000, category_id: "anak", to_account_id: "bibit", from_category_id: "", description: "Tabungan Anak" });
-    push(2, { type: "transfer", amount: 800_000, category_id: "rumah", to_account_id: "bibit", from_category_id: "", description: "Tabungan Rumah" });
+    // Payday: savings set aside first.
+    push(2, { amount: 1_000_000, category_id: "travel", description: "Tabungan Travel" });
+    push(2, { amount: 1_400_000, category_id: "dana-darurat", description: "Dana Darurat" });
+    push(2, { amount: 342_000, category_id: "anak", description: "Tabungan Anak" });
+    push(2, { amount: 800_000, category_id: "rumah", description: "Tabungan Rumah" });
     push(10, { amount: 216_600, category_id: "infaq", description: "Infaq" });
     for (let d = 2; d <= 30; d += 1) {
       if (rnd() > 0.45) push(d, { amount: Math.round(10_000 + rnd() * 90_000), category_id: "meals", description: meals[d % meals.length] });
@@ -213,6 +220,24 @@ export function demoSeed() {
     }
   }
 
+  // Last month is already closed: its leftovers covered any overspend and went to Rumah,
+  // so the dashboard has a month-end sweep to show.
+  const lastMonth = addMonths(thisMonth, -1);
+  const closed = budgetMonth({ month: lastMonth, budgets, categories, txns: transactions });
+  const name = (id: string) => categories.find((c) => c.id === id)?.name ?? "";
+  for (const m of closeMonthPlan(closed.lines, "rumah")) {
+    transactions.push(
+      tx({
+        date: dayInMonth(lastMonth, 31),
+        type: "transfer",
+        amount: m.amount,
+        category_id: m.to,
+        from_category_id: m.from,
+        description: m.reason === "cover" ? `Covers ${name(m.to)} overspend` : `Leftover from ${name(m.from)}`,
+      }),
+    );
+  }
+
   const goals: Goal[] = [
     { id: "g-travel", name: "Travel", target_amount: 30_000_000, target_date: dayInMonth(addMonths(thisMonth, 1), 30), starting_amount: 18_000_000, archived: false },
     { id: "g-house", name: "House", target_amount: 50_000_000, target_date: dayInMonth(addMonths(thisMonth, 2), 31), starting_amount: 28_000_000, archived: false },
@@ -221,12 +246,12 @@ export function demoSeed() {
   ];
 
   const installments: Installment[] = [
-    { id: "i-mobil", name: "Cicilan Mobil", account_id: "jago", category_id: "cicilan-mobil", monthly_amount: 2_000_000, tenor_months: 33, start_month: months[0], total_amount: 64_900_000, note: "" },
-    { id: "i-kai", name: "KAI Berangkat", account_id: "cc-cimb", category_id: "transport", monthly_amount: 450_000, tenor_months: 3, start_month: addMonths(thisMonth, -1), total_amount: 1_350_000, note: "CC CIMB Niaga 0%" },
+    { id: "i-mobil", name: "Cicilan Mobil", category_id: "cicilan-mobil", monthly_amount: 2_000_000, tenor_months: 33, start_month: months[0], total_amount: 64_900_000, note: "" },
+    { id: "i-kai", name: "KAI Berangkat", category_id: "transport", monthly_amount: 450_000, tenor_months: 3, start_month: addMonths(thisMonth, -1), total_amount: 1_350_000, note: "CC CIMB Niaga 0%" },
   ];
 
   const recurring: Recurring[] = [
-    { id: "r-wifi", type: "expense", amount: 333_000, category_id: "billing", account_id: "jenius", to_account_id: "", from_category_id: "", member: "", description: "Wifi", frequency: "monthly", day: 3, start_date: `${months[0]}-01`, end_date: "", last_run: now, installment_id: "" },
+    { id: "r-wifi", type: "expense", amount: 333_000, category_id: "billing", from_category_id: "", member: "", description: "Wifi", frequency: "monthly", day: 3, start_date: `${months[0]}-01`, end_date: "", last_run: now, installment_id: "" },
   ];
 
   const settings: Setting[] = [
@@ -236,7 +261,7 @@ export function demoSeed() {
     { key: "members", value: "Kanza,Rafif" },
   ];
 
-  return { accounts, categories, budgets, transactions, goals, installments, recurring, settings };
+  return { categories, budgets, transactions, goals, installments, recurring, settings };
 }
 
 /** A small single-person book: a few categories and a handful of entries this period. */
@@ -244,26 +269,25 @@ function demoPersonalSeed() {
   const now = today();
   const month = monthOf(now);
   const day = (d: number) => dayInMonth(month, d) <= now ? dayInMonth(month, d) : now;
-  const accounts: Account[] = [
-    { id: "p-jenius", name: "Jenius (personal)", type: "bank", opening_balance: 2_500_000, institution: "", archived: false },
-    { id: "p-gopay", name: "GoPay", type: "ewallet", opening_balance: 150_000, institution: "", archived: false },
-  ];
-  const c = (id: string, name: string, group: Category["group"], acc = "p-jenius"): Category => ({
+  const c = (id: string, name: string, group: Category["group"]): Category => ({
     id,
     name,
     kind: group === "Income" ? "income" : "expense",
     group,
-    default_account_id: acc,
     goal_id: "",
+    starting_balance: 0,
+    target_amount: 0,
+    target_date: "",
     color: "",
     emoji: "",
     archived: false,
+    position: 0,
   });
   const categories = [
     c("p-allowance", "Allowance", "Income"),
-    c("p-coffee", "Coffee", "Wants", "p-gopay"),
+    c("p-coffee", "Coffee", "Wants"),
     c("p-hobby", "Hobby", "Wants"),
-    c("p-lunch", "Lunch", "Needs", "p-gopay"),
+    c("p-lunch", "Lunch", "Needs"),
     c("p-gadget", "Gadget fund", "Savings"),
   ];
   const t = (id: string, d: number, amount: number, category_id: string, description: string, type: Transaction["type"] = "expense"): Transaction => ({
@@ -272,8 +296,6 @@ function demoPersonalSeed() {
     type,
     amount,
     category_id,
-    account_id: categories.find((x) => x.id === category_id)!.default_account_id,
-    to_account_id: "",
     from_category_id: "",
     member: "",
     description,
@@ -305,5 +327,5 @@ function demoPersonalSeed() {
     { key: "cutoff_day", value: "31" },
     { key: "members", value: "" },
   ];
-  return { accounts, categories, transactions, budgets, settings };
+  return { categories, transactions, budgets, settings };
 }

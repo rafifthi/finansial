@@ -15,7 +15,6 @@ export interface TxnBrief {
   amount: number;
   description: string;
   categoryName: string;
-  accountName: string;
   /** Set when the transaction lives in another book than the bill. */
   bookName: string;
 }
@@ -72,7 +71,6 @@ export function briefOf(pool: TxnPool, billBookId: string, t: Transaction): TxnB
     amount: t.amount,
     description: t.description,
     categoryName: book?.categoryName.get(t.category_id) ?? "",
-    accountName: book?.accountName.get(t.account_id) ?? "",
     bookName: bookId === billBookId ? "" : (book?.book.name ?? ""),
   };
 }

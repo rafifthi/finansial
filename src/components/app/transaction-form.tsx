@@ -2,7 +2,7 @@
 
 import { useId, useState, useTransition } from "react";
 import { parseDate, type CalendarDate } from "@internationalized/date";
-import { RiArrowDownSLine, RiArrowRightLine, RiBankLine, RiDeleteBinLine } from "@remixicon/react";
+import { RiArrowDownSLine, RiArrowRightLine, RiDeleteBinLine } from "@remixicon/react";
 import { deleteTransactions, restoreTransactions, saveTransaction, type TxnInput } from "@/actions/transactions";
 import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
@@ -16,7 +16,6 @@ import type { FormOptions } from "@/lib/data/app-data";
 import { formatMoney } from "@/lib/finance/money";
 import { cx } from "@/utils/cx";
 import type { Transaction } from "@/lib/sheets/schema";
-import { AccountLogo } from "./account-logo";
 import { CategoryPicker } from "./category-picker";
 import { MoneyField, SelectField } from "./fields";
 import { DrawerForm, FormDrawer, summarizeErrors } from "./form-drawer";
@@ -31,8 +30,6 @@ const blank = (today: string, member: string): Draft => ({
   amount: null,
   category_id: "",
   from_category_id: "",
-  account_id: "",
-  to_account_id: "",
   member,
   description: "",
   verified: false,
@@ -47,8 +44,6 @@ export function fromTransaction(t: Transaction): Draft {
     amount: t.amount,
     category_id: t.category_id,
     from_category_id: t.from_category_id,
-    account_id: t.account_id,
-    to_account_id: t.to_account_id,
     member: t.member,
     description: t.description,
     verified: t.verified,
@@ -94,14 +89,7 @@ export function TransactionFormBody({
   const member = useViewerMember();
   const bookId = useBookId();
   const fresh = () => blank(options.today, options.members.includes(member) ? member : "");
-  const [draft, setDraft] = useState<Draft>(() => {
-    const d = initial ?? fresh();
-    // Transfers saved before they had a source category: start from the category whose account it left.
-    if (d.type === "transfer" && !d.from_category_id && d.account_id) {
-      return { ...d, from_category_id: options.categories.find((c) => c.default_account_id === d.account_id)?.id ?? "" };
-    }
-    return d;
-  });
+  const [draft, setDraft] = useState<Draft>(() => initial ?? fresh());
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -117,21 +105,8 @@ export function TransactionFormBody({
   };
 
   const kind = draft.type === "income" ? "income" : "expense";
-  const accountOptions = options.accounts.map((a) => ({ id: a.id, label: a.name }));
-  const accountName = (id: string) => options.accounts.find((a) => a.id === id)?.name;
-  const categoryAccountOf = (id?: string) => options.categories.find((c) => c.id === id)?.default_account_id ?? "";
-  const categoryAccount = categoryAccountOf(draft.category_id);
-
-  function onCategory(id: string) {
-    setErrors((e) => ({ ...e, category_id: undefined }));
-    setDraft((d) => ({
-      ...d,
-      category_id: id,
-      // An explicit pick (when overrides are on) sticks; otherwise the account follows the
-      // category, except that an edit back to its original category keeps its original account.
-      account_id: options.accountOverride ? d.account_id : initial && id === initial.category_id ? initial.account_id : "",
-    }));
-  }
+  // Income can't be moved; a transfer runs between Needs, Wants and Savings.
+  const movable = options.categories.filter((c) => c.kind === "expense");
 
   function onInstallment(id: string) {
     const inst = options.installments.find((i) => i.id === id);
@@ -228,7 +203,7 @@ export function TransactionFormBody({
           const type = [...keys][0] as Draft["type"] | undefined;
           if (type && type !== draft.type) {
             setErrors({});
-            setDraft((d) => ({ ...d, type, category_id: "", from_category_id: "", installment_id: "", account_id: options.accountOverride ? d.account_id : "" }));
+            setDraft((d) => ({ ...d, type, category_id: "", from_category_id: "", installment_id: "" }));
           }
         }}
       >
@@ -257,7 +232,7 @@ export function TransactionFormBody({
         <>
           <CategoryPicker
             label="From"
-            categories={options.categories}
+            categories={movable}
             use={options.categoryUse}
             value={draft.from_category_id ?? ""}
             onChange={(v) => set("from_category_id", v)}
@@ -266,41 +241,26 @@ export function TransactionFormBody({
           <CategoryPicker
             label="To"
             // Same tiles in the same places as "From", so nothing shifts under the thumb.
-            categories={options.categories}
+            categories={movable}
             use={options.categoryUse}
             value={draft.category_id ?? ""}
             onChange={(v) => set("category_id", v)}
             error={errors.category_id}
           />
-          <TransferAccounts
-            from={options.accounts.find((a) => a.id === categoryAccountOf(draft.from_category_id))}
-            to={options.accounts.find((a) => a.id === categoryAccountOf(draft.category_id))}
+          <TransferEffect
+            from={options.categories.find((c) => c.id === draft.from_category_id)}
+            to={options.categories.find((c) => c.id === draft.category_id)}
+            amount={draft.amount ? formatMoney(draft.amount, options.money) : "the amount"}
           />
         </>
       ) : (
-        <>
-          <CategoryPicker
-            categories={options.categories.filter((c) => c.kind === kind)}
-            use={options.categoryUse}
-            value={draft.category_id ?? ""}
-            onChange={onCategory}
-            error={errors.category_id}
-          />
-          {options.accountOverride ? (
-            <SelectField
-              label={draft.type === "income" ? "Received into" : "Paid from"}
-              value={draft.account_id ?? ""}
-              onChange={(v) => set("account_id", v)}
-              options={accountOptions}
-              allowEmpty={categoryAccount && accountName(categoryAccount) ? `Category account (${accountName(categoryAccount)})` : "Category account"}
-            />
-          ) : (
-            <CategoryAccount
-              type={draft.type}
-              account={draft.category_id ? (options.accounts.find((a) => a.id === (draft.account_id || categoryAccount)) ?? "none") : null}
-            />
-          )}
-        </>
+        <CategoryPicker
+          categories={options.categories.filter((c) => c.kind === kind)}
+          use={options.categoryUse}
+          value={draft.category_id ?? ""}
+          onChange={(v) => set("category_id", v)}
+          error={errors.category_id}
+        />
       )}
 
       <Input
@@ -397,56 +357,33 @@ function TodayDateField({ value, today, onChange, error }: { value: string; toda
   );
 }
 
-/** Where a transfer physically moves money: the two categories' accounts. */
-function TransferAccounts({ from, to }: { from?: FormOptions["accounts"][number]; to?: FormOptions["accounts"][number] }) {
+type FormCategory = FormOptions["categories"][number];
+
+/** What a transfer does to each side: a budget gives up room, a savings pot fills or drains. */
+function TransferEffect({ from, to, amount }: { from?: FormCategory; to?: FormCategory; amount: string }) {
   if (!from && !to) return null;
-  const side = (a?: FormOptions["accounts"][number]) => (
-    <span className="flex min-w-0 flex-1 items-center gap-1.5 text-body-medium text-text-primary">
-      {a ? <AccountLogo account={a} size="sm" /> : null}
-      <span className="truncate">{a?.name ?? "Pick a category"}</span>
+  const effect = (c: FormCategory | undefined, out: boolean) =>
+    !c ? "Pick a category" : c.group === "Savings" ? `Pot ${out ? "−" : "+"}${amount}` : `Budget ${out ? "−" : "+"}${amount}`;
+  const side = (c: FormCategory | undefined, out: boolean) => (
+    <span className="flex min-w-0 flex-1 flex-col">
+      <span className="truncate text-body-medium text-text-primary">{c?.name ?? "—"}</span>
+      <span className="truncate text-caption-1-regular text-text-tertiary tabular-nums">{effect(c, out)}</span>
     </span>
   );
   return (
-    <div className="flex flex-col gap-1 rounded-xl bg-background-secondary-default px-3 py-2.5">
+    <div className="flex flex-col gap-1.5 rounded-xl bg-background-secondary-default px-3 py-2.5" aria-live="polite">
       <span className="text-caption-1-medium text-text-tertiary">
-        {from && to && from.id === to.id ? "Both use the same account, so only the budget moves" : "Money moves between accounts"}
+        {to?.group === "Savings" && from && from.group !== "Savings"
+          ? "Moves unspent budget into savings"
+          : from?.group === "Savings"
+            ? "Takes money out of savings"
+            : "Moves budget between categories"}
       </span>
       <div className="flex items-center gap-2">
-        {side(from)}
-        <RiArrowRightLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-label="to" />
-        {side(to)}
+        {side(from, true)}
+        <RiArrowRightLine className="size-4 shrink-0 text-foreground-icon-tertiary rtl:rotate-180" aria-label="to" />
+        {side(to, false)}
       </div>
-    </div>
-  );
-}
-
-/**
- * Read-only account line: with overrides off, the category decides where the
- * money comes from (Settings → Categories), so the form only shows it.
- */
-function CategoryAccount({
-  type,
-  account,
-}: {
-  type: Draft["type"];
-  /** null: no category yet; "none": the category has no account. */
-  account: FormOptions["accounts"][number] | "none" | null;
-}) {
-  const found = account && account !== "none" ? account : null;
-  return (
-    <div className="flex items-center gap-3 rounded-xl bg-background-secondary-default px-3 py-2.5">
-      {found ? (
-        <AccountLogo account={found} size="sm" />
-      ) : (
-        <RiBankLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
-      )}
-      <div className="flex min-w-0 flex-col">
-        <span className="text-caption-1-medium text-text-tertiary">{type === "income" ? "Received into" : "Paid from"}</span>
-        <span className={found ? "truncate text-body-medium text-text-primary" : "text-body-regular text-text-tertiary"}>
-          {account === null ? "Follows the category" : found ? found.name : "No account set for this category"}
-        </span>
-      </div>
-      {found ? <span className="ms-auto shrink-0 text-caption-1-regular text-text-tertiary">Category&apos;s account</span> : null}
     </div>
   );
 }

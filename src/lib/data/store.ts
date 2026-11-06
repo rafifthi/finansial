@@ -3,8 +3,8 @@ import { customAlphabet } from "nanoid";
 import { getSheetsClient } from "@/lib/sheets/client";
 import { SheetDb } from "@/lib/sheets/db";
 import { MemoryDb } from "@/lib/sheets/memory-db";
-import { DEFAULT_SETTINGS, STATEMENT_TABLES, type Book, type StatementTables, type Tables } from "@/lib/sheets/schema";
-import { demoBookSeed } from "./demo-seed";
+import { DEFAULT_SETTINGS, SAVINGS_TABLES, STATEMENT_TABLES, type Book, type SavingsTables, type StatementTables, type TableSet, type Tables } from "@/lib/sheets/schema";
+import { demoBookSeed, demoSavingsSeed } from "./demo-seed";
 import { createStore, type SheetStore } from "./sheet-store";
 
 /** Local-only demo database; never selectable in a production build. */
@@ -20,10 +20,10 @@ export type BookStore = SheetStore<Tables> & {
 // Survive dev hot reloads: one store (and its cache) per spreadsheet.
 const g = globalThis as typeof globalThis & {
   __finansialBookStores?: Map<string, BookStore>;
-  __finansialStatementStores?: Map<string, Promise<SheetStore<StatementTables>>>;
+  __finansialModuleStores?: Map<string, Promise<unknown>>;
 };
 const stores = (g.__finansialBookStores ??= new Map());
-const statementStores = (g.__finansialStatementStores ??= new Map());
+const moduleStores = (g.__finansialModuleStores ??= new Map());
 
 /** Data access for one book's spreadsheet. */
 export function bookStore(book: Pick<Book, "spreadsheet_id">): BookStore {
@@ -52,21 +52,27 @@ export function bookStore(book: Pick<Book, "spreadsheet_id">): BookStore {
 }
 
 /**
- * Card statements for one book. Its tabs are created on first use, so books
- * made before the module existed pick them up without a migration.
+ * Tables a module keeps in its own tabs of the book's sheet. They're created on
+ * first use, so books made before the module existed pick them up without a migration.
  */
-export function statementStore(book: Pick<Book, "spreadsheet_id">): Promise<SheetStore<StatementTables>> {
+function moduleStore<T extends TableSet>(book: Pick<Book, "spreadsheet_id">, key: string, tables: T, seed: () => object): Promise<SheetStore<T>> {
   const id = book.spreadsheet_id;
   if (!id) throw new Error("This book has no spreadsheet connected yet.");
-  let store = statementStores.get(id);
+  const cacheKey = `${key}:${id}`;
+  let store = moduleStores.get(cacheKey) as Promise<SheetStore<T>> | undefined;
   if (!store) {
-    const db = usingDemoDb()
-      ? new MemoryDb<StatementTables>({}, id, STATEMENT_TABLES)
-      : new SheetDb<StatementTables>(getSheetsClient(), id, STATEMENT_TABLES);
-    store = db.ensureSchema().then(() => createStore<StatementTables>(db, `${id.slice(0, 8)}:stmt`));
+    const db = usingDemoDb() ? new MemoryDb<T>(seed(), id, tables) : new SheetDb<T>(getSheetsClient(), id, tables);
+    store = db.ensureSchema().then(() => createStore<T>(db, `${id.slice(0, 8)}:${key}`));
     // A failed setup (e.g. a network blip) retries on the next request.
-    store.catch(() => statementStores.delete(id));
-    statementStores.set(id, store);
+    store.catch(() => moduleStores.delete(cacheKey));
+    moduleStores.set(cacheKey, store);
   }
   return store;
 }
+
+/** Card statements for one book (Bill check). */
+export const statementStore = (book: Pick<Book, "spreadsheet_id">) => moduleStore<StatementTables>(book, "stmt", STATEMENT_TABLES, () => ({}));
+
+/** Savings balance adjustments for one book. */
+export const savingsStore = (book: Pick<Book, "spreadsheet_id">) =>
+  moduleStore<SavingsTables>(book, "savings", SAVINGS_TABLES, () => demoSavingsSeed(book.spreadsheet_id));

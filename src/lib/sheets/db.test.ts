@@ -61,42 +61,42 @@ function fakeSheets(initial: Record<string, Grid>) {
   return { api: api as unknown as sheets_v4.Sheets, tabs };
 }
 
-const HEADER = ["id", "name", "my note", "type", "opening_balance", "archived"];
+const HEADER = ["id", "name", "my note", "target_amount", "starting_amount", "archived"];
 
 describe("SheetDb", () => {
   it("inserts, updates and deletes by id while keeping user columns", async () => {
     const { api, tabs } = fakeSheets({
-      Accounts: [HEADER, ["a1", "Jago", "salary acct", "bank", 100, false], ["a2", "Cash", "", "cash", 0, false]],
+      Goals: [HEADER, ["g1", "Travel", "bali trip", 100, 0, false], ["g2", "House", "", 500, 0, false]],
     });
     const db = new SheetDb(api, "x");
 
-    await db.insert("accounts", [{ id: "a3", name: "Bibit", type: "investment", opening_balance: 5, institution: "", archived: false }]);
-    expect(tabs.get("Accounts")![3]).toEqual(["a3", "Bibit", "", "investment", 5, false]);
+    await db.insert("goals", [{ id: "g3", name: "Car", target_amount: 5, target_date: "", starting_amount: 0, archived: false }]);
+    expect(tabs.get("Goals")![3]).toEqual(["g3", "Car", "", 5, 0, false]);
 
-    // Someone sorts the sheet by hand: a2 moves to the top.
-    const grid = tabs.get("Accounts")!;
+    // Someone sorts the sheet by hand: g2 moves to the top.
+    const grid = tabs.get("Goals")!;
     [grid[1], grid[2]] = [grid[2], grid[1]];
 
-    await db.update("accounts", "a1", { name: "Bank Jago" });
-    expect(tabs.get("Accounts")![2]).toEqual(["a1", "Bank Jago", "salary acct", "bank", 100, false]);
+    await db.update("goals", "g1", { name: "Bali" });
+    expect(tabs.get("Goals")![2]).toEqual(["g1", "Bali", "bali trip", 100, 0, false]);
 
-    await db.updateMany("accounts", [
-      { key: "a2", patch: { archived: true } },
-      { key: "a3", patch: { opening_balance: 9 } },
+    await db.updateMany("goals", [
+      { key: "g2", patch: { archived: true } },
+      { key: "g3", patch: { starting_amount: 9 } },
     ]);
-    expect(tabs.get("Accounts")![1][5]).toBe(true);
-    expect(tabs.get("Accounts")![3][4]).toBe(9);
+    expect(tabs.get("Goals")![1][5]).toBe(true);
+    expect(tabs.get("Goals")![3][4]).toBe(9);
 
-    await db.remove("accounts", ["a2", "a3"]);
-    expect(tabs.get("Accounts")!.map((r) => r[0])).toEqual(["id", "a1"]);
+    await db.remove("goals", ["g2", "g3"]);
+    expect(tabs.get("Goals")!.map((r) => r[0])).toEqual(["id", "g1"]);
   });
 
   it("creates missing tabs and header columns", async () => {
-    const { api, tabs } = fakeSheets({ Accounts: [["id", "name"]] });
+    const { api, tabs } = fakeSheets({ Goals: [["id", "name"]] });
     const db = new SheetDb(api, "x");
     const log = await db.ensureSchema();
     expect(log.join("\n")).toContain("Created tabs");
-    expect(tabs.get("Accounts")![0]).toEqual(["id", "name", "type", "opening_balance", "institution", "archived"]);
+    expect(tabs.get("Goals")![0]).toEqual(["id", "name", "target_amount", "target_date", "starting_amount", "archived"]);
     expect(tabs.get("Transactions")![0]).toContain("verified");
   });
 });

@@ -3,7 +3,7 @@
  * Sheets API returns with FORMATTED_VALUE) into rows for the new DB tables.
  * Pure: no I/O, deterministic ids so re-running the import never duplicates.
  */
-import type { Account, Budget, Category, Goal, Installment, Transaction } from "@/lib/sheets/schema";
+import type { Budget, Category, Installment, Transaction } from "@/lib/sheets/schema";
 import { toIsoDate } from "@/lib/sheets/codec";
 import { addMonths, dayInMonth } from "@/lib/finance/dates";
 import { parseAmount } from "@/lib/finance/money";
@@ -21,11 +21,9 @@ export interface ReferenceGrids {
 }
 
 export interface ImportPlan {
-  accounts: Account[];
   categories: Category[];
   budgets: Budget[];
   transactions: Transaction[];
-  goals: Goal[];
   installments: Installment[];
   settings: { key: string; value: string }[];
   warnings: string[];
@@ -95,22 +93,7 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
   const warnings: string[] = [];
   const now = opts.now;
 
-  // ── Accounts ────────────────────────────────────────────────────────────
-  const bankNames = column(g.setup, "Account [ Summary]");
-  const assetNames = column(g.setup, "Account [Assets]");
-  const accounts: Account[] = [
-    ...bankNames.map((name) => ({ id: `acc-${slug(name)}`, name, type: "bank" as const, opening_balance: 0, institution: "", archived: false })),
-    ...assetNames.map((name) => ({ id: `acc-${slug(name)}`, name, type: "investment" as const, opening_balance: 0, institution: "", archived: false })),
-  ];
-  const accountByName = new Map(accounts.map((a) => [a.name.toLowerCase(), a.id]));
-
-  // ── Categories (+ default account from Summary) ─────────────────────────
-  const defaultAccount = new Map<string, string>();
-  for (const row of g.summary) {
-    const bank = clean(row[2]);
-    const cat = clean(row[3]);
-    if (cat && !isRef(cat) && accountByName.has(bank.toLowerCase())) defaultAccount.set(cat.toLowerCase(), accountByName.get(bank.toLowerCase())!);
-  }
+  // ── Categories ──────────────────────────────────────────────────────────
   const categories: Category[] = [];
   const addCategory = (name: string, group: Category["group"]) => {
     const id = `cat-${slug(name)}`;
@@ -120,11 +103,14 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
       name,
       kind: group === "Income" ? "income" : "expense",
       group,
-      default_account_id: defaultAccount.get(name.toLowerCase()) ?? "",
       goal_id: "",
+      starting_balance: 0,
+      target_amount: 0,
+      target_date: "",
       color: "",
       emoji: "",
       archived: false,
+      position: 0,
     });
   };
   column(g.setup, "Income Sources").forEach((n) => addCategory(n, "Income"));
@@ -168,8 +154,6 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
       type: cat?.kind === "income" ? "income" : "expense",
       amount,
       category_id: cat?.id ?? "",
-      account_id: cat?.default_account_id ?? "",
-      to_account_id: "",
       from_category_id: "",
       member: "",
       description,
@@ -185,7 +169,7 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
 
   // ── Goals: a header block per column, e.g. "Travel Goals : Rp.30.000.000 By November 2026".
   // Merged cells arrive either as one multi-line cell or split over the rows above "Month".
-  const goals: Goal[] = [];
+  // Each becomes the target of its savings pot; "Now" is what the pot already held.
   const GOAL_CATEGORY_ALIASES: Record<string, string[]> = { house: ["rumah"], dandur: ["dana darurat"], travel: ["travel"] };
   const headerRows = g.goals.slice(0, Math.max(1, g.goals.findIndex((r) => r.some((c) => monthIndex(c) === 0))));
   const width = Math.max(0, ...headerRows.map((r) => r.length));
@@ -199,12 +183,16 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
     const mi = by ? monthIndex(by[1]) : -1;
     const targetDate = by && mi >= 0 ? dayInMonth(`${by[2]}-${String(mi + 1).padStart(2, "0")}`, 31) : "";
     const now = text.match(/Now\s*:\s*Rp\.?\s*([\d.,]+)/i);
-    const id = `goal-${slug(name)}`;
-    goals.push({ id, name, target_amount: target, target_date: targetDate, starting_amount: now ? (parseAmount(now[1]) ?? 0) : 0, archived: false });
     const aliases = GOAL_CATEGORY_ALIASES[name.toLowerCase()] ?? [name.toLowerCase()];
-    const cat = categories.find((c) => c.group === "Savings" && aliases.includes(c.name.toLowerCase()));
-    if (cat) cat.goal_id = id;
-    else warnings.push(`Goal "${name}": no Savings category to link; link it in Settings → Categories`);
+    let pot = categories.find((c) => c.group === "Savings" && aliases.includes(c.name.toLowerCase()));
+    if (!pot) {
+      addCategory(name, "Savings");
+      pot = categories.find((c) => c.id === `cat-${slug(name)}`)!;
+      warnings.push(`Goal "${name}": no Savings category matched, so a "${name}" pot was added`);
+    }
+    pot.target_amount = target;
+    pot.target_date = targetDate;
+    pot.starting_balance = now ? (parseAmount(now[1]) ?? 0) : 0;
   }
 
   // ── Installments: Mobil sheet — a schedule of [year?, month, amount paid] rows,
@@ -232,7 +220,6 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
     installments.push({
       id,
       name,
-      account_id: cat?.default_account_id ?? "",
       category_id: cat?.id ?? "",
       monthly_amount: monthly,
       tenor_months: tenor,
@@ -249,8 +236,6 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
         type: "expense",
         amount: p.amount,
         category_id: cat?.id ?? "",
-        account_id: cat?.default_account_id ?? "",
-        to_account_id: "",
         from_category_id: "",
         member: "",
         description: name,
@@ -289,7 +274,6 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
     installments.push({
       id: `inst-${slug(`${card}-${first}`)}`,
       name: first,
-      account_id: "",
       category_id: "",
       monthly_amount: perMonth,
       tenor_months: tenor,
@@ -305,5 +289,5 @@ export function planImport(g: ReferenceGrids, opts: { year: number; now: string 
   const members = [...new Set(sections.income.map((r) => r.label.split(" ").slice(1).join(" ")).filter(Boolean))];
   if (members.length) settings.push({ key: "members", value: members.join(",") });
 
-  return { accounts, categories, budgets, transactions, goals, installments, settings, warnings };
+  return { categories, budgets, transactions, installments, settings, warnings };
 }

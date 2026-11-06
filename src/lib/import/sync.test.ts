@@ -7,13 +7,11 @@ const plan = planImport(REFERENCE_FIXTURE, { year: 2026, now: "2026-11-03T08:00:
 const meals = plan.categories.find((c) => c.name === "Meals")!;
 const gas = plan.transactions.find((t) => t.description === "Gas")!;
 const nasi = plan.transactions.find((t) => t.description === "Nasi Padang")!;
-const pockets = { Income: "", Needs: "acc-pocket", Wants: "", Savings: "" };
 
 const existing = (over: Partial<SyncExisting> = {}): SyncExisting => ({
   transactions: [],
   // The book renamed nothing but uses its own id for Meals; Billing is missing.
-  categories: [{ ...meals, id: "own-meals", default_account_id: "" }],
-  accounts: [{ id: "acc-pocket" }],
+  categories: [{ ...meals, id: "own-meals" }],
   installments: [],
   ...over,
 });
@@ -35,15 +33,14 @@ describe("previewSync", () => {
 
 describe("syncRows", () => {
   it("points rows at the book's own categories, and brings over missing ones", () => {
-    const { transactions, categories } = syncRows(plan, [nasi.id, gas.id], existing(), pockets, "2026-11-05T00:00:00.000Z");
-    expect(transactions.find((t) => t.id === nasi.id)).toMatchObject({ category_id: "own-meals", account_id: "acc-pocket" });
+    const { transactions, categories } = syncRows(plan, [nasi.id, gas.id], existing(), "2026-11-05T00:00:00.000Z");
+    expect(transactions.find((t) => t.id === nasi.id)).toMatchObject({ category_id: "own-meals" });
     expect(categories.map((c) => c.name)).toEqual(["Billing"]);
-    // Billing's account (acc-jenius) isn't in this book, so the group pocket is used.
-    expect(transactions.find((t) => t.id === gas.id)?.account_id).toBe("acc-pocket");
+    expect(transactions.find((t) => t.id === gas.id)?.category_id).toBe(categories[0].id);
   });
 
   it("never adds a row twice", () => {
-    const { transactions } = syncRows(plan, [gas.id], existing({ transactions: [{ ...gas }] }), pockets, "2026-11-05T00:00:00.000Z");
+    const { transactions } = syncRows(plan, [gas.id], existing({ transactions: [{ ...gas }] }), "2026-11-05T00:00:00.000Z");
     expect(transactions).toEqual([]);
   });
 });

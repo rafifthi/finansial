@@ -8,18 +8,12 @@ describe("planImport", () => {
   const plan = planImport(grids, { year: 2026, now: "2026-11-03T08:00:00.000Z" });
   const cat = (name: string) => plan.categories.find((c) => c.name === name)!;
 
-  it("maps accounts and categories with groups and default accounts", () => {
-    expect(plan.accounts.map((a) => `${a.name}:${a.type}`)).toEqual([
-      "Jenius:bank",
-      "Jago:bank",
-      "Bibit:investment",
-      "Deposit:investment",
-    ]);
-    expect(cat("Meals")).toMatchObject({ group: "Needs", default_account_id: "acc-jenius" });
-    expect(cat("Groceries")).toMatchObject({ default_account_id: "acc-jago" });
-    expect(cat("Travel")).toMatchObject({ group: "Savings", goal_id: "goal-travel" });
-    expect(cat("Rumah").goal_id).toBe("goal-house");
-    expect(cat("Dana Darurat").goal_id).toBe("goal-dandur");
+  it("maps categories with their groups, and goals onto their savings pots", () => {
+    expect(cat("Meals")).toMatchObject({ group: "Needs", starting_balance: 0 });
+    expect(cat("Groceries").group).toBe("Needs");
+    expect(cat("Travel")).toMatchObject({ group: "Savings", target_amount: 30000000, target_date: "2026-11-30", starting_balance: 0 });
+    expect(cat("Rumah")).toMatchObject({ target_amount: 50000000, target_date: "2026-12-31" });
+    expect(cat("Dana Darurat")).toMatchObject({ target_amount: 30000000, target_date: "", starting_balance: 21745790 });
     expect(cat("Monthly Kanza").kind).toBe("income");
     // Only in the Budgeting matrix:
     expect(cat("Cicilan Mobil").group).toBe("Needs");
@@ -40,7 +34,7 @@ describe("planImport", () => {
   it("imports spending with verified flags and stable, distinct ids", () => {
     const spending = plan.transactions.filter((t) => !t.installment_id);
     expect(spending).toHaveLength(5);
-    expect(spending[0]).toMatchObject({ date: "2026-10-01", amount: 230000, category_id: "cat-billing", verified: true, account_id: "acc-jenius" });
+    expect(spending[0]).toMatchObject({ date: "2026-10-01", amount: 230000, category_id: "cat-billing", verified: true });
     expect(spending[1].verified).toBe(false);
     expect(spending[2].id).not.toBe(spending[3].id);
     const again = planImport(grids, { year: 2026, now: "2026-12-01T00:00:00.000Z" });
@@ -48,12 +42,7 @@ describe("planImport", () => {
     expect(plan.warnings.some((w) => w.includes("Unknown"))).toBe(true);
   });
 
-  it("parses goals, installments and settings", () => {
-    expect(plan.goals.map((g) => [g.name, g.target_amount, g.target_date, g.starting_amount])).toEqual([
-      ["Travel", 30000000, "2026-11-30", 0],
-      ["House", 50000000, "2026-12-31", 0],
-      ["Dandur", 30000000, "", 21745790],
-    ]);
+  it("parses installments and settings", () => {
     const mobil = plan.installments.find((i) => i.name === "Cicilan Mobil")!;
     expect(mobil).toMatchObject({ monthly_amount: 2000000, tenor_months: 33, start_month: "2026-10", total_amount: 64900000 });
     expect(plan.transactions.filter((t) => t.installment_id === mobil.id).map((t) => t.date)).toEqual(["2026-10-01", "2026-11-01"]);
@@ -78,16 +67,15 @@ describe("planImport", () => {
       },
       { year: 2026, now: "2026-11-03T08:00:00.000Z" },
     );
-    expect(split.goals.map((g) => [g.name, g.target_date, g.starting_amount])).toEqual([
-      ["Travel", "2026-11-30", 0],
-      ["Dandur", "", 21745790],
-    ]);
+    const pot = (name: string) => split.categories.find((c) => c.name === name)!;
+    expect([pot("Travel").target_date, pot("Travel").starting_balance]).toEqual(["2026-11-30", 0]);
+    expect([pot("Dana Darurat").target_date, pot("Dana Darurat").starting_balance]).toEqual(["", 21745790]);
     expect(split.installments.find((i) => i.name === "Cicilan Mobil")).toMatchObject({ tenor_months: 4, total_amount: 0 });
   });
 
   it("finds the Setup header row after leading blank rows (Sheets API layout)", () => {
     const plan2 = planImport({ ...grids, setup: [[], ...grids.setup] }, { year: 2026, now: "2026-11-03T08:00:00.000Z" });
-    expect(plan2.accounts.map((a) => a.name)).toEqual(["Jenius", "Jago", "Bibit", "Deposit"]);
+    expect(plan2.categories.find((c) => c.name === "Monthly Kanza")?.kind).toBe("income");
     expect(plan2.categories.find((c) => c.name === "Petty Cash")?.group).toBe("Wants");
   });
 });

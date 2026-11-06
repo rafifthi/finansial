@@ -10,8 +10,6 @@ export interface Draft {
   category_id: string;
   /** Transfers only: the category the money comes from. */
   from_category_id: string;
-  account_id: string;
-  to_account_id: string;
   description: string;
   member: string;
 }
@@ -21,7 +19,6 @@ export interface BookContext {
   today: string;
   currency: string;
   categories: { id: string; name: string; group: string; kind: "expense" | "income" }[];
-  accounts: { id: string; name: string; type: string }[];
   members: string[];
 }
 
@@ -37,8 +34,6 @@ export interface DraftForPrompt {
   amount: number;
   category: string;
   from_category: string;
-  account: string;
-  to_account: string;
   description: string;
   member: string;
 }
@@ -52,10 +47,9 @@ Reading amounts:
 Reading dates (relative to today): "tadi", "hari ini" = today; "kemarin" = yesterday; "lusa kemarin" = 2 days ago; a weekday means the most recent one. No date given means today.
 
 Choosing fields:
-- type: expense for spending, income for money coming in (gaji, refund, cashback), transfer for moving money from one of the user's categories to another (e.g. salary into a savings category).
-- category_id and account_id must be ids from the lists given, or "" when unsure. Never invent ids.
-- A transfer goes category to category: from_category_id is where the money comes from, category_id is where it goes. Leave account_id and to_account_id "" for transfers; each category's account is used.
-- Payment words map to accounts: "pakai jago", "via gopay", "cash/tunai", "kartu kredit/cc", "jenius".
+- type: expense for spending, income for money coming in (gaji, refund, cashback), transfer for moving budget from one Needs, Wants or Savings category to another (e.g. "sisa makan pindah ke tabungan", "ambil dari dana darurat buat servis mobil").
+- category_id must be an id from the list given, or "" when unsure. Never invent ids.
+- A transfer goes category to category: from_category_id is where the money comes from, category_id is where it goes. Income categories are never part of a transfer.
 - member: a household member's name when the text says who spent it, else "".
 - description: short and specific, like the merchant or item ("Nasi Padang", "Grab ke kantor").
 
@@ -68,7 +62,7 @@ Follow-ups: when current drafts are given, the message usually corrects them ("y
 
 The reply is one short sentence in the user's language about what you drafted or changed. Nothing is saved until the user confirms, so never say it was recorded or saved ("dicatat", "disimpan"); say it's ready to check instead.
 
-Reply with only JSON: {"reply": "<that sentence>", "drafts": [{"date":"YYYY-MM-DD","type":"expense","amount":35000,"category_id":"","from_category_id":"","account_id":"","to_account_id":"","description":"","member":""}]}
+Reply with only JSON: {"reply": "<that sentence>", "drafts": [{"date":"YYYY-MM-DD","type":"expense","amount":35000,"category_id":"","from_category_id":"","description":"","member":""}]}
 If the message isn't about money at all, return no drafts and say what you can help with.`;
 
 export function buildPrompt(ctx: BookContext, turns: Turn[], drafts: DraftForPrompt[], remap: boolean): string {
@@ -76,13 +70,12 @@ export function buildPrompt(ctx: BookContext, turns: Turn[], drafts: DraftForPro
     today: ctx.today,
     currency: ctx.currency,
     categories: ctx.categories.map((c) => ({ id: c.id, name: c.name, group: c.group, kind: c.kind })),
-    accounts: ctx.accounts.map((a) => ({ id: a.id, name: a.name, type: a.type })),
     members: ctx.members,
   };
   const parts = [`Book (use only these ids):\n${JSON.stringify(book)}`];
-  if (drafts.length) parts.push(`Current drafts (categories and accounts by name):\n${JSON.stringify(drafts)}`);
+  if (drafts.length) parts.push(`Current drafts (categories by name):\n${JSON.stringify(drafts)}`);
   if (remap) {
-    parts.push("The user switched to this book. Keep every draft as it is, and re-pick category_id and account_id from this book's lists by matching names and meaning.");
+    parts.push("The user switched to this book. Keep every draft as it is, and re-pick category_id and from_category_id from this book's lists by matching names and meaning.");
   }
   if (turns.length) parts.push(`Conversation (latest last):\n${turns.map((t) => `${t.role === "user" ? "User" : "You"}: ${t.text}`).join("\n")}`);
   parts.push("Reply with only the JSON.");
@@ -99,8 +92,6 @@ const RawReply = z.object({
         amount: z.coerce.number().catch(0),
         category_id: z.string().catch(""),
         from_category_id: z.string().catch(""),
-        account_id: z.string().catch(""),
-        to_account_id: z.string().catch(""),
         description: z.string().catch(""),
         member: z.string().catch(""),
       }),
@@ -118,7 +109,6 @@ export function sanitizeReply(raw: unknown, ctx: BookContext): { reply: string; 
   const parsed = RawReply.safeParse(raw);
   if (!parsed.success) return { reply: "", drafts: [] };
   const categories = new Map(ctx.categories.map((c) => [c.id, c]));
-  const accounts = new Set(ctx.accounts.map((a) => a.id));
   const members = new Set(ctx.members);
   const decimals = ctx.currency === "IDR" ? 0 : 2;
 
@@ -127,11 +117,10 @@ export function sanitizeReply(raw: unknown, ctx: BookContext): { reply: string; 
     if (!amount) return [];
     const type = (TXN_TYPES as readonly string[]).includes(d.type) ? (d.type as Draft["type"]) : "expense";
     const category = categories.get(d.category_id);
-    const categoryOk = category && (type === "transfer" || category.kind === (type === "income" ? "income" : "expense"));
-    // Transfers run category to category; the server takes each category's account.
-    const fromOk = type === "transfer" && categories.has(d.from_category_id) && d.from_category_id !== d.category_id;
-    const account_id = type !== "transfer" && accounts.has(d.account_id) ? d.account_id : "";
-    const to_account_id = "";
+    // Transfers move budget between Needs, Wants and Savings; income never takes part.
+    const categoryOk = category && category.kind === (type === "income" ? "income" : "expense");
+    const from = categories.get(d.from_category_id);
+    const fromOk = type === "transfer" && from?.kind === "expense" && d.from_category_id !== d.category_id;
     return [
       {
         date: ISO.test(d.date) && d.date <= ctx.today ? d.date : ctx.today,
@@ -139,8 +128,6 @@ export function sanitizeReply(raw: unknown, ctx: BookContext): { reply: string; 
         amount,
         category_id: categoryOk ? d.category_id : "",
         from_category_id: fromOk ? d.from_category_id : "",
-        account_id,
-        to_account_id,
         description: d.description.trim().slice(0, 200),
         member: members.has(d.member) ? d.member : "",
       },

@@ -216,7 +216,7 @@ export function NewBookWizard({
           <h2 className="text-title-2-semibold text-text-primary">{name || resume?.name} is ready</h2>
           <p className="text-body-regular text-text-secondary">
             {provision.counts
-              ? `${provision.counts.transactions ?? 0} transactions, ${provision.counts.categories ?? 0} categories and ${provision.counts.accounts ?? 0} accounts are in the sheet.`
+              ? `${provision.counts.transactions ?? 0} transactions and ${provision.counts.categories ?? 0} categories are in the sheet.`
               : "Everything is set up."}
           </p>
         </div>

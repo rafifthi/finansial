@@ -5,15 +5,15 @@
 export type Role = "admin" | "member" | "viewer";
 
 export const ROLE_INFO: Record<Role, { label: string; description: string }> = {
-  admin: { label: "Admin", description: "Everything, including users, settings, money accounts and categories" },
-  member: { label: "Member", description: "Add and edit transactions, budgets, goals, installments and recurring rules" },
+  admin: { label: "Admin", description: "Everything, including users, settings and categories" },
+  member: { label: "Member", description: "Add and edit transactions, budgets, savings adjustments, installments and recurring rules" },
   viewer: { label: "Viewer", description: "Read-only access to every page" },
 };
 
 export const PERMISSIONS = {
-  /** Transactions, budgets, goals, installments, recurring, reconcile. */
+  /** Transactions, budgets, savings adjustments, installments, recurring, reconcile. */
   "data:write": ["admin", "member"],
-  /** Money accounts, categories, household settings. */
+  /** Categories, household settings. */
   "setup:write": ["admin"],
   /** Create, edit, disable users and reset passwords. */
   "users:manage": ["admin"],
@@ -27,9 +27,7 @@ export function can(role: Role | undefined | null, permission: Permission): bool
 
 /** Editable tables (generic entity forms) and the permission each needs. */
 export const TABLE_PERMISSION = {
-  accounts: "setup:write",
   categories: "setup:write",
-  goals: "data:write",
   installments: "data:write",
   recurring: "data:write",
 } as const satisfies Record<string, Permission>;

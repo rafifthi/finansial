@@ -38,11 +38,9 @@ export const previewImport = userAction(z.object({ input: z.string().max(500) })
   return {
     title: v.title,
     counts: {
-      accounts: plan.accounts.length,
       categories: plan.categories.length,
       budgets: plan.budgets.length,
       transactions: plan.transactions.length,
-      goals: plan.goals.length,
       installments: plan.installments.length,
     },
     months: months.map((month) => {

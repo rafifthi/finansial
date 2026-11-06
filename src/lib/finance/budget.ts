@@ -4,7 +4,12 @@ import { monthTotals, type Group } from "./ledger";
 export interface BudgetLine {
   category: Category;
   budget: number;
+  /** Spending plus budget moved out, minus budget moved in (for Savings: net saved). */
   actual: number;
+  /** Real spending (expenses) only. */
+  spent: number;
+  /** Needs/Wants: budget sent to savings pots. The rest of `actual − spent` went to other categories. */
+  toSavings: number;
   /** actual / budget; 0 when there is no budget. */
   usage: number;
   remaining: number;
@@ -26,6 +31,8 @@ export interface BudgetMonth {
   lines: BudgetLine[];
   incomeLines: BudgetLine[];
   groups: Record<Exclude<Group, "Income">, { budget: number; actual: number }>;
+  /** Where the money went: real spending on Needs and Wants, and net saved. Budget moved between them isn't counted twice. */
+  outByGroup: Record<Exclude<Group, "Income">, number>;
 }
 
 export function budgetMonth(input: {
@@ -46,7 +53,15 @@ export function budgetMonth(input: {
   const toLine = (category: Category): BudgetLine => {
     const budget = budgets.get(category.id) ?? 0;
     const actual = totals.byCategory.get(category.id) ?? 0;
-    return { category, budget, actual, usage: budget > 0 ? actual / budget : 0, remaining: budget - actual };
+    return {
+      category,
+      budget,
+      actual,
+      spent: totals.spentBy.get(category.id) ?? 0,
+      toSavings: totals.toSavingsBy.get(category.id) ?? 0,
+      usage: budget > 0 ? actual / budget : 0,
+      remaining: budget - actual,
+    };
   };
 
   // Show active categories plus any archived one that still has data this month.
@@ -75,10 +90,53 @@ export function budgetMonth(input: {
     budgetedExpenses: groups.Needs.budget + groups.Wants.budget,
     spent: totals.spent,
     saved: totals.saved,
+    outByGroup: { Needs: totals.byGroup.Needs, Wants: totals.byGroup.Wants, Savings: totals.byGroup.Savings },
     lines,
     incomeLines,
     groups,
   };
+}
+
+export interface MonthMove {
+  from: string;
+  to: string;
+  amount: number;
+  /** "cover" tops up a line that went over budget; "save" sends a leftover to savings. */
+  reason: "cover" | "save";
+}
+
+/**
+ * Month-end plan for Needs and Wants: leftovers first cover the lines that went
+ * over budget, and whatever is still left goes to the `saveTo` Savings category.
+ * Largest first on both sides, so it takes few transfers.
+ */
+export function closeMonthPlan(
+  lines: { category: Pick<Category, "id" | "group">; remaining: number }[],
+  saveTo: string,
+): MonthMove[] {
+  const spending = lines.filter((l) => l.category.group === "Needs" || l.category.group === "Wants");
+  const leftovers = spending
+    .filter((l) => l.remaining > 0)
+    .map((l) => ({ id: l.category.id, left: l.remaining }))
+    .sort((a, b) => b.left - a.left);
+  const over = spending
+    .filter((l) => l.remaining < 0)
+    .map((l) => ({ id: l.category.id, need: -l.remaining }))
+    .sort((a, b) => b.need - a.need);
+
+  const moves: MonthMove[] = [];
+  for (const o of over) {
+    for (const l of leftovers) {
+      if (o.need <= 0) break;
+      const amount = Math.min(l.left, o.need);
+      if (amount <= 0) continue;
+      moves.push({ from: l.id, to: o.id, amount, reason: "cover" });
+      l.left -= amount;
+      o.need -= amount;
+    }
+  }
+  if (saveTo) for (const l of leftovers) if (l.left > 0) moves.push({ from: l.id, to: saveTo, amount: l.left, reason: "save" });
+  return moves;
 }
 
 /** Budget rows for `to` copied from `from`, skipping categories already budgeted in `to`. */

@@ -1,8 +1,10 @@
 import { requireBookPage } from "@/auth";
 import Link from "next/link";
 import { RiCalendarCheckLine, RiCheckDoubleLine } from "@remixicon/react";
-import { BudgetBar } from "@/components/app/budget-bar";
+import { BudgetUsage } from "@/components/app/budget-usage";
+import { can } from "@/lib/auth/roles";
 import { Card, EmptyState } from "@/components/app/card";
+import { CategoryIcon } from "@/components/app/category-icon";
 import { GroupDonut, TrendChart } from "@/components/app/charts";
 import { DashboardStats, type DashboardStat } from "@/components/app/dashboard-stats";
 import { MonthNav, monthLabel, shortDate } from "@/components/app/month-nav";
@@ -10,12 +12,12 @@ import { PageHeader } from "@/components/app/page-header";
 import { QuickAdd } from "@/components/app/quick-add";
 import { Chip } from "@/components/base/badges/chip";
 import { Meter } from "@/components/base/meter/meter";
-import { formOptions, loadAppData, monthParam } from "@/lib/data/app-data";
+import { formOptions, loadAdjustments, loadAppData, monthParam } from "@/lib/data/app-data";
 import { budgetMonth } from "@/lib/finance/budget";
 import { addMonths, monthsEnding } from "@/lib/finance/dates";
-import { goalProgress } from "@/lib/finance/goals";
+import { potTarget } from "@/lib/finance/savings";
 import { installmentStatus } from "@/lib/finance/installments";
-import { accountBalances } from "@/lib/finance/ledger";
+import { savingsBalances } from "@/lib/finance/ledger";
 import { formatMoney, formatPercent } from "@/lib/finance/money";
 import { periodOf } from "@/lib/finance/period";
 
@@ -32,6 +34,7 @@ function delta(current: number, previous: number, higherIsGood: boolean): Pick<D
 export default async function DashboardPage({ params: route, searchParams }: PageProps<"/b/[bookId]">) {
   const params = await searchParams;
   const data = await loadAppData(await requireBookPage((await route).bookId));
+  const adjustments = await loadAdjustments(data);
   const month = monthParam(params.m, data.current.period);
   const { money, categories, transactions: txns, budgets, cutoffDay: cutoff } = data;
   const fmt = (n: number) => formatMoney(n, money);
@@ -81,14 +84,26 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
   const trendMonths = monthsEnding(month, 6);
   const trend = trendMonths.map((m) => {
     const b = budgetMonth({ month: m, budgets, categories, txns, cutoff });
-    return { label: monthLabel(m, "en-GB", "short").split(" ")[0], spent: b.spent, budget: b.budgetedExpenses, income: b.actualIncome };
+    // Unspent = income not spent on Needs + Wants: what went to savings, plus the rest (unallocated or not yet moved).
+    const saved = Math.max(b.saved, 0);
+    return {
+      label: monthLabel(m, "en-GB", "short").split(" ")[0],
+      spent: b.spent,
+      saved,
+      rest: Math.max(b.actualIncome - b.spent - saved, 0),
+      income: b.actualIncome,
+    };
   });
 
-  const expenseLines = bm.lines
-    .filter((l) => l.category.group !== "Savings" && (l.budget > 0 || l.actual > 0))
-    .sort((a, b) => b.usage - a.usage);
-  const balances = accountBalances(data.accounts, txns);
-  const goals = data.goals.filter((g) => !g.archived).map((g) => goalProgress(g, categories, txns, data.today, cutoff));
+  // In the book's category order (Settings → Categories, or Reorder on the card).
+  const expenseLines = bm.lines.filter((l) => l.category.group !== "Savings" && (l.budget > 0 || l.actual > 0));
+  const balances = savingsBalances(categories, txns, adjustments);
+  const pots = categories.filter((c) => c.group === "Savings" && (!c.archived || (balances.get(c.id) ?? 0) !== 0));
+  const totalSaved = pots.reduce((s, c) => s + (balances.get(c.id) ?? 0), 0);
+  const targets = pots.flatMap((c) => {
+    const t = potTarget(c, balances.get(c.id) ?? 0, data.today, cutoff);
+    return t && !c.archived ? [{ pot: c, balance: balances.get(c.id) ?? 0, ...t }] : [];
+  });
   const installments = data.installments
     .map((i) => installmentStatus(i, txns, data.today, cutoff))
     .filter((s) => !s.isComplete);
@@ -120,35 +135,44 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
       <DashboardStats stats={stats} />
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card title="Spending vs budget" description="Needs + Wants, last 6 months" className="xl:col-span-2">
+        <Card title="Spent vs unspent" description="Needs + Wants spending against what was left of income, last 6 months" className="xl:col-span-2">
           <TrendChart data={trend} money={money} />
         </Card>
         <Card title="Where it went" description={monthLabel(month)}>
           <GroupDonut
             money={money}
             data={[
-              { group: "Needs", value: bm.groups.Needs.actual },
-              { group: "Wants", value: bm.groups.Wants.actual },
-              { group: "Savings", value: bm.groups.Savings.actual },
+              { group: "Needs", value: bm.outByGroup.Needs },
+              { group: "Wants", value: bm.outByGroup.Wants },
+              { group: "Savings", value: Math.max(bm.outByGroup.Savings, 0) },
             ]}
           />
         </Card>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card title="Budget usage" description={`${monthLabel(month)} · most used first`} href={data.href(`/budget?m=${month}`)} className="xl:col-span-2">
-          {expenseLines.length === 0 ? (
+        <BudgetUsage
+          lines={expenseLines.map((l) => ({
+            id: l.category.id,
+            name: l.category.name,
+            emoji: l.category.emoji,
+            color: l.category.color,
+            group: l.category.group,
+            actual: l.actual,
+            spent: l.spent,
+            toSavings: l.toSavings,
+            budget: l.budget,
+          }))}
+          money={money}
+          description={monthLabel(month)}
+          href={data.href(`/budget?m=${month}`)}
+          canReorder={can(data.membership.role, "setup:write")}
+          empty={
             <EmptyState>
               No budgets for this month yet. <Link className="text-button-ghost-foreground underline" href={data.href(`/budget?m=${month}`)}>Set them up</Link>.
             </EmptyState>
-          ) : (
-            <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
-              {expenseLines.map((l) => (
-                <BudgetBar key={l.category.id} name={l.category.name} category={l.category} actual={l.actual} budget={l.budget} money={money} />
-              ))}
-            </div>
-          )}
-        </Card>
+          }
+        />
 
         <div className="flex flex-col gap-4">
           {unverified > 0 ? (
@@ -166,17 +190,27 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
             </Link>
           ) : null}
 
-          <Card title="Accounts" href={data.href("/accounts")}>
-            <ul className="flex flex-col gap-2.5">
-              {data.accounts
-                .filter((a) => !a.archived)
-                .map((a) => (
-                  <li key={a.id} className="flex items-center justify-between gap-3">
-                    <span className="text-body-medium text-text-secondary">{a.name}</span>
-                    <span className="text-body-medium text-text-primary tabular-nums">{fmt(balances.get(a.id) ?? 0)}</span>
+          <Card title="Savings" description={pots.length ? `${fmt(totalSaved)} in total` : undefined} href={data.href("/savings")}>
+            {pots.length === 0 ? (
+              <EmptyState>No savings categories yet.</EmptyState>
+            ) : (
+              <ul className="flex flex-col gap-2.5">
+                {pots.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      href={data.href(`/savings/${c.id}`)}
+                      className="-mx-1.5 flex items-center justify-between gap-3 rounded-lg px-1.5 py-1 outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <CategoryIcon name={c.name} emoji={c.emoji} color={c.color} group={c.group} size="sm" />
+                        <span className="truncate text-body-medium text-text-secondary">{c.name}</span>
+                      </span>
+                      <span className="text-body-medium text-text-primary tabular-nums">{fmt(balances.get(c.id) ?? 0)}</span>
+                    </Link>
                   </li>
                 ))}
-            </ul>
+              </ul>
+            )}
           </Card>
 
           <Card title="Installments" href={data.href("/installments")}>
@@ -205,23 +239,23 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
         </div>
       </div>
 
-      <Card title="Goals" href={data.href("/goals")}>
-        {goals.length === 0 ? (
-          <EmptyState>No goals yet.</EmptyState>
+      <Card title="Savings targets" href={data.href("/savings")}>
+        {targets.length === 0 ? (
+          <EmptyState>No targets yet. Give a savings pot a target in Settings → Categories.</EmptyState>
         ) : (
           <div className="grid gap-x-8 gap-y-5 md:grid-cols-2 xl:grid-cols-4">
-            {goals.map((g) => (
-              <div key={g.goal.id} className="flex flex-col gap-1.5">
+            {targets.map((t) => (
+              <Link key={t.pot.id} href={data.href(`/savings/${t.pot.id}`)} className="flex flex-col gap-1.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-body-medium text-text-primary">{g.goal.name}</span>
-                  <span className="text-body-2-regular text-text-tertiary tabular-nums">{Math.round(g.ratio * 100)}%</span>
+                  <span className="truncate text-body-medium text-text-primary">{t.pot.name}</span>
+                  <span className="text-body-2-regular text-text-tertiary tabular-nums">{Math.round(t.ratio * 100)}%</span>
                 </div>
-                <Meter aria-label={`${g.goal.name} progress`} value={g.ratio * 100} tone={g.ratio >= 1 ? "success" : "accent"} size="sm" />
+                <Meter aria-label={`${t.pot.name} target progress`} value={t.ratio * 100} tone={t.ratio >= 1 ? "success" : "accent"} size="sm" />
                 <span className="text-caption-1-medium text-text-tertiary tabular-nums">
-                  {fmt(g.saved)} of {fmt(g.goal.target_amount)}
-                  {g.requiredMonthly ? ` · ${fmt(g.requiredMonthly)}/mo to go` : ""}
+                  {fmt(t.balance)} of {fmt(t.target)}
+                  {t.requiredMonthly ? ` · ${fmt(t.requiredMonthly)}/mo to go` : ""}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         )}

@@ -28,7 +28,7 @@ const IN_TAB_BAR = ["", "/transactions", "/budget"];
 /** In-book pages grouped the way they get used; paths are relative to /b/<bookId>. */
 const GROUPS: { label: string; paths: string[] }[] = [
   { label: "Check", paths: ["/reconcile", "/bill-check"] },
-  { label: "Plan", paths: ["/goals", "/installments", "/recurring", "/accounts"] },
+  { label: "Plan", paths: ["/savings", "/installments", "/recurring"] },
   { label: "Book", paths: ["/members", "/settings"] },
 ];
 

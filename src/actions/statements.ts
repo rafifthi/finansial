@@ -1,7 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { accountOfCategory, pocketsOf } from "@/lib/finance/accounts";
 import { requireBook } from "@/auth";
 import { bookAction, type BookActionContext } from "@/lib/data/action";
 import { bookStore, newId, statementStore } from "@/lib/data/store";
@@ -57,11 +56,9 @@ async function insertTxnForLine(
   line: Pick<StatementLine, "date" | "description" | "amount" | "kind">,
   statementDate: string,
   categoryId: string,
-  accountId: string,
 ): Promise<string> {
   const category = (await ctx.store.rows("categories")).find((c) => c.id === categoryId);
   if (!category) throw new Error("Pick a category");
-  const pockets = pocketsOf(await ctx.store.settings());
   const now = new Date().toISOString();
   const id = newId();
   const credit = line.kind === "refund" || line.kind === "payment";
@@ -71,8 +68,6 @@ async function insertTxnForLine(
     type: credit ? "income" : "expense",
     amount: line.amount,
     category_id: categoryId,
-    account_id: accountId || accountOfCategory(category, pockets),
-    to_account_id: "",
     from_category_id: "",
     member: "",
     description: line.description,
@@ -151,7 +146,7 @@ export const createStatement = bookAction(
       const line: StatementLine = { id: newId(), statement_id: statement.id, position, ...l, status: "unmatched", transaction_id: "", transaction_book_id: "" };
       if (l.kind === "payment") line.status = "ignored";
       else if ((l.kind === "fee" || l.kind === "interest") && input.fee_category_id) {
-        line.transaction_id = await insertTxnForLine(ctx, l, statement.statement_date, input.fee_category_id, "");
+        line.transaction_id = await insertTxnForLine(ctx, l, statement.statement_date, input.fee_category_id);
         line.status = "matched";
       }
       lines.push(line);

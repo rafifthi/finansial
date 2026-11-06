@@ -15,7 +15,6 @@ const month = z.string().regex(/^\d{4}-\d{2}$/, "Expected YYYY-MM");
 const amount = z.number().nonnegative();
 
 export const TXN_TYPES = ["expense", "income", "transfer"] as const;
-export const ACCOUNT_TYPES = ["bank", "ewallet", "cash", "credit_card", "investment"] as const;
 export const CATEGORY_GROUPS = ["Needs", "Wants", "Savings", "Income"] as const;
 export const FREQUENCIES = ["monthly", "weekly"] as const;
 export const ROLES = ["admin", "member", "viewer"] as const;
@@ -27,10 +26,8 @@ export const TransactionSchema = z.object({
   amount,
   /** For a transfer, the destination category; otherwise the category. */
   category_id: optId,
-  /** Transfers only: the category the money leaves. Its account is the `account_id`. */
+  /** Transfers only: the category the money leaves. */
   from_category_id: optId,
-  account_id: optId,
-  to_account_id: optId,
   member: z.string().default(""),
   description: z.string().default(""),
   verified: z.boolean().default(false),
@@ -43,28 +40,43 @@ export const TransactionSchema = z.object({
   updated_by: z.string().default(""),
 });
 
-export const AccountSchema = z.object({
-  id,
-  name: z.string().min(1),
-  type: z.enum(ACCOUNT_TYPES),
-  opening_balance: z.number().default(0),
-  /** Bank / fintech id from lib/finance/institutions.ts for its logo; "" detects from the name, "none" opts out. */
-  institution: z.string().default(""),
-  archived: z.boolean().default(false),
-});
-
 export const CategorySchema = z.object({
   id,
   name: z.string().min(1),
   kind: z.enum(["expense", "income"]),
   group: z.enum(CATEGORY_GROUPS),
-  default_account_id: optId,
+  /** Legacy: the Goal this pot used to fund. Read only to merge goals into pots. */
   goal_id: optId,
+  /** Savings only: what the pot already held before it was tracked here. */
+  starting_balance: z.number().default(0),
+  /** Savings only: what the pot is saving toward (0 = no target) and by when. */
+  target_amount: z.number().nonnegative().default(0),
+  target_date: date.or(z.literal("")).default(""),
   /** Identity shown wherever the category appears: a palette name (see category-icon.tsx) and an emoji. */
   color: z.string().default(""),
   emoji: z.string().default(""),
   archived: z.boolean().default(false),
+  /** Display order across the app (1, 2, …); 0 keeps the sheet's row order. */
+  position: z.number().int().nonnegative().default(0),
 });
+
+/** Categories in display order: by position, ties (and unset 0s) in sheet order. */
+export function orderCategories<C extends { position: number }>(categories: C[]): C[] {
+  return categories
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => (a.c.position || 0) - (b.c.position || 0) || a.i - b.i)
+    .map(({ c }) => c);
+}
+
+/**
+ * The full order after rearranging `ids` (a subset, in their new order) among
+ * the places they already held; everything else stays where it was.
+ */
+export function rearrange(order: string[], ids: string[]): string[] {
+  const moving = new Set(ids.filter((id) => order.includes(id)));
+  const queue = ids.filter((id) => moving.has(id));
+  return order.map((id) => (moving.has(id) ? queue.shift()! : id));
+}
 
 export const BudgetSchema = z.object({
   id,
@@ -73,6 +85,7 @@ export const BudgetSchema = z.object({
   amount,
 });
 
+/** Legacy: goals now live on their Savings pot (Category.target_*). Kept to read old books for the merge. */
 export const GoalSchema = z.object({
   id,
   name: z.string().min(1),
@@ -85,7 +98,6 @@ export const GoalSchema = z.object({
 export const InstallmentSchema = z.object({
   id,
   name: z.string().min(1),
-  account_id: optId,
   category_id: optId,
   monthly_amount: amount,
   tenor_months: z.number().int().positive(),
@@ -101,8 +113,6 @@ export const RecurringSchema = z.object({
   category_id: optId,
   /** Transfers only: the category the money leaves. */
   from_category_id: optId,
-  account_id: optId,
-  to_account_id: optId,
   member: z.string().default(""),
   description: z.string().default(""),
   frequency: z.enum(FREQUENCIES),
@@ -120,7 +130,6 @@ export const SettingSchema = z.object({
 });
 
 export type Transaction = z.infer<typeof TransactionSchema>;
-export type Account = z.infer<typeof AccountSchema>;
 export type Category = z.infer<typeof CategorySchema>;
 export type Budget = z.infer<typeof BudgetSchema>;
 export type Goal = z.infer<typeof GoalSchema>;
@@ -154,8 +163,6 @@ export const TABLES = {
     amount: "number",
     category_id: "string",
     from_category_id: "string",
-    account_id: "string",
-    to_account_id: "string",
     member: "string",
     description: "string",
     verified: "boolean",
@@ -166,24 +173,19 @@ export const TABLES = {
     created_by: "string",
     updated_by: "string",
   }),
-  accounts: table("Accounts", AccountSchema, {
-    id: "string",
-    name: "string",
-    type: "string",
-    opening_balance: "number",
-    institution: "string",
-    archived: "boolean",
-  }),
   categories: table("Categories", CategorySchema, {
     id: "string",
     name: "string",
     kind: "string",
     group: "string",
-    default_account_id: "string",
     goal_id: "string",
+    starting_balance: "number",
+    target_amount: "number",
+    target_date: "date",
     color: "string",
     emoji: "string",
     archived: "boolean",
+    position: "number",
   }),
   budgets: table("Budgets", BudgetSchema, {
     id: "string",
@@ -202,7 +204,6 @@ export const TABLES = {
   installments: table("Installments", InstallmentSchema, {
     id: "string",
     name: "string",
-    account_id: "string",
     category_id: "string",
     monthly_amount: "number",
     tenor_months: "number",
@@ -216,8 +217,6 @@ export const TABLES = {
     amount: "number",
     category_id: "string",
     from_category_id: "string",
-    account_id: "string",
-    to_account_id: "string",
     member: "string",
     description: "string",
     frequency: "string",
@@ -303,6 +302,40 @@ export const STATEMENT_TABLES = {
 
 export type StatementTables = typeof STATEMENT_TABLES;
 
+/* ---- Savings: balance adjustments on a savings pot ---- */
+
+/**
+ * A correction to a Savings category's balance with no transaction behind it
+ * (interest, fees, a miscount). Signed: positive adds to the pot, negative
+ * takes from it. Kept out of Transactions so budgets and spending never see it.
+ */
+export const SavingsAdjustmentSchema = z.object({
+  id,
+  category_id: id,
+  date,
+  amount: z.number().refine((n) => n !== 0, "Enter an amount"),
+  note: z.string().trim().min(1, "Say what it's for").max(200),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+});
+
+export type SavingsAdjustment = z.infer<typeof SavingsAdjustmentSchema>;
+
+/** Their own tab, added the first time a book opens Savings. */
+export const SAVINGS_TABLES = {
+  adjustments: table("SavingsAdjustments", SavingsAdjustmentSchema, {
+    id: "string",
+    category_id: "string",
+    date: "date",
+    amount: "number",
+    note: "string",
+    created_at: "string",
+    created_by: "string",
+  }),
+} as const;
+
+export type SavingsTables = typeof SAVINGS_TABLES;
+
 /** Any set of tables a SheetDb can serve (book sheet or registry sheet). */
 export type TableSet = Record<string, TableDef>;
 export type Tables = typeof TABLES;
@@ -315,7 +348,7 @@ export type RowIn<T extends TableSet, N extends keyof T> = z.infer<T[N]["schema"
 export const BOOK_KINDS = ["family", "personal"] as const;
 export const BOOK_STATUSES = ["provisioning", "active", "archived", "error"] as const;
 
-/** App users (sign-in accounts), not to be confused with money Accounts. */
+/** App users (sign-in accounts). */
 export const UserSchema = z.object({
   id,
   email: z.string().trim().toLowerCase().email(),
@@ -422,6 +455,4 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   /** Last day of each budget period; 31 = end of month (calendar months). */
   cutoff_day: "31",
   members: "",
-  /** "true" lets a transaction pick an account other than its category's. */
-  account_override: "false",
 };

@@ -28,8 +28,6 @@ export function PayInstallmentButton({ installment, options }: { installment: In
           type: "expense",
           amount: installment.monthly_amount,
           category_id: installment.category_id,
-          account_id: installment.account_id,
-          to_account_id: "",
           member: options.members.includes(member) ? member : "",
           description: installment.name,
           verified: false,

@@ -8,8 +8,6 @@ const txn = (p: Partial<Transaction> & { id: string }): Transaction => ({
   type: "expense",
   amount: 0,
   category_id: "",
-  account_id: "",
-  to_account_id: "",
   from_category_id: "",
   member: "",
   description: "",
@@ -84,9 +82,9 @@ describe("matching", () => {
     expect(similarity("Netflix", "Spotify")).toBe(0);
   });
 
-  it("matches on amount across any account or category, within the statement window", () => {
+  it("matches on amount across any category, within the statement window", () => {
     const txns = [
-      txn({ id: "a", amount: 20000, description: "Ayam", account_id: "jago", category_id: "food" }),
+      txn({ id: "a", amount: 20000, description: "Ayam", category_id: "food" }),
       txn({ id: "old", amount: 20000, date: "2026-06-01" }),
       txn({ id: "b", amount: 19999 }),
     ];

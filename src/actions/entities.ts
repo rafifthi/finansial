@@ -7,26 +7,24 @@ import { newId } from "@/lib/data/store";
 import { PermissionError } from "@/auth";
 import { can, TABLE_PERMISSION } from "@/lib/auth/roles";
 import type { Role } from "@/lib/auth/roles";
-import { accountOfCategory, accountUsage, isUsed, planAccountMerge, pocketKey, pocketsOf } from "@/lib/finance/accounts";
-import { CATEGORY_GROUPS, TABLES } from "@/lib/sheets/schema";
+import { transferErrors } from "@/lib/data/transaction-write";
+import { orderCategories, rearrange, TABLES } from "@/lib/sheets/schema";
 
-const EDITABLE = ["accounts", "categories", "goals", "installments", "recurring"] as const;
+const EDITABLE = ["categories", "installments", "recurring"] as const;
 type Editable = (typeof EDITABLE)[number];
 
 /** Which other tables reference a row, so deletes can't orphan data. */
 const REFERENCES: Record<Editable, { table: "transactions" | "categories" | "recurring" | "installments" | "budgets"; column: string }[]> = {
-  // Accounts go through deleteAccount, which moves their rows elsewhere.
-  accounts: [],
   categories: [
     { table: "transactions", column: "category_id" },
+    { table: "transactions", column: "from_category_id" },
     { table: "budgets", column: "category_id" },
   ],
-  goals: [{ table: "categories", column: "goal_id" }],
   installments: [{ table: "transactions", column: "installment_id" }],
   recurring: [],
 };
 
-/** Money accounts and categories are admin-only; the rest is for members too. */
+/** Categories are admin-only; the rest is for members too. */
 function assertCanEdit(role: Role, table: Editable) {
   if (!can(role, TABLE_PERMISSION[table])) throw new PermissionError("Your role doesn't allow this.");
 }
@@ -40,11 +38,20 @@ export const saveEntity = bookAction(
     const id = typeof values.id === "string" && values.id ? values.id : "";
     if (table === "categories") {
       values.kind = values.group === "Income" ? "income" : "expense";
-      // New categories start in their group's pocket.
-      if (!id && !values.default_account_id) values.default_account_id = pocketsOf(await store.settings())[values.group as never] ?? "";
+      // Only a savings pot holds a balance or a target.
+      if (values.group !== "Savings") {
+        values.starting_balance = 0;
+        values.target_amount = 0;
+        values.target_date = "";
+      }
       values.emoji = Array.from(String(values.emoji ?? "").trim()).slice(0, 8).join("");
+      // A new category goes to the end of a reordered list; with no order set, the sheet's row order already does that.
+      if (!id) {
+        const top = Math.max(0, ...(await store.rows("categories")).map((c) => c.position));
+        values.position = top ? top + 1 : 0;
+      }
     }
-    // Books created before a column existed (category emoji, account institution) lack it in
+    // Books created before a column existed (category emoji, starting balance) lack it in
     // the sheet; add it first so the write isn't silently dropped.
     const headers = (await store.snapshot())[table].headers.map(String);
     if (Object.keys(def.columns).some((c) => !headers.includes(c))) {
@@ -53,29 +60,12 @@ export const saveEntity = bookAction(
     }
     if (table === "recurring") {
       if (values.type === "transfer") {
-        // Transfers run category to category; the categories' accounts are where the money moves.
-        const categories = await store.rows("categories");
-        const pockets = pocketsOf(await store.settings());
-        const accountOf = (cid: unknown) => {
-          const c = categories.find((x) => x.id === cid);
-          return c ? accountOfCategory(c, pockets) : "";
-        };
-        const errors: Record<string, string> = {};
-        if (!values.from_category_id) errors.from_category_id = "Pick where the money comes from";
-        if (!values.category_id) errors.category_id = "Pick where the money goes";
-        else if (values.category_id === values.from_category_id) errors.category_id = "Pick two different categories";
+        const errors = transferErrors(await store.rows("categories"), String(values.from_category_id ?? ""), String(values.category_id ?? ""));
         if (Object.keys(errors).length) throw new FieldErrors(errors);
-        values.account_id = accountOf(values.from_category_id);
-        values.to_account_id = accountOf(values.category_id);
         values.installment_id = "";
       } else {
         values.from_category_id = "";
-        values.to_account_id = "";
       }
-    }
-    if ((table === "recurring" || table === "installments") && values.type !== "transfer" && !values.account_id && values.category_id) {
-      const category = (await store.rows("categories")).find((c) => c.id === values.category_id);
-      values.account_id = category ? accountOfCategory(category, pocketsOf(await store.settings())) : "";
     }
     const parsed = def.schema.safeParse({ ...values, id: id || newId() });
     if (!parsed.success) throw new FieldErrors(fieldErrorsFrom(parsed.error.issues));
@@ -86,7 +76,6 @@ export const saveEntity = bookAction(
 
 export const deleteEntity = bookAction("data:write", z.object({ table: z.enum(EDITABLE), id: z.string().min(1) }), async ({ table, id }, { membership, store }) => {
   assertCanEdit(membership.role, table);
-  if (table === "accounts") throw new Error("Delete accounts from the Accounts page so their transactions can be moved.");
   for (const ref of REFERENCES[table]) {
     const used = (await store.rows(ref.table)).some((r) => (r as Record<string, unknown>)[ref.column] === id);
     if (used) {
@@ -108,7 +97,6 @@ export const restoreEntity = bookAction(
   z.object({ table: z.enum(EDITABLE), row: z.record(z.string(), z.unknown()) }),
   async ({ table, row }, { membership, store }) => {
     assertCanEdit(membership.role, table);
-    if (table === "accounts") throw new Error("Accounts can't be restored here.");
     const parsed = TABLES[table].schema.safeParse(row);
     if (!parsed.success) throw new Error("That item can't be restored.");
     if ((await store.rows(table)).some((r) => r.id === parsed.data.id)) return;
@@ -117,57 +105,22 @@ export const restoreEntity = bookAction(
 );
 
 /**
- * Deletes a money account. When anything still points at it, everything is
- * moved to `move_to` first (transactions, recurring, installments, category
- * defaults, group pockets) and `move_to` takes over its opening balance.
+ * Saves a new category order. `ids` may be a subset (e.g. the Needs and Wants
+ * lines shown on the dashboard): they're rearranged among the places they
+ * already held, and every other category keeps its place.
  */
-export const deleteAccount = bookAction(
+export const reorderCategories = bookAction(
   "setup:write",
-  z.object({ id: z.string().min(1), move_to: z.string().default("") }),
-  async ({ id, move_to }, { store }) => {
-    const accounts = await store.rows("accounts");
-    const from = accounts.find((a) => a.id === id);
-    if (!from) throw new Error("That account no longer exists.");
-    const [transactions, recurring, installments, categories, settings] = await Promise.all([
-      store.rows("transactions"),
-      store.rows("recurring"),
-      store.rows("installments"),
-      store.rows("categories"),
-      store.settings(),
-    ]);
-    const rows = { transactions, recurring, installments, categories, pockets: pocketsOf(settings) };
-
-    if (move_to) {
-      const to = accounts.find((a) => a.id === move_to);
-      if (!to || to.id === from.id) throw new Error("Pick another account to move everything to.");
-      const plan = planAccountMerge(from, to, rows);
-      // Repoint first, drop the account last: a failure part-way leaves it in place to retry.
-      await store.updateMany("transactions", plan.transactions.update);
-      await store.remove("transactions", plan.transactions.remove);
-      await store.updateMany("recurring", plan.recurring.update);
-      await store.remove("recurring", plan.recurring.remove);
-      await store.updateMany("installments", plan.installments);
-      await store.updateMany("categories", plan.categories);
-      for (const group of plan.pockets) await store.setSetting(pocketKey(group), to.id);
-      if (from.opening_balance) await store.update("accounts", to.id, { opening_balance: plan.openingBalance });
-    } else {
-      if (isUsed(accountUsage(id, rows))) throw new Error("This account is still in use. Pick an account to move everything to.");
+  z.object({ ids: z.array(z.string().min(1)).min(1).max(500) }),
+  async ({ ids }, { store }) => {
+    const headers = (await store.snapshot()).categories.headers.map(String);
+    if (!headers.includes("position")) {
+      await store.db.ensureSchema();
+      store.invalidate();
     }
-    await store.remove("accounts", [id]);
-  },
-);
-
-/** Shortcut: every category in the group moves to one account, which also becomes the default for new ones. */
-export const setGroupPocket = bookAction(
-  "setup:write",
-  z.object({ group: z.enum(CATEGORY_GROUPS), account_id: z.string() }),
-  async ({ group, account_id }, { store }) => {
-    if (account_id && !(await store.rows("accounts")).some((a) => a.id === account_id)) throw new Error("That account no longer exists.");
-    await store.setSetting(pocketKey(group), account_id);
-    if (!account_id) return;
-    const changes = (await store.rows("categories"))
-      .filter((c) => c.group === group && c.default_account_id !== account_id)
-      .map((c) => ({ key: c.id, patch: { default_account_id: account_id } }));
+    const order = orderCategories(await store.rows("categories"));
+    const next = rearrange(order.map((c) => c.id), ids);
+    const changes = next.flatMap((id, i) => (order.find((c) => c.id === id)!.position === i + 1 ? [] : [{ key: id, patch: { position: i + 1 } }]));
     await store.updateMany("categories", changes);
   },
 );
@@ -189,11 +142,6 @@ export const saveSettings = bookAction(
     await store.setSetting("currency", s.currency);
     await store.setSetting("locale", s.locale);
   },
-);
-
-/** Whether transactions may use an account other than their category's. */
-export const setAccountOverride = bookAction("setup:write", z.object({ enabled: z.boolean() }), ({ enabled }, { store }) =>
-  store.setSetting("account_override", String(enabled)),
 );
 
 export const runRecurringNow = bookAction("data:write", z.object({}), async (_input, { book }) => {

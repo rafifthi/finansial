@@ -336,6 +336,85 @@ export const SAVINGS_TABLES = {
 
 export type SavingsTables = typeof SAVINGS_TABLES;
 
+/* ---- Lists: checklists for groceries, purchases and chores ---- */
+
+export const LIST_SORTS = ["manual", "deadline", "priority", "starred"] as const;
+/** "" is no priority. */
+export const PRIORITIES = ["", "low", "medium", "high"] as const;
+/** "" doesn't repeat. Ticking a repeating item creates the next one (see lib/lists/order.ts). */
+export const REPEATS = ["", "daily", "weekly", "monthly", "yearly"] as const;
+
+const lower = <S extends z.ZodType>(s: S) => z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), s);
+
+export const TodoListSchema = z.object({
+  id,
+  name: z.string().trim().min(1, "Give the list a name").max(60),
+  /** Same identity as a category: an emoji on a palette colour (see category-icon.tsx). */
+  emoji: z.string().default(""),
+  color: z.string().default(""),
+  sort: lower(z.enum(LIST_SORTS)).catch("manual"),
+  position: z.number().default(0),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+});
+
+export const TodoItemSchema = z.object({
+  id,
+  list_id: id,
+  title: z.string().trim().min(1, "Write something").max(500),
+  note: z.string().max(2000).default(""),
+  deadline: date.or(z.literal("")).default(""),
+  /** Typed by hand as "High" or left blank: anything unknown reads as no priority. */
+  priority: lower(z.enum(PRIORITIES)).catch(""),
+  repeat: lower(z.enum(REPEATS)).catch(""),
+  starred: z.boolean().default(false),
+  done: z.boolean().default(false),
+  /** Manual order within the list; spaced apart so a move rewrites one row (see lib/lists/order.ts). */
+  position: z.number().default(0),
+  completed_at: z.string().default(""),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+  updated_at: z.string().default(""),
+});
+
+export type TodoList = z.infer<typeof TodoListSchema>;
+export type TodoItem = z.infer<typeof TodoItemSchema>;
+export type ListSort = (typeof LIST_SORTS)[number];
+export type Priority = (typeof PRIORITIES)[number];
+export type Repeat = (typeof REPEATS)[number];
+
+/** Their own tabs, added the first time a book opens Lists. */
+export const LIST_TABLES = {
+  lists: table("Lists", TodoListSchema, {
+    id: "string",
+    name: "string",
+    emoji: "string",
+    color: "string",
+    sort: "string",
+    position: "number",
+    created_at: "string",
+    created_by: "string",
+  }),
+  items: table("ListItems", TodoItemSchema, {
+    id: "string",
+    list_id: "string",
+    title: "string",
+    note: "string",
+    deadline: "date",
+    priority: "string",
+    repeat: "string",
+    starred: "boolean",
+    done: "boolean",
+    position: "number",
+    completed_at: "string",
+    created_at: "string",
+    created_by: "string",
+    updated_at: "string",
+  }),
+} as const;
+
+export type ListTables = typeof LIST_TABLES;
+
 /** Any set of tables a SheetDb can serve (book sheet or registry sheet). */
 export type TableSet = Record<string, TableDef>;
 export type Tables = typeof TABLES;

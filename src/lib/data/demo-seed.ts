@@ -7,12 +7,14 @@ import type {
   Membership,
   Recurring,
   Setting,
+  TodoItem,
+  TodoList,
   Transaction,
   User,
 } from "@/lib/sheets/schema";
 import { hashPasswordSync } from "@/lib/auth/password";
 import { budgetMonth, closeMonthPlan } from "@/lib/finance/budget";
-import { addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
+import { addDays, addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
 
 export const DEMO_PASSWORD = "demo1234";
 export const DEMO_USERS = [
@@ -79,6 +81,67 @@ export function demoSavingsSeed(spreadsheetId: string) {
     adjustments: [
       { id: "adj-1", category_id: "rumah", date: dayInMonth(prev, 28), amount: 186_500, note: "Bunga deposito", created_at: "", created_by: "" },
       { id: "adj-2", category_id: "dana-darurat", date: dayInMonth(prev, 30), amount: -6_500, note: "Biaya admin bank", created_at: "", created_by: "" },
+    ],
+  };
+}
+
+export function demoListSeed(spreadsheetId: string): { lists?: TodoList[]; items?: TodoItem[] } {
+  const now = today();
+  const list = (id: string, name: string, emoji: string, color: string, position: number): TodoList => ({
+    id,
+    name,
+    emoji,
+    color,
+    sort: "manual",
+    position,
+    created_at: "",
+    created_by: "",
+  });
+  let n = 0;
+  const item = (list_id: string, title: string, extra: Partial<TodoItem> = {}): TodoItem => ({
+    id: `item-${++n}`,
+    list_id,
+    title,
+    note: "",
+    deadline: "",
+    priority: "",
+    repeat: "",
+    starred: false,
+    done: false,
+    position: n * 1024,
+    completed_at: "",
+    created_at: "",
+    created_by: "",
+    updated_at: "",
+    ...extra,
+  });
+  if (spreadsheetId === DEMO_PERSONAL_SHEET) {
+    return {
+      lists: [list("reading", "Reading", "📚", "purple", 1024)],
+      items: [item("reading", "Atomic Habits"), item("reading", "The Psychology of Money", { starred: true })],
+    };
+  }
+  if (spreadsheetId !== DEMO_FAMILY_SHEET) return {};
+  return {
+    lists: [
+      list("groceries", "Groceries", "🛒", "lime", 1024),
+      list("to-buy", "To buy", "🛍️", "orange", 2048),
+      list("chores", "Chores", "🧹", "blue", 3072),
+    ],
+    items: [
+      item("groceries", "Beras 5 kg", { starred: true }),
+      item("groceries", "Telur 1 tray"),
+      item("groceries", "Susu UHT", { note: "Full cream, 1 L × 6" }),
+      item("groceries", "Minyak goreng 2 L"),
+      item("groceries", "Bawang merah"),
+      item("groceries", "Sabun cuci piring", { done: true, completed_at: `${now}T08:00:00.000Z` }),
+      item("to-buy", "Rice cooker baru", { priority: "medium", deadline: addDays(now, 10) }),
+      item("to-buy", "Kado ulang tahun Ibu", { priority: "high", starred: true, deadline: addDays(now, 3) }),
+      item("to-buy", "Filter air", { deadline: addDays(now, -1) }),
+      item("chores", "Bayar PBB", { priority: "high", deadline: now }),
+      item("chores", "Servis AC", { deadline: addDays(now, 1) }),
+      item("chores", "Ganti sprei", { repeat: "weekly", deadline: addDays(now, 2) }),
+      item("chores", "Buang sampah", { repeat: "daily", deadline: now }),
     ],
   };
 }

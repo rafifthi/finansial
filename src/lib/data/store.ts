@@ -3,8 +3,19 @@ import { customAlphabet } from "nanoid";
 import { getSheetsClient } from "@/lib/sheets/client";
 import { SheetDb } from "@/lib/sheets/db";
 import { MemoryDb } from "@/lib/sheets/memory-db";
-import { DEFAULT_SETTINGS, SAVINGS_TABLES, STATEMENT_TABLES, type Book, type SavingsTables, type StatementTables, type TableSet, type Tables } from "@/lib/sheets/schema";
-import { demoBookSeed, demoSavingsSeed } from "./demo-seed";
+import {
+  DEFAULT_SETTINGS,
+  LIST_TABLES,
+  SAVINGS_TABLES,
+  STATEMENT_TABLES,
+  type Book,
+  type ListTables,
+  type SavingsTables,
+  type StatementTables,
+  type TableSet,
+  type Tables,
+} from "@/lib/sheets/schema";
+import { demoBookSeed, demoListSeed, demoSavingsSeed } from "./demo-seed";
 import { createStore, type SheetStore } from "./sheet-store";
 
 /** Local-only demo database; never selectable in a production build. */
@@ -76,3 +87,6 @@ export const statementStore = (book: Pick<Book, "spreadsheet_id">) => moduleStor
 /** Savings balance adjustments for one book. */
 export const savingsStore = (book: Pick<Book, "spreadsheet_id">) =>
   moduleStore<SavingsTables>(book, "savings", SAVINGS_TABLES, () => demoSavingsSeed(book.spreadsheet_id));
+
+/** Checklists (Lists) for one book. */
+export const listStore = (book: Pick<Book, "spreadsheet_id">) => moduleStore<ListTables>(book, "lists", LIST_TABLES, () => demoListSeed(book.spreadsheet_id));

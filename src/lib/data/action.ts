@@ -90,6 +90,8 @@ export function bookAction<S extends z.ZodType, T = undefined>(
   permission: Permission | null,
   schema: S,
   fn: (input: z.infer<S>, ctx: BookActionContext) => Promise<T | void>,
+  /** `refresh: false` skips re-rendering the page, for screens that update themselves optimistically (Lists). */
+  options: { refresh?: boolean } = {},
 ) {
   return async (bookId: string, raw: z.input<S>): Promise<ActionResult<T>> => {
     let ctx: BookActionContext;
@@ -104,7 +106,7 @@ export function bookAction<S extends z.ZodType, T = undefined>(
     if (!parsed.success) return invalid(parsed.error);
     try {
       const data = await fn(parsed.data, ctx);
-      refresh();
+      if (options.refresh !== false) refresh();
       return { ok: true, data: data ?? undefined };
     } catch (err) {
       return failure(err);

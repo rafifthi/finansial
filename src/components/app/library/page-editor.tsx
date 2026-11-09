@@ -17,6 +17,7 @@ import { useBookId } from "../permissions";
 import { EditorBubble } from "./editor/editor-bubble";
 import { LinkShortcut } from "./editor/link";
 import { SlashMenu } from "./editor/slash-menu";
+import { TocMenu, TocRail, useActiveHeading, useToc } from "./editor/toc";
 import { useLibrary } from "./library-context";
 import { PageMenu } from "./page-tree";
 import { usePageSave, type SaveStatus } from "./use-page-save";
@@ -74,6 +75,9 @@ export function PageEditor({ page: initialPage, rows }: { page: Page; rows: Page
     () => [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+        // Passwords, commands and addresses aren't words to spell-check.
+        code: { HTMLAttributes: { spellcheck: "false" } },
+        codeBlock: { HTMLAttributes: { spellcheck: "false" } },
         link: {
           openOnClick: !canEdit,
           autolink: true,
@@ -113,72 +117,89 @@ export function PageEditor({ page: initialPage, rows }: { page: Page; rows: Page
     document.title = `${pageTitle({ title })} · Finansial`;
   }, [title]);
 
+  const toc = useToc(editor);
+  const activeHeading = useActiveHeading(toc);
+  // A contents list earns its place once a page has a few sections.
+  const showToc = toc.length >= 2;
+
   const trail = ancestors(pages, initialPage.id);
   const parent = trail[trail.length - 1];
   const live = pages.find((p) => p.id === initialPage.id);
 
   return (
-    <article className="mx-auto flex w-full max-w-3xl flex-col gap-4 lg:pt-2">
-      <div className="flex min-h-7 items-center justify-between gap-3">
-        <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-body-2-regular text-text-tertiary">
-          <Link href={parent ? href(parent.id) : href()} className="flex items-center gap-0.5 rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring lg:hidden">
-            <RiArrowLeftSLine className="size-4 shrink-0 rtl:-scale-x-100" aria-hidden />
-            <span className="truncate">{parent ? pageTitle(parent) : "Library"}</span>
-          </Link>
-          <ol className="flex min-w-0 items-center gap-1 max-lg:hidden">
-            <li>
-              <Link href={href()} className="rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring">
-                Library
-              </Link>
-            </li>
-            {trail.map((p) => (
-              <li key={p.id} className="flex min-w-0 items-center gap-1">
-                <span aria-hidden>/</span>
-                <Link href={href(p.id)} className="truncate rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring">
-                  {pageTitle(p)}
+    <div className={cx("mx-auto grid w-full items-start gap-8", showToc ? "max-w-3xl min-[1360px]:max-w-[calc(48rem+11rem+2rem)] min-[1360px]:grid-cols-[minmax(0,48rem)_11rem]" : "max-w-3xl")}>
+      <article className="flex min-w-0 flex-col gap-4 lg:pt-2">
+        <div className="flex min-h-7 items-center justify-between gap-3">
+          <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-body-2-regular text-text-tertiary">
+            <Link href={parent ? href(parent.id) : href()} className="flex items-center gap-0.5 rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring lg:hidden">
+              <RiArrowLeftSLine className="size-4 shrink-0 rtl:-scale-x-100" aria-hidden />
+              <span className="truncate">{parent ? pageTitle(parent) : "Library"}</span>
+            </Link>
+            <ol className="flex min-w-0 items-center gap-1 max-lg:hidden">
+              <li>
+                <Link href={href()} className="rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+                  Library
                 </Link>
               </li>
-            ))}
-          </ol>
-        </nav>
-        <div className="flex shrink-0 items-center gap-3">
-          {canEdit ? <SaveState status={save.status} error={save.error} /> : null}
-          {canEdit && live ? <PageMenu page={live} /> : null}
+              {trail.map((p) => (
+                <li key={p.id} className="flex min-w-0 items-center gap-1">
+                  <span aria-hidden>/</span>
+                  <Link href={href(p.id)} className="truncate rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+                    {pageTitle(p)}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </nav>
+          <div className="flex shrink-0 items-center gap-3">
+            {showToc ? (
+              <span className="min-[1360px]:hidden">
+                <TocMenu items={toc} active={activeHeading} />
+              </span>
+            ) : null}
+            {canEdit ? <SaveState status={save.status} error={save.error} /> : null}
+            {canEdit && live ? <PageMenu page={live} /> : null}
+          </div>
         </div>
-      </div>
 
-      <header className="flex flex-col gap-1">
-        {canEdit ? (
-          <TextField
-            aria-label="Title"
-            value={title}
-            maxLength={200}
-            onChange={(t) => {
-              setTitle(t);
-              patchLocal(initialPage.id, { title: t });
-              saver.changed(t);
-            }}
-            onKeyDown={(e) => {
-              // Enter moves on to the first line of the page.
-              if ((e.key === "Enter" || (e.key === "ArrowDown" && !e.shiftKey)) && editor) {
-                e.preventDefault();
-                // Focus now, not on the next frame (Tiptap's focus waits for one), so fast typing lands in the page.
-                editor.view.dom.focus();
-                editor.commands.focus("start");
-              }
-            }}
-            fieldClassName={BARE}
-          >
-            <InputBase placeholder="Untitled" autoComplete="off" autoFocus={initialPage.version === 0 && !initialPage.title} className="field-display px-0 text-large-title-semibold" />
-          </TextField>
-        ) : (
-          <h1 className="text-large-title-semibold text-text-primary">{pageTitle({ title })}</h1>
-        )}
-        {edited(meta) ? <p className="text-body-2-regular text-text-tertiary">{edited(meta)}</p> : null}
-      </header>
+        <header className="flex flex-col gap-1">
+          {canEdit ? (
+            <TextField
+              aria-label="Title"
+              value={title}
+              maxLength={200}
+              onChange={(t) => {
+                setTitle(t);
+                patchLocal(initialPage.id, { title: t });
+                saver.changed(t);
+              }}
+              onKeyDown={(e) => {
+                // Enter moves on to the first line of the page.
+                if ((e.key === "Enter" || (e.key === "ArrowDown" && !e.shiftKey)) && editor) {
+                  e.preventDefault();
+                  // Focus now, not on the next frame (Tiptap's focus waits for one), so fast typing lands in the page.
+                  editor.view.dom.focus();
+                  editor.commands.focus("start");
+                }
+              }}
+              fieldClassName={BARE}
+            >
+              <InputBase placeholder="Untitled" autoComplete="off" autoFocus={initialPage.version === 0 && !initialPage.title} className="field-display px-0 text-large-title-semibold" />
+            </TextField>
+          ) : (
+            <h1 className="text-large-title-semibold text-text-primary">{pageTitle({ title })}</h1>
+          )}
+          {edited(meta) ? <p className="text-body-2-regular text-text-tertiary">{edited(meta)}</p> : null}
+        </header>
 
-      <EditorContent editor={editor} />
-      {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} /> : null}
-    </article>
+        <EditorContent editor={editor} />
+        {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} /> : null}
+      </article>
+      {showToc ? (
+        <aside className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pt-12 max-[1359px]:hidden">
+          <TocRail items={toc} active={activeHeading} />
+        </aside>
+      ) : null}
+    </div>
   );
 }

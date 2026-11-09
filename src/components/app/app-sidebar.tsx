@@ -8,6 +8,7 @@ import {
   RiAddLine,
   RiArrowLeftRightLine,
   RiBankCard2Line,
+  RiBookOpenLine,
   RiBookShelfLine,
   RiCalendarScheduleLine,
   RiCheckDoubleLine,
@@ -74,6 +75,7 @@ const BOOK_NAV: NavEntry[] = [
   { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine, group: "finance" },
   { path: "/recurring", label: "Recurring", icon: RiRepeatLine, group: "finance" },
   { path: "/lists", label: "Lists", icon: RiListCheck3, group: "others" },
+  { path: "/library", label: "Library", icon: RiBookOpenLine, group: "others" },
   { path: "/members", label: "Members", icon: RiGroupLine, group: "book", admins: true },
   { path: "/settings", label: "Settings", icon: RiSettings4Line, group: "book" },
 ];

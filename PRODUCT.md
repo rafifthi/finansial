@@ -30,7 +30,7 @@ The household's own Google Sheets are the only database, one spreadsheet per boo
 ## Capabilities and Constraints
 
 - **Books:** multiple books per user. A registry spreadsheet holds Users, Books, Memberships and Invites, and each book has its own spreadsheet.
-- **Modules:** Dashboard, Transactions, Catat, Budget (income allocated to Savings / Needs / Wants), Goals, Installments (*Bulan ke-*, *Lunas*), Recurring, Lists (checklists for groceries, purchases and chores), Accounts, Reconcile, Bill check, Members, Book settings, and account-level Settings and Profile.
+- **Modules:** Dashboard, Transactions, Catat, Budget (income allocated to Savings / Needs / Wants), Goals, Installments (*Bulan ke-*, *Lunas*), Recurring, Lists (checklists for groceries, purchases and chores), Library (pages of rich text: how-tos, contacts, plans), Accounts, Reconcile, Bill check, Members, Book settings, and account-level Settings and Profile.
 - **Auth:** email and password users with per-book roles. System admins can manage logins but can't open other people's books.
 - **Every transaction needs an amount, a category and a description.**
 - **Transfers go from one category to another, not between accounts.** Each category is bound to an account, so the two categories decide which accounts the money leaves and lands in.

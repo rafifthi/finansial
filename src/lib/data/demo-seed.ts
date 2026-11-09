@@ -5,6 +5,8 @@ import type {
   Goal,
   Installment,
   Membership,
+  Page,
+  PageBlock,
   Recurring,
   Setting,
   TodoItem,
@@ -13,6 +15,7 @@ import type {
   User,
 } from "@/lib/sheets/schema";
 import { hashPasswordSync } from "@/lib/auth/password";
+import { nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
 import { budgetMonth, closeMonthPlan } from "@/lib/finance/budget";
 import { addDays, addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
 
@@ -142,6 +145,57 @@ export function demoListSeed(spreadsheetId: string): { lists?: TodoList[]; items
       item("chores", "Servis AC", { deadline: addDays(now, 1) }),
       item("chores", "Ganti sprei", { repeat: "weekly", deadline: addDays(now, 2) }),
       item("chores", "Buang sampah", { repeat: "daily", deadline: now }),
+    ],
+  };
+}
+
+/** A few Library pages for the Family book: house info with a child page, and a how-to. */
+export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks?: PageBlock[] } {
+  if (spreadsheetId !== DEMO_FAMILY_SHEET) return {};
+  const page = (id: string, title: string, emoji: string, position: number, parent_id = ""): Page => ({
+    id,
+    parent_id,
+    title,
+    emoji,
+    position,
+    version: 1,
+    archived: false,
+    created_at: "",
+    created_by: "admin@demo.local",
+    updated_at: `${today()}T09:00:00.000Z`,
+    updated_by: "admin@demo.local",
+  });
+  const t = (text: string, marks?: DocNode["marks"]): DocNode => ({ type: "text", text, ...(marks ? { marks } : {}) });
+  const para = (...content: DocNode[]): DocNode => ({ type: "paragraph", content });
+  const heading = (level: number, text: string): DocNode => ({ type: "heading", attrs: { level }, content: [t(text)] });
+  const bullets = (...items: string[]): DocNode => ({ type: "bulletList", content: items.map((i) => ({ type: "listItem", content: [para(t(i))] })) });
+  let n = 0;
+  const blocks = (page_id: string, nodes: DocNode[]): PageBlock[] =>
+    nodes.map((node, i) => {
+      const id = `blk-${++n}`;
+      const json = JSON.stringify({ ...node, attrs: { id, ...node.attrs } });
+      return { id, page_id, position: (i + 1) * 1024, type: node.type, text: nodeText(node), ...splitJson(json), updated_at: "", updated_by: "" };
+    });
+  return {
+    pages: [page("house", "House info", "🏠", 1024), page("utilities", "Wi-Fi & utilities", "💡", 1024, "house"), page("tax", "Paying PBB", "🧾", 2048)],
+    blocks: [
+      ...blocks("house", [
+        para(t("Everything about the house in one place. Ask in the comments if something's out of date.")),
+        heading(2, "Contacts"),
+        bullets("RT: Pak Budi, 0812 0000 1111", "Security post: ext. 21", "AC service: Dingin Jaya, 0813 2222 3333"),
+        heading(2, "Keys"),
+        para(t("Spare keys are in the "), t("blue box", [{ type: "bold" }]), t(" in the study.")),
+      ]),
+      ...blocks("utilities", [
+        heading(2, "Internet"),
+        para(t("Provider: IndiHome. Customer number is on the bill.")),
+        heading(2, "Electricity"),
+        para(t("Prepaid token. Top up "), t("in the PLN app", [{ type: "link", attrs: { href: "https://pln.co.id" } }]), t(" when it drops below 50 kWh.")),
+      ]),
+      ...blocks("tax", [
+        para(t("PBB is due every August.")),
+        { type: "orderedList", content: ["Get the SPPT from the RT", "Pay at the bank or in the app", "File the receipt in the blue box"].map((s) => ({ type: "listItem", content: [para(t(s))] })) },
+      ]),
     ],
   };
 }

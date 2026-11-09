@@ -9,6 +9,7 @@ Household money tracker whose only databases are Google Sheets you own. Built wi
 - **Goals:** funded by Savings categories linked to them. Shows the monthly amount needed to hit the target date.
 - **Installments:** card plans and loans. Shows *Bulan ke-*, *Lunas* month and "record payment".
 - **Recurring:** monthly or weekly rules, booked daily by a cron job (idempotent).
+- **Library:** pages of rich text in a tree (headings, lists, checklists, quotes, code, links), typed with a `/` menu and saved as you type.
 - **Dashboard:** KPIs, spending vs budget trend, Needs/Wants/Savings split, balances, goals, installments due.
 
 **Roles are per book:**
@@ -28,7 +29,7 @@ Every server action re-checks the session and the role in the book it touches. P
 | Spreadsheet | Tabs |
 |---|---|
 | **Registry** (one per deployment, `REGISTRY_SPREADSHEET_ID`) | `Users` (email, name, scrypt password hash, system-admin flag), `Books` (name, kind, spreadsheet id, owner, setup status), `Memberships` (user × book → role, household member), `Invites` |
-| **Book** (one per book; the user creates it in Drive) | `Transactions`, `Categories`, `Budgets`, `Goals`, `Installments`, `Recurring`, `Settings` (currency, locale, cut-off day, household members), `_meta` (marks which book owns the sheet) |
+| **Book** (one per book; the user creates it in Drive) | `Transactions`, `Categories`, `Budgets`, `Goals`, `Installments`, `Recurring`, `Settings` (currency, locale, cut-off day, household members), `_meta` (marks which book owns the sheet). Modules add their own tabs on first use, e.g. `Lists`/`ListItems` and `Pages`/`PageBlocks` (one row per block of a Library page) |
 
 - **Schema:** the schema lives in [`src/lib/sheets/schema.ts`](src/lib/sheets/schema.ts).
 - **Columns:** they're matched **by name**, so you can reorder them or add your own columns; the app preserves them.

@@ -415,6 +415,81 @@ export const LIST_TABLES = {
 
 export type ListTables = typeof LIST_TABLES;
 
+/* ---- Library: pages of rich text, one row per top-level block ---- */
+
+export const PageSchema = z.object({
+  id,
+  /** "" is a top-level page. */
+  parent_id: optId,
+  title: z.string().max(200).default(""),
+  emoji: z.string().default(""),
+  /** Order among siblings; spaced apart so a move rewrites one row. */
+  position: z.number().default(0),
+  /** Goes up on every save; a save from an older version is merged block by block (see lib/library/blocks.ts). */
+  version: z.number().int().nonnegative().default(0),
+  archived: z.boolean().default(false),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+  updated_at: z.string().default(""),
+  updated_by: z.string().default(""),
+});
+
+/**
+ * A top-level block of a page (paragraph, heading, list, table…). `json` is
+ * the editor's node and the source of truth; long nodes continue in json_2…
+ * because a cell holds at most 50,000 characters. `text` is a plain copy for
+ * reading the sheet and searching, rewritten on every save. A row added by
+ * hand with only `text` shows as a paragraph.
+ */
+export const PageBlockSchema = z.object({
+  id,
+  page_id: id,
+  position: z.number().default(0),
+  type: z.string().default("paragraph"),
+  text: z.string().default(""),
+  json: z.string().default(""),
+  json_2: z.string().default(""),
+  json_3: z.string().default(""),
+  json_4: z.string().default(""),
+  updated_at: z.string().default(""),
+  updated_by: z.string().default(""),
+});
+
+export type Page = z.infer<typeof PageSchema>;
+export type PageBlock = z.infer<typeof PageBlockSchema>;
+
+/** Their own tabs, added the first time a book opens the Library. */
+export const LIBRARY_TABLES = {
+  pages: table("Pages", PageSchema, {
+    id: "string",
+    parent_id: "string",
+    title: "string",
+    emoji: "string",
+    position: "number",
+    version: "number",
+    archived: "boolean",
+    created_at: "string",
+    created_by: "string",
+    updated_at: "string",
+    updated_by: "string",
+  }),
+  blocks: table("PageBlocks", PageBlockSchema, {
+    id: "string",
+    page_id: "string",
+    position: "number",
+    type: "string",
+    text: "string",
+    json: "string",
+    json_2: "string",
+    json_3: "string",
+    json_4: "string",
+    updated_at: "string",
+    updated_by: "string",
+  }),
+} as const;
+
+export type LibraryTables = typeof LIBRARY_TABLES;
+
 /** Any set of tables a SheetDb can serve (book sheet or registry sheet). */
 export type TableSet = Record<string, TableDef>;
 export type Tables = typeof TABLES;

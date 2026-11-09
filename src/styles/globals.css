@@ -2,6 +2,7 @@
 @import "./theme.css";
 @import "./typography.css";
 @import "./shadcn.css";
+@import "./library.css";
 
 /* ---------------------------------------------------------------------------
  * Dark mode strategy

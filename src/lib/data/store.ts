@@ -5,17 +5,19 @@ import { SheetDb } from "@/lib/sheets/db";
 import { MemoryDb } from "@/lib/sheets/memory-db";
 import {
   DEFAULT_SETTINGS,
+  LIBRARY_TABLES,
   LIST_TABLES,
   SAVINGS_TABLES,
   STATEMENT_TABLES,
   type Book,
+  type LibraryTables,
   type ListTables,
   type SavingsTables,
   type StatementTables,
   type TableSet,
   type Tables,
 } from "@/lib/sheets/schema";
-import { demoBookSeed, demoListSeed, demoSavingsSeed } from "./demo-seed";
+import { demoBookSeed, demoLibrarySeed, demoListSeed, demoSavingsSeed } from "./demo-seed";
 import { createStore, type SheetStore } from "./sheet-store";
 
 /** Local-only demo database; never selectable in a production build. */
@@ -90,3 +92,7 @@ export const savingsStore = (book: Pick<Book, "spreadsheet_id">) =>
 
 /** Checklists (Lists) for one book. */
 export const listStore = (book: Pick<Book, "spreadsheet_id">) => moduleStore<ListTables>(book, "lists", LIST_TABLES, () => demoListSeed(book.spreadsheet_id));
+
+/** Library pages and their blocks for one book. */
+export const libraryStore = (book: Pick<Book, "spreadsheet_id">) =>
+  moduleStore<LibraryTables>(book, "library", LIBRARY_TABLES, () => demoLibrarySeed(book.spreadsheet_id));

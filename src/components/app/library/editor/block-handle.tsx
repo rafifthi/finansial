@@ -6,7 +6,7 @@ import { Dialog as AriaDialog, Popover as AriaPopover } from "react-aria-compone
 import type { Editor } from "@tiptap/core";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
-import { RiAddLine, RiDeleteBinLine, RiDraggable, RiFileCopyLine } from "@remixicon/react";
+import { RiAddLine, RiChat3Line, RiDeleteBinLine, RiDraggable, RiFileCopyLine } from "@remixicon/react";
 import { DropdownDivider, DropdownGroup, DropdownItem } from "@/components/base/dropdown/dropdown";
 import { MENU_POPOVER_SURFACE } from "@/components/base/dropdown/menu-styles";
 import { cx } from "@/utils/cx";
@@ -58,7 +58,7 @@ const HANDLE = cx(
  * own drop, so its id and comments move with it) or, clicked, opens a menu
  * to turn it into another block, duplicate or delete it.
  */
-export function BlockHandle({ editor }: { editor: Editor }) {
+export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?: (id: string, text: string) => void }) {
   const host = editor.view.dom.parentElement;
   const [target, setTarget] = useState<Target | null>(null);
   const [menu, setMenu] = useState(false);
@@ -209,6 +209,19 @@ export function BlockHandle({ editor }: { editor: Editor }) {
             </DropdownGroup>
           ) : null}
           {textual ? <DropdownDivider /> : null}
+          {onComment && typeof target.node.attrs.id === "string" ? (
+            <DropdownItem
+              className="py-1.5"
+              onSelect={() => {
+                close();
+                const { pos, node } = current();
+                onComment(node.attrs.id as string, editor.state.doc.textBetween(pos, pos + node.nodeSize, " ", " "));
+              }}
+            >
+              <RiChat3Line className="size-4 text-foreground-icon-secondary" aria-hidden />
+              <span className="text-body-medium">Comment</span>
+            </DropdownItem>
+          ) : null}
           <DropdownItem
             className="py-1.5"
             onSelect={() => {

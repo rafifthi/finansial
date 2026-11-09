@@ -134,3 +134,12 @@
 .library-prose ::selection {
   @apply bg-button-ghost-hover;
 }
+
+/* Blocks with open comments, and the one whose comments are being read. */
+.library-prose .has-comments {
+  @apply rounded-md bg-background-secondary-default;
+}
+
+.library-prose .comment-active {
+  @apply rounded-md bg-button-ghost-background;
+}

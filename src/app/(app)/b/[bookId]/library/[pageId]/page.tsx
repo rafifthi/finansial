@@ -11,8 +11,13 @@ async function load({ params }: Props) {
   const ctx = await requireBookPage(bookId);
   const store = await libraryStore(ctx.book);
   // Fresh reads: the 30s cache could be behind a save made on another server instance.
-  const [pages, blocks] = await Promise.all([store.fresh("pages"), store.fresh("blocks")]);
-  return { pageId, page: pages.find((p) => p.id === pageId) ?? null, rows: blocks.filter((b) => b.page_id === pageId) };
+  const [pages, blocks, comments] = await Promise.all([store.fresh("pages"), store.fresh("blocks"), store.fresh("comments")]);
+  return {
+    pageId,
+    page: pages.find((p) => p.id === pageId) ?? null,
+    rows: blocks.filter((b) => b.page_id === pageId),
+    comments: comments.filter((c) => c.page_id === pageId),
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -23,6 +28,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function LibraryPageRoute(props: Props) {
-  const { pageId, page, rows } = await load(props);
-  return <LibraryPage id={pageId} page={page} rows={rows} />;
+  const { pageId, page, rows, comments } = await load(props);
+  return <LibraryPage id={pageId} page={page} rows={rows} comments={comments} />;
 }

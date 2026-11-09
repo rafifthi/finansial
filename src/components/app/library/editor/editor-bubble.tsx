@@ -9,6 +9,7 @@ import { useEditorState } from "@tiptap/react";
 import {
   type RemixiconComponentType,
   RiBold,
+  RiChat3Line,
   RiCodeLine,
   RiExternalLinkLine,
   RiItalic,
@@ -22,6 +23,7 @@ import { Button } from "@/components/base/buttons/button";
 import { MENU_POPOVER_SURFACE } from "@/components/base/dropdown/menu-styles";
 import { Input } from "@/components/base/input/input";
 import { cx } from "@/utils/cx";
+import { blockAtSelection } from "./comment-marks";
 import { applyLink, linkDraftAt, normalizeHref, removeLink, type LinkDraft } from "./link";
 
 /** A panel pinned to a stretch of the document, following it as the page scrolls. */
@@ -155,7 +157,7 @@ function LinkForm({ draft, onDone, editor }: { draft: LinkDraft; onDone: () => v
  * card when the cursor sits on a link, and the link form (⌘K) with separate
  * Text and URL fields, so an address can hide behind words like "Click here".
  */
-export function EditorBubble({ editor, linkEvents }: { editor: Editor; linkEvents: EventTarget }) {
+export function EditorBubble({ editor, linkEvents, onComment }: { editor: Editor; linkEvents: EventTarget; onComment?: (id: string, text: string) => void }) {
   const [draft, setDraft] = useState<LinkDraft | null>(null);
   const s = useEditorState({
     editor,
@@ -230,6 +232,16 @@ export function EditorBubble({ editor, linkEvents }: { editor: Editor; linkEvent
           <ToolButton icon={RiCodeLine} label="Inline code" active={s.code} onPress={toggle("toggleCode")} />
           <span className="mx-0.5 h-4 w-px bg-separator-border" aria-hidden />
           <ToolButton icon={RiLinkM} label="Link (⌘K)" active={s.link !== null} onPress={() => setDraft(linkDraftAt(editor))} />
+          {onComment ? (
+            <ToolButton
+              icon={RiChat3Line}
+              label="Comment"
+              onPress={() => {
+                const at = blockAtSelection(editor);
+                if (at) onComment(at.id, at.text);
+              }}
+            />
+          ) : null}
         </div>
       </Floating>
     );

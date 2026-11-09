@@ -16,6 +16,7 @@ interface LibraryValue {
   pages: Page[];
   canEdit: boolean;
   user: string;
+  userName: string;
   href: (pageId?: string) => string;
   /** Adds a page (under `parentId`) and opens it. */
   create: (parentId?: string) => void;
@@ -38,7 +39,7 @@ export function useLibrary(): LibraryValue {
  * new pages, renames and archiving show before the sheet has them. The other
  * person's changes arrive by polling.
  */
-export function LibraryProvider({ initial, canEdit, user, children }: { initial: Page[]; canEdit: boolean; user: string; children: ReactNode }) {
+export function LibraryProvider({ initial, canEdit, user, userName, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; children: ReactNode }) {
   const bookId = useBookId();
   const router = useRouter();
   const [pages, setPages] = useState(initial);
@@ -121,6 +122,6 @@ export function LibraryProvider({ initial, canEdit, user, children }: { initial:
     [bookId, href, router, sync],
   );
 
-  const value = useMemo(() => ({ pages, canEdit, user, href, create, archive, patchLocal }), [pages, canEdit, user, href, create, archive, patchLocal]);
+  const value = useMemo(() => ({ pages, canEdit, user, userName, href, create, archive, patchLocal }), [pages, canEdit, user, userName, href, create, archive, patchLocal]);
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }

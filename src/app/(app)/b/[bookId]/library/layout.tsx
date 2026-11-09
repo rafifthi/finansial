@@ -8,7 +8,7 @@ export default async function LibraryLayout({ children, params }: LayoutProps<"/
   const ctx = await requireBookPage((await params).bookId);
   const pages = await (await libraryStore(ctx.book)).rows("pages");
   return (
-    <LibraryShell initial={pages} canEdit={can(ctx.membership.role, "data:write")} user={ctx.user.email}>
+    <LibraryShell initial={pages} canEdit={can(ctx.membership.role, "data:write")} user={ctx.user.email} userName={ctx.user.name}>
       {children}
     </LibraryShell>
   );

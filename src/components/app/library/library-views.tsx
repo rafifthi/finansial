@@ -5,7 +5,7 @@ import Link from "next/link";
 import { RiAddLine, RiFileTextLine } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
 import { pageTitle } from "@/lib/library/tree";
-import type { Page, PageBlock } from "@/lib/sheets/schema";
+import type { Page, PageBlock, PageComment } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
 import { EmptyState } from "../card";
 import { PageHeader } from "../page-header";
@@ -16,9 +16,9 @@ import { PageTree } from "./page-tree";
 const PANEL = "rounded-3xl border border-separator-border bg-background-primary-default";
 
 /** The tree beside every Library screen on desktop; on phones the Library home is the tree. */
-export function LibraryShell({ initial, canEdit, user, children }: { initial: Page[]; canEdit: boolean; user: string; children: ReactNode }) {
+export function LibraryShell({ initial, canEdit, user, userName, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; children: ReactNode }) {
   return (
-    <LibraryProvider initial={initial} canEdit={canEdit} user={user}>
+    <LibraryProvider initial={initial} canEdit={canEdit} user={user} userName={userName}>
       <div className="grid items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
         <aside className={cx(PANEL, "sticky top-4 max-h-[calc(100dvh-3rem)] overflow-y-auto p-2 max-lg:hidden")}>
           <PageTree />
@@ -84,7 +84,7 @@ export function LibraryHome() {
  * A page route. A page made a moment ago in this browser may not be in the
  * sheet yet, so it opens empty from the local list instead of "not found".
  */
-export function LibraryPage({ id, page, rows }: { id: string; page: Page | null; rows: PageBlock[] }) {
+export function LibraryPage({ id, page, rows, comments }: { id: string; page: Page | null; rows: PageBlock[]; comments: PageComment[] }) {
   const { pages, href } = useLibrary();
   const local = pages.find((p) => p.id === id);
   const shown = page ?? local;
@@ -98,5 +98,5 @@ export function LibraryPage({ id, page, rows }: { id: string; page: Page | null;
       </div>
     );
   }
-  return <PageEditor key={id} page={shown} rows={page ? rows : []} />;
+  return <PageEditor key={id} page={shown} rows={page ? rows : []} comments={comments} />;
 }

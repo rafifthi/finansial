@@ -7,6 +7,7 @@ import type {
   Membership,
   Page,
   PageBlock,
+  PageComment,
   Recurring,
   Setting,
   TodoItem,
@@ -150,7 +151,7 @@ export function demoListSeed(spreadsheetId: string): { lists?: TodoList[]; items
 }
 
 /** A few Library pages for the Family book: house info with a child page, and a how-to. */
-export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks?: PageBlock[] } {
+export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks?: PageBlock[]; comments?: PageComment[] } {
   if (spreadsheetId !== DEMO_FAMILY_SHEET) return {};
   const page = (id: string, title: string, emoji: string, position: number, parent_id = ""): Page => ({
     id,
@@ -176,7 +177,30 @@ export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks
       const json = JSON.stringify({ ...node, attrs: { id, ...node.attrs } });
       return { id, page_id, position: (i + 1) * 1024, type: node.type, text: nodeText(node), ...splitJson(json), updated_at: "", updated_by: "" };
     });
+  const at = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
+  const comment = (id: string, page_id: string, extra: Partial<PageComment>): PageComment => ({
+    id,
+    page_id,
+    block_id: "",
+    parent_id: "",
+    quote: "",
+    body: "",
+    resolved: false,
+    resolved_by: "",
+    resolved_at: "",
+    deleted: false,
+    author_name: "Kanza",
+    created_at: at(5),
+    created_by: "member@demo.local",
+    updated_at: at(5),
+    ...extra,
+  });
   return {
+    comments: [
+      comment("cm-1", "house", { block_id: "blk-3", quote: "RT: Pak Budi, 0812 0000 1111 Security post: ext. 21 AC service: Dingin Jaya, 0813 2222 3333", body: "Dingin Jaya has a new number since October, I'll ask them." }),
+      comment("cm-2", "house", { parent_id: "cm-1", body: "Thanks! Update it here when you have it.", author_name: "Rafif", created_by: "admin@demo.local", created_at: at(3), updated_at: at(3) }),
+      comment("cm-3", "house", { body: "Should we add the plumber here too?", created_at: at(26), updated_at: at(26) }),
+    ],
     pages: [page("house", "House info", "🏠", 1024), page("utilities", "Wi-Fi & utilities", "💡", 1024, "house"), page("tax", "Paying PBB", "🧾", 2048)],
     blocks: [
       ...blocks("house", [

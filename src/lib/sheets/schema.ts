@@ -455,8 +455,33 @@ export const PageBlockSchema = z.object({
   updated_by: z.string().default(""),
 });
 
+/**
+ * A comment on a page: on one block (`block_id`) or the whole page (""). A
+ * reply points at its thread's first comment (`parent_id`); only that first
+ * comment carries `resolved`. `quote` keeps the block's words as they were,
+ * so a thread whose block is deleted still says what it was about.
+ */
+export const PageCommentSchema = z.object({
+  id,
+  page_id: id,
+  block_id: optId,
+  parent_id: optId,
+  quote: z.string().max(500).default(""),
+  body: z.string().max(5000).default(""),
+  resolved: z.boolean().default(false),
+  resolved_by: z.string().default(""),
+  resolved_at: z.string().default(""),
+  /** Hidden but kept, so a thread's replies still make sense. */
+  deleted: z.boolean().default(false),
+  author_name: z.string().default(""),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+  updated_at: z.string().default(""),
+});
+
 export type Page = z.infer<typeof PageSchema>;
 export type PageBlock = z.infer<typeof PageBlockSchema>;
+export type PageComment = z.infer<typeof PageCommentSchema>;
 
 /** Their own tabs, added the first time a book opens the Library. */
 export const LIBRARY_TABLES = {
@@ -485,6 +510,22 @@ export const LIBRARY_TABLES = {
     json_4: "string",
     updated_at: "string",
     updated_by: "string",
+  }),
+  comments: table("PageComments", PageCommentSchema, {
+    id: "string",
+    page_id: "string",
+    block_id: "string",
+    parent_id: "string",
+    quote: "string",
+    body: "string",
+    resolved: "boolean",
+    resolved_by: "string",
+    resolved_at: "string",
+    deleted: "boolean",
+    author_name: "string",
+    created_at: "string",
+    created_by: "string",
+    updated_at: "string",
   }),
 } as const;
 

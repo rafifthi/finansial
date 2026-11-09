@@ -5,7 +5,8 @@ import { bookAction, FieldErrors } from "@/lib/data/action";
 import { libraryStore } from "@/lib/data/store";
 import { MAX_BLOCK_CHARS, nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
 import { nextPosition, withDescendants } from "@/lib/library/tree";
-import { PageSchema, type Page, type PageBlock } from "@/lib/sheets/schema";
+import { quoteOf } from "@/lib/library/comments";
+import { PageCommentSchema, PageSchema, type Page, type PageBlock, type PageComment } from "@/lib/sheets/schema";
 
 /*
  * The Library updates the screen before the server answers, so these actions
@@ -168,6 +169,104 @@ export const restorePages = bookAction(
     const known = ids.filter((id) => pages.some((p) => p.id === id));
     const now = new Date().toISOString();
     await store.updateMany("pages", known.map((key) => ({ key, patch: { archived: false, updated_at: now, updated_by: user.email } })));
+  },
+  NO_REFRESH,
+);
+
+/* ---- Comments: on a block or the whole page ---- */
+
+/** A page's comments, read fresh; the open page polls this for the other person's. */
+export const listComments = bookAction(
+  null,
+  z.object({ page_id: clientId }),
+  async ({ page_id }, { book }) => {
+    const store = await libraryStore(book);
+    return (await store.fresh("comments")).filter((c) => c.page_id === page_id) as PageComment[];
+  },
+  NO_REFRESH,
+);
+
+const Body = z.string().trim().min(1, "Write a comment first.").max(5000, "Keep it under 5,000 characters.");
+
+export const addComment = bookAction(
+  "data:write",
+  z.object({
+    id: clientId,
+    page_id: clientId,
+    block_id: z.string().max(40).default(""),
+    parent_id: clientId.or(z.literal("")).default(""),
+    quote: z.string().max(2000).default(""),
+    body: Body,
+  }),
+  async (input, { book, user }) => {
+    const store = await libraryStore(book);
+    const [pages, comments] = await Promise.all([store.fresh("pages"), store.fresh("comments")]);
+    const existing = comments.find((c) => c.id === input.id);
+    if (existing) return existing; // a retried send
+    if (!pages.some((p) => p.id === input.page_id && !p.archived)) throw new Error("This page doesn't exist any more.");
+    // A reply joins its thread's block; only first comments carry a quote.
+    const root = input.parent_id ? comments.find((c) => c.id === input.parent_id && c.page_id === input.page_id) : undefined;
+    if (input.parent_id && !root) throw new Error("That thread was deleted.");
+    const now = new Date().toISOString();
+    const comment = PageCommentSchema.parse({
+      ...input,
+      block_id: root ? root.block_id : input.block_id,
+      quote: root ? "" : quoteOf(input.quote),
+      author_name: user.name,
+      created_at: now,
+      created_by: user.email,
+      updated_at: now,
+    });
+    await store.insert("comments", [comment]);
+    return comment;
+  },
+  NO_REFRESH,
+);
+
+/** Only the author edits or deletes a comment (book admins may delete any). */
+async function ownComment(book: Parameters<typeof libraryStore>[0], id: string, email: string, admin: boolean) {
+  const store = await libraryStore(book);
+  const comment = (await store.fresh("comments")).find((c) => c.id === id);
+  if (!comment || comment.deleted) throw new Error("That comment was deleted.");
+  if (comment.created_by !== email && !admin) throw new Error("Only the person who wrote a comment can change it.");
+  return { store, comment };
+}
+
+export const editComment = bookAction(
+  "data:write",
+  z.object({ id: clientId, body: Body }),
+  async ({ id, body }, { book, user }) => {
+    const { store } = await ownComment(book, id, user.email, false);
+    return store.update("comments", id, { body, updated_at: new Date().toISOString() });
+  },
+  NO_REFRESH,
+);
+
+export const deleteComment = bookAction(
+  "data:write",
+  z.object({ id: clientId }),
+  async ({ id }, { book, user, membership }) => {
+    const { store } = await ownComment(book, id, user.email, membership.role === "admin");
+    await store.update("comments", id, { deleted: true, updated_at: new Date().toISOString() });
+  },
+  NO_REFRESH,
+);
+
+/** Resolving closes a thread for everyone; reopening brings it back. */
+export const resolveThread = bookAction(
+  "data:write",
+  z.object({ id: clientId, resolved: z.boolean() }),
+  async ({ id, resolved }, { book, user }) => {
+    const store = await libraryStore(book);
+    const comment = (await store.fresh("comments")).find((c) => c.id === id);
+    if (!comment) throw new Error("That thread was deleted.");
+    const now = new Date().toISOString();
+    return store.update("comments", comment.parent_id || comment.id, {
+      resolved,
+      resolved_by: resolved ? user.email : "",
+      resolved_at: resolved ? now : "",
+      updated_at: now,
+    });
   },
   NO_REFRESH,
 );

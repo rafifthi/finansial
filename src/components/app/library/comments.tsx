@@ -372,14 +372,14 @@ function PanelHeader({ onClose }: { onClose: () => void }) {
   );
 }
 
-const WIDE = "(min-width: 1280px)";
+const WIDE = "(min-width: 1024px)";
 const subscribeWide = (cb: () => void) => {
   const mq = window.matchMedia(WIDE);
   mq.addEventListener("change", cb);
   return () => mq.removeEventListener("change", cb);
 };
 
-/** True from the xl breakpoint, where the panel docks beside the page instead of sliding over it. */
+/** True from the lg breakpoint (the desktop layout), where the panel docks beside the page instead of sliding over it. */
 export function useWide() {
   return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => true);
 }
@@ -387,7 +387,7 @@ export function useWide() {
 /**
  * Comments, as in Google Docs: docked on the right beside the page, no
  * overlay, so the page stays readable and editable while you discuss it.
- * Narrower screens get the same panel as a drawer.
+ * Phones and tablets, with no room beside the page, get it as a drawer.
  */
 export function CommentsPanel(props: CommentsPanelProps & { open: boolean }) {
   const wide = useWide();

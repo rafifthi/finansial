@@ -225,7 +225,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       className={cx(
         "mx-auto grid w-full items-start gap-8 lg:ps-12 xl:gap-12",
         panelOpen
-          ? "max-w-3xl xl:max-w-none xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)] xl:justify-center"
+          ? "max-w-3xl lg:max-w-none lg:grid-cols-[minmax(0,48rem)_17rem] lg:justify-center xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)]"
           : railShown
             ? "max-w-3xl @min-[680px]:max-w-[calc(48rem+11rem+2rem)] @min-[680px]:grid-cols-[minmax(0,48rem)_11rem] @min-[1000px]:max-w-[calc(48rem+13rem+3rem)] @min-[1000px]:grid-cols-[minmax(0,48rem)_13rem]"
             : "max-w-3xl",

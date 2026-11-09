@@ -126,7 +126,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   }, [title]);
 
   const toc = useToc(editor);
-  const activeHeading = useActiveHeading(toc);
+  const [activeHeading, pickHeading] = useActiveHeading(toc);
   // A contents list earns its place once a page has a few sections.
   const showToc = toc.length >= 2;
 
@@ -221,7 +221,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
     <div
       className={cx(
         "mx-auto grid w-full items-start gap-8 lg:ps-12 xl:gap-12",
-        panelOpen ? "max-w-3xl xl:max-w-none xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)] xl:justify-center" : railShown ? "max-w-3xl xl:max-w-[calc(48rem+11rem+3rem)] xl:grid-cols-[minmax(0,48rem)_11rem]" : "max-w-3xl",
+        panelOpen ? "max-w-3xl xl:max-w-none xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)] xl:justify-center" : railShown ? "max-w-3xl xl:max-w-[calc(48rem+13rem+3rem)] xl:grid-cols-[minmax(0,48rem)_13rem]" : "max-w-3xl",
       )}
     >
       <article className="flex min-w-0 flex-col gap-4 lg:pt-2">
@@ -250,7 +250,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
           <div className="flex shrink-0 items-center gap-3">
             {showToc ? (
               <span className={cx(railShown && "xl:hidden")}>
-                <TocMenu items={toc} active={activeHeading} />
+                <TocMenu items={toc} active={activeHeading} onPick={pickHeading} />
               </span>
             ) : null}
             <button
@@ -314,8 +314,8 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
         {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} onComment={startComment} /> : null}
       </article>
       {railShown ? (
-        <aside className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pt-12 max-xl:hidden">
-          <TocRail items={toc} active={activeHeading} />
+        <aside className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pt-14 max-xl:hidden">
+          <TocRail items={toc} active={activeHeading} onPick={pickHeading} />
         </aside>
       ) : null}
       <CommentsPanel

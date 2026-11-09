@@ -2,10 +2,11 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useId, useTransition } from "react";
+import { Fragment, useId, useSyncExternalStore, useTransition } from "react";
 import {
   type RemixiconComponentType,
   RiAddLine,
+  RiArrowDownSLine,
   RiArrowLeftRightLine,
   RiBankCard2Line,
   RiBookOpenLine,
@@ -134,6 +135,33 @@ export const accountHref = (current?: ShellBook) => (current ? `/b/${current.id}
 const isActive = (pathname: string, item: ResolvedNav) =>
   item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
+/* The Library row's page tree: open or folded away, remembered per device. */
+const TREE_KEY = "finansial:nav-library-open";
+const TREE_EVENT = "finansial:nav-library";
+function readTreeOpen() {
+  try {
+    return window.localStorage.getItem(TREE_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+function subscribeTree(onChange: () => void) {
+  window.addEventListener(TREE_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(TREE_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+function setTreeOpen(open: boolean) {
+  try {
+    window.localStorage.setItem(TREE_KEY, open ? "1" : "0");
+  } catch {
+    // Private mode: it still toggles for this visit.
+  }
+  window.dispatchEvent(new Event(TREE_EVENT));
+}
+
 function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () => void }) {
   const { user, current, books, signOutAction } = props;
   const pathname = usePathname();
@@ -144,6 +172,8 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
   const onCatat = pathname === catatHref;
   const navId = useId();
   const { setLibrarySlot } = useNavSlot();
+  const treeOpen = useSyncExternalStore(subscribeTree, readTreeOpen, () => true);
+  const treeId = `${navId}-library-pages`;
 
   return (
     <div className="flex h-full flex-col justify-between gap-4">
@@ -177,13 +207,41 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
                     {group.label}
                   </h2>
                 ) : null}
-                {group.items.map((item) => (
-                  <Fragment key={item.href}>
-                    <NavLink item={item} active={isActive(pathname, item)} onNavigate={onNavigate} />
-                    {/* Inside the Library, its page tree opens up right here. */}
-                    {item.href.endsWith("/library") ? <div ref={setLibrarySlot} className="empty:hidden" /> : null}
-                  </Fragment>
-                ))}
+                {group.items.map((item) => {
+                  if (!item.href.endsWith("/library")) return <NavLink key={item.href} item={item} active={isActive(pathname, item)} onNavigate={onNavigate} />;
+                  const inLibrary = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <Fragment key={item.href}>
+                      <div className="group/library relative">
+                        {/* Folded away, the Library row stands in for the open page's hidden row. */}
+                        <NavLink item={item} active={isActive(pathname, item) || (inLibrary && !treeOpen)} onNavigate={onNavigate} />
+                        {inLibrary ? (
+                          <button
+                            type="button"
+                            aria-expanded={treeOpen}
+                            aria-controls={treeId}
+                            aria-label={treeOpen ? "Hide Library pages" : "Show Library pages"}
+                            onClick={() => setTreeOpen(!treeOpen)}
+                            className="absolute end-1 top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-foreground-icon-tertiary outline-none transition-colors hover:bg-background-secondary-hover hover:text-foreground-icon-primary focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                          >
+                            <RiArrowDownSLine className={cx("size-4 transition-transform duration-200 motion-reduce:transition-none", !treeOpen && "-rotate-90 rtl:rotate-90")} aria-hidden />
+                          </button>
+                        ) : null}
+                      </div>
+                      {/* Inside the Library, its page tree opens up right here; folding it slides it shut. */}
+                      <div
+                        id={treeId}
+                        inert={!treeOpen}
+                        className={cx(
+                          "grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
+                          treeOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                        )}
+                      >
+                        <div ref={setLibrarySlot} className="min-h-0 overflow-hidden" />
+                      </div>
+                    </Fragment>
+                  );
+                })}
               </div>
             );
           })}

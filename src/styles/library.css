@@ -73,6 +73,24 @@
   list-style: decimal;
 }
 
+/* Nested numbers read 1. → a. → i., like an outline. */
+.library-prose ol ol {
+  list-style: lower-alpha;
+}
+
+.library-prose ol ol ol {
+  list-style: lower-roman;
+}
+
+.library-prose ul ul {
+  list-style: circle;
+}
+
+/* A block picked with its handle (to drag or delete) shows as selected. */
+.library-prose .ProseMirror-selectednode {
+  @apply rounded-md bg-button-ghost-background;
+}
+
 .library-prose li > p + * {
   @apply mt-1;
 }

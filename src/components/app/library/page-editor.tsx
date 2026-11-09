@@ -16,6 +16,8 @@ import { cx } from "@/utils/cx";
 import { useBookId } from "../permissions";
 import { EditorBubble } from "./editor/editor-bubble";
 import { LinkShortcut } from "./editor/link";
+import { BlockHandle } from "./editor/block-handle";
+import { Indent } from "./editor/indent";
 import { SlashMenu } from "./editor/slash-menu";
 import { TocMenu, TocRail, useActiveHeading, useToc } from "./editor/toc";
 import { useLibrary } from "./library-context";
@@ -93,6 +95,7 @@ export function PageEditor({ page: initialPage, rows }: { page: Page; rows: Page
         showOnlyCurrent: true,
       }),
       UniqueID.configure({ types: ID_TYPES }),
+      Indent,
       ...(canEdit ? [SlashMenu, LinkShortcut.configure({ open: () => linkEvents.dispatchEvent(new Event("open")) })] : []),
     ],
     [canEdit, linkEvents],
@@ -127,7 +130,7 @@ export function PageEditor({ page: initialPage, rows }: { page: Page; rows: Page
   const live = pages.find((p) => p.id === initialPage.id);
 
   return (
-    <div className={cx("mx-auto grid w-full items-start gap-8", showToc ? "max-w-3xl min-[1360px]:max-w-[calc(48rem+11rem+2rem)] min-[1360px]:grid-cols-[minmax(0,48rem)_11rem]" : "max-w-3xl")}>
+    <div className={cx("mx-auto grid w-full items-start gap-8 lg:ps-12", showToc ? "max-w-3xl min-[1360px]:max-w-[calc(48rem+11rem+2rem)] min-[1360px]:grid-cols-[minmax(0,48rem)_11rem]" : "max-w-3xl")}>
       <article className="flex min-w-0 flex-col gap-4 lg:pt-2">
         <div className="flex min-h-7 items-center justify-between gap-3">
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-body-2-regular text-text-tertiary">
@@ -192,7 +195,11 @@ export function PageEditor({ page: initialPage, rows }: { page: Page; rows: Page
           {edited(meta) ? <p className="text-body-2-regular text-text-tertiary">{edited(meta)}</p> : null}
         </header>
 
-        <EditorContent editor={editor} />
+        {/* The left gutter holds each block's + and drag handle, and counts as hovering that block. */}
+        <div data-block-area className="lg:-ms-14 lg:ps-14">
+          <EditorContent editor={editor} className="relative" />
+        </div>
+        {editor && canEdit ? <BlockHandle editor={editor} /> : null}
         {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} /> : null}
       </article>
       {showToc ? (

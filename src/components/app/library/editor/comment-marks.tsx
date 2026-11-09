@@ -115,7 +115,7 @@ export function CommentMarkers({ editor, counts, onOpen }: { editor: Editor; cou
           aria-label={`${s.count} comment${s.count === 1 ? "" : "s"} on this block`}
           style={{ top: s.top }}
           className={cx(
-            "absolute -end-1 z-10 flex h-6 cursor-pointer items-center gap-0.5 rounded-full border border-separator-border bg-background-primary-default px-1.5 text-caption-1-medium text-text-secondary shadow-xs outline-none min-[1360px]:-end-11",
+            "absolute -end-1 z-10 flex h-6 cursor-pointer items-center gap-0.5 rounded-full border border-separator-border bg-background-primary-default px-1.5 text-caption-1-medium text-text-secondary shadow-xs outline-none xl:-end-11",
             "hover:text-text-primary focus-visible:ring-2 focus-visible:ring-border-focus-ring",
           )}
         >

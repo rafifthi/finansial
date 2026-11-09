@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { RiAddLine, RiFileTextLine } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
@@ -9,22 +10,20 @@ import type { Page, PageBlock, PageComment } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
 import { EmptyState } from "../card";
 import { PageHeader } from "../page-header";
+import { useNavSlot } from "../shell-context";
 import { LibraryProvider, useLibrary } from "./library-context";
 import { PageEditor } from "./page-editor";
 import { PageTree } from "./page-tree";
 
 const PANEL = "rounded-3xl border border-separator-border bg-background-primary-default";
 
-/** The tree beside every Library screen on desktop; on phones the Library home is the tree. */
+/** The page tree lives in the main sidebar (under Library) on desktop; on phones the Library home is the tree. */
 export function LibraryShell({ initial, canEdit, user, userName, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; children: ReactNode }) {
+  const { librarySlot } = useNavSlot();
   return (
     <LibraryProvider initial={initial} canEdit={canEdit} user={user} userName={userName}>
-      <div className="grid items-start gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside className={cx(PANEL, "sticky top-4 max-h-[calc(100dvh-3rem)] overflow-y-auto p-2 max-lg:hidden")}>
-          <PageTree />
-        </aside>
-        <div className="min-w-0">{children}</div>
-      </div>
+      {librarySlot ? createPortal(<PageTree variant="sidebar" />, librarySlot) : null}
+      {children}
     </LibraryProvider>
   );
 }

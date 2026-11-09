@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import type { ShellBook } from "./book-switcher";
 
 export interface ShellUser {
@@ -22,7 +22,25 @@ const ShellContext = createContext<ShellValue | null>(null);
 
 /** What the shell knows (user, books, badges), for pages that render navigation themselves. */
 export function ShellProvider({ children, ...value }: ShellValue & { children: ReactNode }) {
-  return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;
+  const [librarySlot, setLibrarySlot] = useState<HTMLElement | null>(null);
+  return (
+    <ShellContext.Provider value={value}>
+      <NavSlotContext.Provider value={{ librarySlot, setLibrarySlot }}>{children}</NavSlotContext.Provider>
+    </ShellContext.Provider>
+  );
+}
+
+interface NavSlot {
+  /** The spot under the sidebar's Library row where the Library section draws its page tree. */
+  librarySlot: HTMLElement | null;
+  setLibrarySlot: (el: HTMLElement | null) => void;
+}
+
+const NavSlotContext = createContext<NavSlot>({ librarySlot: null, setLibrarySlot: () => {} });
+
+/** Lets a section render navigation inside the sidebar (via a portal) without the sidebar knowing its data. */
+export function useNavSlot(): NavSlot {
+  return useContext(NavSlotContext);
 }
 
 export function useShell(): ShellValue {

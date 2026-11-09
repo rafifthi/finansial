@@ -7,16 +7,16 @@ import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
 import UniqueID from "@tiptap/extension-unique-id";
-import { RiArrowLeftSLine, RiCheckLine, RiCloudOffLine, RiLoader4Line, RiPencilLine } from "@remixicon/react";
+import { RiArrowLeftSLine, RiChat3Line, RiCheckLine, RiCloudOffLine, RiLoader4Line, RiPencilLine } from "@remixicon/react";
 import { InputBase, TextField } from "@/components/base/input/input";
 import { docFromRows } from "@/lib/library/blocks";
-import { buildThreads, openCounts, placeThreads, quoteOf } from "@/lib/library/comments";
+import { buildThreads, openCounts, placeThreads, quoteOf, type Thread } from "@/lib/library/comments";
 import { ancestors, pageTitle } from "@/lib/library/tree";
 import type { Page, PageBlock, PageComment } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
 import { useBookId } from "../permissions";
-import { BlockCommentsDrawer, PageComments, type CommentContext } from "./comments";
-import { blockText, CommentMarkers, CommentMarks, setCommentMarks } from "./editor/comment-marks";
+import { CommentsPanel, type CommentContext, type PendingComment, type ThreadLocation } from "./comments";
+import { CommentMarkers, CommentMarks, setCommentMarks } from "./editor/comment-marks";
 import { EditorBubble } from "./editor/editor-bubble";
 import { LinkShortcut } from "./editor/link";
 import { BlockHandle } from "./editor/block-handle";
@@ -132,36 +132,98 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
 
   // Comments: threads placed on the blocks the page has now; a deleted block's threads join the page's.
   const api = useComments(bookId, initialPage.id, comments, { email: user, name: userName });
-  const blockIds = useEditorState({
+  // Every block with an id, in page order, with the heading it sits under: for placing and labelling threads.
+  const outline = useEditorState({
     editor,
     selector: ({ editor: e }) => {
-      const ids: string[] = [];
-      e?.state.doc.descendants((n) => void (typeof n.attrs.id === "string" && ids.push(n.attrs.id)));
-      return ids.join(" ");
+      const rows: [string, string][] = [];
+      let section = "";
+      e?.state.doc.forEach((top) => {
+        if (top.type.name === "heading") section = top.textContent.trim();
+        if (typeof top.attrs.id === "string") rows.push([top.attrs.id, section]);
+        top.descendants((n) => void (typeof n.attrs.id === "string" && rows.push([n.attrs.id, section])));
+      });
+      return JSON.stringify(rows);
     },
   });
+  const where = useMemo(() => new Map((JSON.parse(outline ?? "[]") as [string, string][]).map(([id, section], i) => [id, { index: i, section }])), [outline]);
   const placed = useMemo(() => {
     const threads = buildThreads(api.comments);
     // Until the editor is up, the page's blocks aren't known: don't call any thread's block deleted yet.
-    const ids = editor ? new Set((blockIds ?? "").split(" ").filter(Boolean)) : new Set(threads.map((t) => t.root.block_id));
+    const ids = editor ? new Set(where.keys()) : new Set(threads.map((t) => t.root.block_id));
     return placeThreads(threads, ids);
-  }, [api.comments, blockIds, editor]);
+  }, [api.comments, where, editor]);
   const counts = useMemo(() => openCounts(placed.blocks), [placed]);
-  const [thread, setThread] = useState<{ id: string; quote: string } | null>(null);
-  const ctx: CommentContext = { api, me: user, canEdit };
-  const openThread = useCallback((id: string, text: string) => setThread({ id, quote: quoteOf(text) }), []);
-  const openFromMarker = useCallback((id: string) => editor && openThread(id, blockText(editor, id)), [editor, openThread]);
 
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [pending, setPending] = useState<PendingComment | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const ctx: CommentContext = { api, me: user, canEdit };
+  const pageName = pageTitle({ title });
+
+  const locate = useCallback(
+    (t: Thread, orphaned: boolean): ThreadLocation => {
+      if (!t.root.block_id) return { section: "Whole page", quote: "" };
+      if (orphaned) return { section: "Deleted content", quote: t.root.quote };
+      return { section: where.get(t.root.block_id)?.section || pageName, quote: t.root.quote };
+    },
+    // Page-level threads sort first, then by where their block sits; deleted blocks' threads last.
+    [where, pageName],
+  );
+  const order = useCallback((t: Thread) => (!t.root.block_id ? -1 : (where.get(t.root.block_id)?.index ?? Number.MAX_SAFE_INTEGER)), [where]);
+
+  const scrollToBlock = useCallback(
+    (id: string) => {
+      const el = editor?.view.dom.querySelector(`[data-id="${CSS.escape(id)}"]`);
+      el?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    },
+    [editor],
+  );
+  // From a block's menu or selected words: start a new thread on it.
+  const startComment = useCallback((id: string, text: string) => {
+    setPending({ blockId: id, quote: quoteOf(text) });
+    setActiveId(null);
+    setPanelOpen(true);
+  }, []);
+  // From the count beside a block: open its first open thread.
+  const openFromMarker = useCallback(
+    (id: string) => {
+      const first = placed.blocks.get(id)?.find((t) => !t.root.resolved);
+      setPending(null);
+      setActiveId(first?.root.id ?? null);
+      setPanelOpen(true);
+    },
+    [placed],
+  );
+  const activate = useCallback(
+    (t: Thread) => {
+      setActiveId(t.root.id);
+      if (t.root.block_id) scrollToBlock(t.root.block_id);
+    },
+    [scrollToBlock],
+  );
+  const openCount = [...counts.values()].reduce((a, b) => a + b, 0) + [...placed.page, ...placed.orphaned].filter((t) => !t.root.resolved).length;
+
+  // The block being discussed is tinted in the page.
+  const activeBlock = !panelOpen ? null : (pending?.blockId || api.comments.find((c) => c.id === activeId)?.block_id || null);
   useEffect(() => {
-    if (editor) setCommentMarks(editor, new Set(counts.keys()), thread?.id ?? null);
-  }, [editor, counts, thread]);
+    if (editor) setCommentMarks(editor, new Set(counts.keys()), activeBlock);
+  }, [editor, counts, activeBlock]);
+
+  // The contents rail and the comments panel share the right-hand column; comments win while open.
+  const railShown = showToc && !panelOpen;
 
   const trail = ancestors(pages, initialPage.id);
   const parent = trail[trail.length - 1];
   const live = pages.find((p) => p.id === initialPage.id);
 
   return (
-    <div className={cx("mx-auto grid w-full items-start gap-8 lg:ps-12 min-[1360px]:gap-16", showToc ? "max-w-3xl min-[1360px]:max-w-[calc(48rem+11rem+4rem)] min-[1360px]:grid-cols-[minmax(0,48rem)_11rem]" : "max-w-3xl")}>
+    <div
+      className={cx(
+        "mx-auto grid w-full items-start gap-8 lg:ps-12 xl:gap-12",
+        panelOpen ? "max-w-3xl xl:max-w-none xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)] xl:justify-center" : railShown ? "max-w-3xl xl:max-w-[calc(48rem+11rem+3rem)] xl:grid-cols-[minmax(0,48rem)_11rem]" : "max-w-3xl",
+      )}
+    >
       <article className="flex min-w-0 flex-col gap-4 lg:pt-2">
         <div className="flex min-h-7 items-center justify-between gap-3">
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-body-2-regular text-text-tertiary">
@@ -187,10 +249,26 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
           </nav>
           <div className="flex shrink-0 items-center gap-3">
             {showToc ? (
-              <span className="min-[1360px]:hidden">
+              <span className={cx(railShown && "xl:hidden")}>
                 <TocMenu items={toc} active={activeHeading} />
               </span>
             ) : null}
+            <button
+              type="button"
+              aria-pressed={panelOpen}
+              aria-label={openCount ? `Comments, ${openCount} open` : "Comments"}
+              onClick={() => {
+                setPanelOpen((o) => !o);
+                setPending(null);
+              }}
+              className={cx(
+                "flex h-7 cursor-pointer items-center gap-1 rounded-lg px-2 text-body-2-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring max-sm:h-11",
+                panelOpen ? "bg-background-secondary-hover text-text-primary" : "text-text-secondary hover:bg-background-secondary-hover",
+              )}
+            >
+              <RiChat3Line className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
+              {openCount ? <span className="tabular-nums">{openCount}</span> : <span className="max-sm:sr-only">Comments</span>}
+            </button>
             {canEdit ? <SaveState status={save.status} error={save.error} /> : null}
             {canEdit && live ? <PageMenu page={live} /> : null}
           </div>
@@ -229,26 +307,32 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
         {/* The left gutter holds each block's + and drag handle, and counts as hovering that block. */}
         <div data-block-area className="lg:-ms-14 lg:ps-14">
           {/* Room on the right for comment counts where the page has no margin to put them in. */}
-          <EditorContent editor={editor} className={cx("relative", counts.size > 0 && "max-[1359px]:pe-8")} />
+          <EditorContent editor={editor} className={cx("relative", counts.size > 0 && "max-xl:pe-8")} />
         </div>
-        {editor && canEdit ? <BlockHandle editor={editor} onComment={openThread} /> : null}
+        {editor && canEdit ? <BlockHandle editor={editor} onComment={startComment} /> : null}
         {editor ? <CommentMarkers editor={editor} counts={counts} onOpen={openFromMarker} /> : null}
-        {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} onComment={openThread} /> : null}
-        <PageComments threads={placed.page} orphaned={placed.orphaned} ctx={ctx} />
-        <BlockCommentsDrawer
-          open={thread !== null}
-          onOpenChange={(open) => !open && setThread(null)}
-          quote={thread?.quote ?? ""}
-          threads={thread ? (placed.blocks.get(thread.id) ?? []) : []}
-          ctx={ctx}
-          onNew={(body) => ctx.api.add({ block_id: thread!.id, quote: thread!.quote, body })}
-        />
+        {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} onComment={startComment} /> : null}
       </article>
-      {showToc ? (
-        <aside className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pt-12 max-[1359px]:hidden">
+      {railShown ? (
+        <aside className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pt-12 max-xl:hidden">
           <TocRail items={toc} active={activeHeading} />
         </aside>
       ) : null}
+      <CommentsPanel
+        open={panelOpen}
+        onClose={() => {
+          setPanelOpen(false);
+          setPending(null);
+        }}
+        placed={placed}
+        ctx={ctx}
+        locate={locate}
+        order={order}
+        pending={pending}
+        setPending={setPending}
+        activeId={activeId}
+        onActivate={activate}
+      />
     </div>
   );
 }

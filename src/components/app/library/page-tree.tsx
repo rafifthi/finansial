@@ -67,7 +67,15 @@ function RowLabel({ page, current }: { page: Page; current: boolean }) {
   );
 }
 
-function TreeRow({ node, depth, currentId, expanded, toggle }: { node: PageNode; depth: number; currentId?: string; expanded: Set<string>; toggle: (id: string) => void }) {
+type Variant = "sidebar" | "panel";
+
+/** Sidebar rows match the nav rows above them; panel rows (the phone Library home) step down a shade on surface 1. */
+const ROW: Record<Variant, { current: string; rest: string; indent: number }> = {
+  sidebar: { current: "bg-background-primary-default shadow-xs", rest: "hover:bg-background-secondary-hover", indent: 4 },
+  panel: { current: "bg-background-secondary-hover", rest: "hover:bg-background-secondary-default", indent: 0 },
+};
+
+function TreeRow({ node, depth, currentId, expanded, toggle, variant }: { node: PageNode; depth: number; currentId?: string; expanded: Set<string>; toggle: (id: string) => void; variant: Variant }) {
   const { href, canEdit, create } = useLibrary();
   const { page, children } = node;
   const open = expanded.has(page.id);
@@ -77,10 +85,9 @@ function TreeRow({ node, depth, currentId, expanded, toggle }: { node: PageNode;
       <div
         className={cx(
           "group flex h-7 items-center gap-0.5 rounded-lg pe-1 transition-colors max-sm:h-11",
-          // The panel is surface 1, so the current row steps down a shade rather than up.
-          current ? "bg-background-secondary-hover" : "hover:bg-background-secondary-default",
+          current ? ROW[variant].current : ROW[variant].rest,
         )}
-        style={{ paddingInlineStart: `${depth * 12}px` }}
+        style={{ paddingInlineStart: `${ROW[variant].indent + depth * 12}px` }}
       >
         {children.length ? (
           <button type="button" aria-label={`Pages inside ${pageTitle(page)}`} aria-expanded={open} onClick={() => toggle(page.id)} className={ICON_BUTTON}>
@@ -108,7 +115,7 @@ function TreeRow({ node, depth, currentId, expanded, toggle }: { node: PageNode;
       {children.length && open ? (
         <ul className="flex flex-col gap-0.5 pt-0.5">
           {children.map((c) => (
-            <TreeRow key={c.page.id} node={c} depth={depth + 1} currentId={currentId} expanded={expanded} toggle={toggle} />
+            <TreeRow key={c.page.id} node={c} depth={depth + 1} currentId={currentId} expanded={expanded} toggle={toggle} variant={variant} />
           ))}
         </ul>
       ) : null}
@@ -116,8 +123,12 @@ function TreeRow({ node, depth, currentId, expanded, toggle }: { node: PageNode;
   );
 }
 
-/** The Library's pages as a tree; the open page and the pages above it start expanded. */
-export function PageTree({ className }: { className?: string }) {
+/**
+ * The Library's pages as a tree; the open page and the pages above it start
+ * expanded. On desktop it sits in the main sidebar under the Library row; on
+ * phones it is the Library home.
+ */
+export function PageTree({ className, variant = "panel" }: { className?: string; variant?: Variant }) {
   const { pages, href, canEdit, create } = useLibrary();
   const pathname = usePathname();
   const base = href();
@@ -147,6 +158,28 @@ export function PageTree({ className }: { className?: string }) {
     });
   };
 
+  if (variant === "sidebar") {
+    return (
+      <ul aria-label="Library pages" className={cx("flex flex-col gap-0.5 pt-0.5", className)}>
+        {tree.map((n) => (
+          <TreeRow key={n.page.id} node={n} depth={0} currentId={currentId} expanded={expanded} toggle={toggle} variant="sidebar" />
+        ))}
+        {canEdit ? (
+          <li>
+            <button
+              type="button"
+              onClick={() => create()}
+              className="flex h-7 w-full cursor-pointer items-center gap-2 rounded-lg ps-[30px] text-start text-body-medium text-text-tertiary outline-none transition-colors hover:bg-background-secondary-hover hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+            >
+              <RiAddLine className="size-4 shrink-0" aria-hidden />
+              New page
+            </button>
+          </li>
+        ) : null}
+      </ul>
+    );
+  }
+
   return (
     <nav aria-label="Pages" className={cx("flex flex-col gap-1", className)}>
       <div className="flex items-center justify-between gap-2 ps-2">
@@ -160,7 +193,7 @@ export function PageTree({ className }: { className?: string }) {
       {tree.length ? (
         <ul className="flex flex-col gap-0.5">
           {tree.map((n) => (
-            <TreeRow key={n.page.id} node={n} depth={0} currentId={currentId} expanded={expanded} toggle={toggle} />
+            <TreeRow key={n.page.id} node={n} depth={0} currentId={currentId} expanded={expanded} toggle={toggle} variant="panel" />
           ))}
         </ul>
       ) : (

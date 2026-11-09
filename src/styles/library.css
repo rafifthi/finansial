@@ -88,7 +88,7 @@
 
 /* A block picked with its handle (to drag or delete) shows as selected. */
 .library-prose .ProseMirror-selectednode {
-  @apply rounded-md bg-button-ghost-background;
+  @apply rounded-md bg-button-ghost-hover;
 }
 
 .library-prose li > p + * {
@@ -141,5 +141,5 @@
 }
 
 .library-prose .comment-active {
-  @apply rounded-md bg-button-ghost-background;
+  @apply rounded-md bg-button-ghost-hover;
 }

@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { RiChat3Line, RiCheckLine, RiDeleteBinLine, RiMoreLine, RiPencilLine, RiReplyLine, RiRestartLine } from "@remixicon/react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { RiAddLine, RiCheckLine, RiCloseLine, RiDeleteBinLine, RiMoreLine, RiPencilLine, RiReplyLine, RiRestartLine } from "@remixicon/react";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { Button } from "@/components/base/buttons/button";
-import { Drawer, DrawerBody, DrawerHeader } from "@/components/base/drawer/drawer";
+import { Drawer } from "@/components/base/drawer/drawer";
 import { Dropdown, DropdownItem, DropdownPopover, DropdownTrigger } from "@/components/base/dropdown/dropdown";
-import { SegmentedControl, SegmentedControlItem } from "@/components/base/segmented-control/segmented-control";
+import { Tab, TabList, TabPanel, Tabs } from "@/components/base/tabs/tabs";
+import { ScrollFade, useScrollFade } from "@/components/foundations/scroll-fade/scroll-fade";
 import { Textarea } from "@/components/base/textarea/textarea";
-import type { Thread } from "@/lib/library/comments";
+import type { PlacedThreads, Thread } from "@/lib/library/comments";
 import type { PageComment } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
 import type { CommentsApi } from "./use-comments";
@@ -38,6 +39,13 @@ export interface CommentContext {
 function Composer({ label, placeholder, onSend, onCancel, initial = "", submit = "Comment", autoFocus }: { label: string; placeholder: string; onSend: (body: string) => Promise<boolean>; onCancel?: () => void; initial?: string; submit?: string; autoFocus?: boolean }) {
   const [body, setBody] = useState(initial);
   const [sending, setSending] = useState(false);
+  const field = useRef<HTMLTextAreaElement>(null);
+  // Explicit, since a menu closing can hand focus back to the page in the same tick.
+  useEffect(() => {
+    if (!autoFocus) return;
+    const id = window.setTimeout(() => field.current?.focus(), 0);
+    return () => window.clearTimeout(id);
+  }, [autoFocus]);
   const send = async () => {
     if (!body.trim() || sending) return;
     setSending(true);
@@ -62,7 +70,7 @@ function Composer({ label, placeholder, onSend, onCancel, initial = "", submit =
         rows={2}
         maxRows={10}
         maxLength={5000}
-        autoFocus={autoFocus}
+        ref={field}
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
@@ -172,43 +180,74 @@ function CommentItem({ comment, ctx, isRoot, thread }: { comment: PageComment; c
   );
 }
 
-/** One thread: what it's about, the comments in order, then reply. */
-export function CommentThread({ thread, ctx, showQuote, orphaned }: { thread: Thread; ctx: CommentContext; showQuote?: boolean; orphaned?: boolean }) {
-  const [replying, setReplying] = useState(false);
+/** Where a thread points, as the card's first line: "Contacts · RT: Pak Budi…", "Whole page" or "Deleted content · …". */
+export interface ThreadLocation {
+  section: string;
+  quote: string;
+}
+
+function LocationLine({ location }: { location: ThreadLocation }) {
+  return (
+    <span className="flex min-w-0 items-baseline gap-1 text-body-2-medium text-text-tertiary">
+      <span className="shrink-0">{location.section}</span>
+      {location.quote ? (
+        <>
+          <span aria-hidden>·</span>
+          <span className="truncate font-normal">{location.quote}</span>
+        </>
+      ) : null}
+    </span>
+  );
+}
+
+/**
+ * One thread as a card. Pressing it shows its block in the page; the open
+ * card takes the reply box, as in Google Docs.
+ */
+function ThreadCard({ thread, ctx, location, active, onActivate }: { thread: Thread; ctx: CommentContext; location: ThreadLocation; active: boolean; onActivate: () => void }) {
   const { root } = thread;
+  const ref = useRef<HTMLElement>(null);
+  // Opened from the page (a count beside a block): bring the card into view.
+  useEffect(() => {
+    if (active) ref.current?.scrollIntoView({ block: "nearest", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }, [active]);
   return (
     <article
+      ref={ref}
       aria-label={`Comment by ${root.author_name || root.created_by}`}
-      className={cx("flex flex-col gap-3 rounded-2xl border border-separator-border bg-background-primary-default p-3", root.resolved && "opacity-70")}
+      onClick={(e) => {
+        // Presses on the card's own controls stay theirs.
+        if (!(e.target as HTMLElement).closest("button, a, textarea, input, [role='menu'], [role='dialog']")) onActivate();
+      }}
+      className={cx(
+        "flex cursor-default flex-col gap-3 rounded-3xl border bg-background-primary-default p-3 transition-colors",
+        active ? "border-border-button-hover" : "border-separator-border hover:border-border-button-default",
+      )}
     >
-      {showQuote && root.quote ? (
-        <blockquote className="border-s-2 border-border-button-default ps-2 text-body-2-regular text-text-secondary">
-          {orphaned ? <span className="block text-caption-1-medium text-text-tertiary">On deleted content</span> : null}
-          <span className="line-clamp-3">{root.quote}</span>
-        </blockquote>
-      ) : null}
-      {root.resolved ? (
-        <span className="flex items-center gap-1 text-caption-1-medium text-text-tertiary">
-          <RiCheckLine className="size-3.5" aria-hidden />
-          Resolved
-        </span>
-      ) : null}
+      <button
+        type="button"
+        onClick={onActivate}
+        className="-m-1 flex min-w-0 cursor-pointer rounded-md p-1 text-start outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+        aria-label={`Show in page: ${location.section}${location.quote ? `, ${location.quote}` : ""}`}
+      >
+        <LocationLine location={location} />
+      </button>
       <CommentItem comment={root} ctx={ctx} isRoot thread={thread} />
       {thread.replies.map((r) => (
         <CommentItem key={r.id} comment={r} ctx={ctx} isRoot={false} thread={thread} />
       ))}
-      {ctx.canEdit && !root.resolved ? (
-        replying ? (
-          <Composer label="Reply" placeholder="Reply…" submit="Reply" autoFocus onCancel={() => setReplying(false)} onSend={async (body) => {
-              const ok = await ctx.api.add({ parent_id: root.id, body });
-              if (ok) setReplying(false);
-              return ok;
-            }}
-          />
+      {root.resolved ? (
+        <span className="flex items-center gap-1 text-body-2-medium text-text-tertiary">
+          <RiCheckLine className="size-3.5" aria-hidden />
+          Marked as resolved
+        </span>
+      ) : ctx.canEdit ? (
+        active ? (
+          <Composer label="Reply" placeholder="Reply…" submit="Reply" onSend={(body) => ctx.api.add({ parent_id: root.id, body })} />
         ) : (
           <button
             type="button"
-            onClick={() => setReplying(true)}
+            onClick={onActivate}
             className="flex w-fit cursor-pointer items-center gap-1 rounded-md text-body-2-medium text-text-tertiary outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring max-sm:min-h-9"
           >
             <RiReplyLine className="size-3.5" aria-hidden />
@@ -220,79 +259,151 @@ export function CommentThread({ thread, ctx, showQuote, orphaned }: { thread: Th
   );
 }
 
-type Filter = "open" | "resolved";
+/** A comment being started: on a block (quoting it) or on the whole page. */
+export interface PendingComment {
+  blockId: string;
+  quote: string;
+}
 
-function ThreadList({ threads, ctx, empty, showQuote, orphaned = [] }: { threads: Thread[]; ctx: CommentContext; empty: string; showQuote?: boolean; orphaned?: Thread[] }) {
-  const [filter, setFilter] = useState<Filter>("open");
-  const all = [...threads, ...orphaned];
-  const resolvedCount = all.filter((t) => t.root.resolved).length;
-  const shown = (list: Thread[]) => list.filter((t) => (filter === "open" ? !t.root.resolved : t.root.resolved));
+export interface CommentsPanelProps {
+  placed: PlacedThreads;
+  ctx: CommentContext;
+  /** Where each block sits: its order in the page and the heading it falls under. */
+  locate: (thread: Thread, orphaned: boolean) => ThreadLocation;
+  order: (thread: Thread) => number;
+  pending: PendingComment | null;
+  setPending: (p: PendingComment | null) => void;
+  activeId: string | null;
+  onActivate: (thread: Thread) => void;
+  onClose: () => void;
+}
+
+type View = "all" | "mine";
+
+function PanelBody({ placed, ctx, locate, order, pending, setPending, activeId, onActivate }: Omit<CommentsPanelProps, "onClose">) {
+  const [view, setView] = useState<View>("all");
+  const fade = useScrollFade();
+  const orphans = new Set(placed.orphaned.map((t) => t.root.id));
+  const all = [...placed.page, ...[...placed.blocks.values()].flat(), ...placed.orphaned].sort((a, b) => order(a) - order(b) || a.root.created_at.localeCompare(b.root.created_at));
+  const mine = (t: Thread) => t.root.created_by === ctx.me || t.replies.some((r) => r.created_by === ctx.me);
+  const shown = view === "all" ? all : all.filter(mine);
+  const open = shown.filter((t) => !t.root.resolved);
+  const resolved = shown.filter((t) => t.root.resolved);
+  const card = (t: Thread) => <ThreadCard key={t.root.id} thread={t} ctx={ctx} location={locate(t, orphans.has(t.root.id))} active={t.root.id === activeId} onActivate={() => onActivate(t)} />;
+
+  const list = (
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <ScrollFade progress={fade.progress} surfaceClassName="from-background-full" />
+      <div onScroll={fade.onScroll} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain pb-4">
+        {pending ? (
+          <div className="flex flex-col gap-3 rounded-3xl border border-border-button-hover bg-background-primary-default p-3">
+            <LocationLine location={pending.blockId ? { section: "New comment", quote: pending.quote } : { section: "New comment on the whole page", quote: "" }} />
+            <Composer
+              key={pending.blockId}
+              label="New comment"
+              placeholder={pending.blockId ? "Add a comment…" : "Comment on this page…"}
+              autoFocus
+              onCancel={() => setPending(null)}
+              onSend={async (body) => {
+                const ok = await ctx.api.add({ block_id: pending.blockId, quote: pending.quote, body });
+                if (ok) setPending(null);
+                return ok;
+              }}
+            />
+          </div>
+        ) : ctx.canEdit ? (
+          <button
+            type="button"
+            onClick={() => setPending({ blockId: "", quote: "" })}
+            className="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border-button-default px-3 text-start text-body-medium text-text-secondary outline-none transition-colors hover:border-border-button-hover hover:text-text-primary focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+          >
+            <RiAddLine className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
+            Comment on the whole page
+          </button>
+        ) : null}
+
+        {open.map(card)}
+        {!open.length && !pending ? (
+          <p className="px-1 py-2 text-body-2-regular text-text-tertiary">
+            {view === "mine"
+              ? "Threads you start or reply to show up here."
+              : resolved.length
+                ? "No open comments."
+                : ctx.canEdit
+                  ? "No comments yet. Select some words, or open a block's ⋮⋮ menu, to comment on it."
+                  : "No comments yet."}
+          </p>
+        ) : null}
+
+        {resolved.length ? (
+          <section aria-labelledby="comments-resolved" className="flex flex-col gap-3 pt-3">
+            <h3 id="comments-resolved" className="px-1 text-body-semibold text-text-secondary">
+              Resolved
+            </h3>
+            {resolved.map(card)}
+          </section>
+        ) : null}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col gap-3">
-      {resolvedCount ? (
-        <SegmentedControl
-          aria-label="Show"
-          className="w-fit"
-          selectedKeys={new Set([filter])}
-          onSelectionChange={(keys) => {
-            const next = [...keys][0];
-            if (next) setFilter(next as Filter);
-          }}
-        >
-          <SegmentedControlItem id="open">Open ({all.length - resolvedCount})</SegmentedControlItem>
-          <SegmentedControlItem id="resolved">Resolved ({resolvedCount})</SegmentedControlItem>
-        </SegmentedControl>
-      ) : null}
-      {shown(threads).map((t) => (
-        <CommentThread key={t.root.id} thread={t} ctx={ctx} showQuote={showQuote} />
-      ))}
-      {shown(orphaned).map((t) => (
-        <CommentThread key={t.root.id} thread={t} ctx={ctx} showQuote orphaned />
-      ))}
-      {!shown(threads).length && !shown(orphaned).length ? <p className="py-2 text-body-2-regular text-text-tertiary">{filter === "resolved" ? "No resolved comments." : resolvedCount ? "No open comments." : empty}</p> : null}
+    <Tabs selectedKey={view} onSelectionChange={(k) => setView(k as View)} className="flex min-h-0 flex-1 flex-col gap-3">
+      <TabList aria-label="Which comments">
+        <Tab id="all">All comments</Tab>
+        <Tab id="mine">For you</Tab>
+      </TabList>
+      <TabPanel id="all" className="flex min-h-0 flex-1 flex-col outline-none">
+        {list}
+      </TabPanel>
+      <TabPanel id="mine" className="flex min-h-0 flex-1 flex-col outline-none">
+        {list}
+      </TabPanel>
+    </Tabs>
+  );
+}
+
+function PanelHeader({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <h2 className="text-title-2-semibold text-text-primary">Comments</h2>
+      <Button variant="secondary" size="small" iconOnly leadingIcon={RiCloseLine} aria-label="Close comments" onClick={onClose} className="border-transparent bg-transparent" />
     </div>
   );
 }
 
-/** The comments on one block, in a side drawer (a sheet from the bottom on phones). */
-export function BlockCommentsDrawer({
-  open,
-  onOpenChange,
-  quote,
-  threads,
-  ctx,
-  onNew,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  quote: string;
-  threads: Thread[];
-  ctx: CommentContext;
-  onNew: (body: string) => Promise<boolean>;
-}) {
-  return (
-    <Drawer isOpen={open} onOpenChange={onOpenChange} placement="end" size="md" aria-label="Comments on this block" className="flex h-full flex-col rounded-3xl bg-background-primary-default">
-      <DrawerHeader title="Comments" />
-      <DrawerBody className="flex flex-col gap-4 overflow-y-auto">
-        {quote ? <blockquote className="border-s-2 border-border-button-default ps-3 text-body-regular text-text-secondary line-clamp-4">{quote}</blockquote> : null}
-        {ctx.canEdit ? <Composer label="New comment" placeholder="Add a comment…" autoFocus={!threads.length} onSend={onNew} /> : null}
-        <ThreadList threads={threads} ctx={ctx} empty={ctx.canEdit ? "No comments on this block yet." : "No comments on this block."} />
-      </DrawerBody>
-    </Drawer>
-  );
+const WIDE = "(min-width: 1280px)";
+const subscribeWide = (cb: () => void) => {
+  const mq = window.matchMedia(WIDE);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+};
+
+/** True from the xl breakpoint, where the panel docks beside the page instead of sliding over it. */
+export function useWide() {
+  return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => true);
 }
 
-/** Comments about the whole page, plus threads whose block was deleted, under the page. */
-export function PageComments({ threads, orphaned, ctx }: { threads: Thread[]; orphaned: Thread[]; ctx: CommentContext }) {
-  const open = [...threads, ...orphaned].filter((t) => !t.root.resolved).length;
+/**
+ * Comments, as in Google Docs: docked on the right beside the page, no
+ * overlay, so the page stays readable and editable while you discuss it.
+ * Narrower screens get the same panel as a drawer.
+ */
+export function CommentsPanel(props: CommentsPanelProps & { open: boolean }) {
+  const wide = useWide();
+  if (wide) {
+    if (!props.open) return null;
+    return (
+      <aside aria-label="Comments" className="sticky top-4 flex h-[calc(100dvh-4rem)] min-h-0 flex-col gap-3 border-s border-separator-border ps-5">
+        <PanelHeader onClose={props.onClose} />
+        <PanelBody {...props} />
+      </aside>
+    );
+  }
   return (
-    <section aria-labelledby="page-comments" className="flex flex-col gap-3 border-t border-separator-border pt-6">
-      <h2 id="page-comments" className="flex items-center gap-2 text-title-3-semibold text-text-primary">
-        <RiChat3Line className="size-4 text-foreground-icon-secondary" aria-hidden />
-        Comments{open ? <span className="text-text-tertiary">{open}</span> : null}
-      </h2>
-      {ctx.canEdit ? <Composer label="Comment on this page" placeholder="Comment on this page…" onSend={(body) => ctx.api.add({ body })} /> : null}
-      <ThreadList threads={threads} orphaned={orphaned} ctx={ctx} empty={ctx.canEdit ? "No comments yet. Ask a question or leave a note for the household." : "No comments yet."} />
-    </section>
+    <Drawer isOpen={props.open} onOpenChange={(o) => !o && props.onClose()} placement="end" size="md" aria-label="Comments" className="flex h-full flex-col gap-3 rounded-3xl bg-background-full p-4">
+      <PanelHeader onClose={props.onClose} />
+      <PanelBody {...props} />
+    </Drawer>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useId, useTransition } from "react";
+import { Fragment, useId, useTransition } from "react";
 import {
   type RemixiconComponentType,
   RiAddLine,
@@ -41,7 +41,7 @@ import { ROLE_INFO } from "@/lib/auth/roles";
 import type { FormOptions } from "@/lib/data/app-data";
 import { cx } from "@/utils/cx";
 import { BookSwitcher, type ShellBook } from "./book-switcher";
-import type { ShellValue } from "./shell-context";
+import { useNavSlot, type ShellValue } from "./shell-context";
 import { useCan } from "./permissions";
 
 /** What a page is for; the sidebar and the More page both group by it, in this order. */
@@ -62,6 +62,8 @@ interface NavEntry {
   badgeKey?: "unverified";
   /** Shown only to book admins. */
   admins?: boolean;
+  /** Current only on this exact path, not the pages under it. */
+  exact?: boolean;
 }
 
 /** In-book destinations; `path` is relative to /b/<bookId>. */
@@ -75,7 +77,8 @@ const BOOK_NAV: NavEntry[] = [
   { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine, group: "finance" },
   { path: "/recurring", label: "Recurring", icon: RiRepeatLine, group: "finance" },
   { path: "/lists", label: "Lists", icon: RiListCheck3, group: "others" },
-  { path: "/library", label: "Library", icon: RiBookOpenLine, group: "others" },
+  // Exact: inside a page, the page's own row in the tree below is the current one.
+  { path: "/library", label: "Library", icon: RiBookOpenLine, group: "others", exact: true },
   { path: "/members", label: "Members", icon: RiGroupLine, group: "book", admins: true },
   { path: "/settings", label: "Settings", icon: RiSettings4Line, group: "book" },
 ];
@@ -111,7 +114,7 @@ export function navFor({ current, user, badges }: Pick<ShellProps, "current" | "
       label: n.label,
       icon: n.icon,
       badge: n.badgeKey ? badges[n.badgeKey] : undefined,
-      exact: n.path === "",
+      exact: n.path === "" || n.exact,
       group: n.group,
     }));
   }
@@ -140,6 +143,7 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
   const catatHref = current ? `/b/${current.id}/catat` : "";
   const onCatat = pathname === catatHref;
   const navId = useId();
+  const { setLibrarySlot } = useNavSlot();
 
   return (
     <div className="flex h-full flex-col justify-between gap-4">
@@ -174,7 +178,11 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
                   </h2>
                 ) : null}
                 {group.items.map((item) => (
-                  <NavLink key={item.href} item={item} active={isActive(pathname, item)} onNavigate={onNavigate} />
+                  <Fragment key={item.href}>
+                    <NavLink item={item} active={isActive(pathname, item)} onNavigate={onNavigate} />
+                    {/* Inside the Library, its page tree opens up right here. */}
+                    {item.href.endsWith("/library") ? <div ref={setLibrarySlot} className="empty:hidden" /> : null}
+                  </Fragment>
                 ))}
               </div>
             );

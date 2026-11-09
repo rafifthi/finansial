@@ -143,3 +143,49 @@
 .library-prose .comment-active {
   @apply rounded-md bg-button-ghost-hover;
 }
+
+/* @mentions: a quiet chip that still reads as a name. */
+.library-prose .mention {
+  @apply rounded-md bg-background-tertiary-default px-1 py-px text-body-medium text-text-primary;
+  box-decoration-break: clone;
+}
+
+/* Tables: hairline grid, a tinted header row, and a scroller when it's wider than the page. */
+.library-prose .tableWrapper {
+  @apply overflow-x-auto;
+}
+
+.library-prose table {
+  @apply w-full border-collapse overflow-hidden rounded-xl text-body-regular;
+  table-layout: fixed;
+}
+
+.library-prose th,
+.library-prose td {
+  @apply relative min-w-24 border border-border-table px-2.5 py-1.5 text-start align-top;
+}
+
+.library-prose th {
+  @apply bg-background-secondary-default text-body-semibold text-text-primary;
+}
+
+.library-prose td > p,
+.library-prose th > p {
+  @apply m-0;
+}
+
+/* Cells picked by dragging across the table. */
+.library-prose .selectedCell::after {
+  @apply pointer-events-none absolute inset-0 bg-button-ghost-hover opacity-60;
+  content: "";
+}
+
+/* The column-resize grip and the cursor while dragging it. */
+.library-prose .column-resize-handle {
+  @apply pointer-events-none absolute -end-px top-0 -bottom-px w-0.5 bg-accent-solid;
+}
+
+.library-prose.resize-cursor,
+.resize-cursor .library-prose {
+  cursor: col-resize;
+}

@@ -9,7 +9,10 @@ import {
   RiListCheck2,
   RiListOrdered2,
   RiListUnordered,
+  RiAtLine,
+  RiCalendarLine,
   RiSeparator,
+  RiTable2,
   RiText,
 } from "@remixicon/react";
 
@@ -30,6 +33,8 @@ export interface SlashItem {
   allowedIn?: (ctx: SlashContext) => boolean;
   /** Applies the block to the line the cursor is on (the menu has already made room). */
   apply: (editor: Editor) => void;
+  /** Goes in at the cursor, inside the line, rather than as a block. */
+  inline?: boolean;
 }
 
 export const SLASH_SECTIONS = ["Text", "Lists", "Blocks", "Insert"] as const;
@@ -46,6 +51,9 @@ export const SLASH_ITEMS: SlashItem[] = [
   { key: "checklist", label: "Checklist", section: "Lists", icon: RiListCheck2, aliases: ["todo", "task", "check", "checkbox"], apply: (e) => void e.chain().toggleTaskList().run() },
   { key: "quote", label: "Quote", section: "Blocks", icon: RiDoubleQuotesL, aliases: ["blockquote", "callout"], apply: (e) => void e.chain().setBlockquote().run() },
   { key: "code", label: "Code", section: "Blocks", icon: RiCodeBoxLine, aliases: ["codeblock", "pre", "snippet"], allowedIn: (c) => !c.inList, apply: (e) => void e.chain().setCodeBlock().run() },
+  { key: "table", label: "Table", section: "Blocks", icon: RiTable2, aliases: ["grid", "columns", "rows"], allowedIn: notInTable, apply: (e) => void e.chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+  { key: "date", label: "Date", section: "Insert", icon: RiCalendarLine, aliases: ["today", "deadline", "due", "when"], inline: true, apply: (e) => void e.chain().insertDate().run() },
+  { key: "mention", label: "Mention someone", section: "Insert", icon: RiAtLine, aliases: ["@", "person", "people", "tag"], inline: true, apply: (e) => void e.chain().insertContent("@").run() },
   { key: "divider", label: "Divider", section: "Blocks", icon: RiSeparator, aliases: ["hr", "line", "separator", "rule"], apply: (e) => void e.chain().setHorizontalRule().run() },
 ];
 
@@ -80,7 +88,7 @@ export function runSlashItem(editor: Editor, range: Range, item: SlashItem) {
   editor.chain().focus().deleteRange(range).run();
   const { $from } = editor.state.selection;
   const empty = $from.parent.isTextblock && $from.parent.content.size === 0;
-  if (!empty && item.key !== "divider") {
+  if (!empty && !item.inline && item.key !== "divider") {
     const after = $from.after();
     editor.chain().insertContentAt(after, { type: "paragraph" }).setTextSelection(after + 1).run();
   }

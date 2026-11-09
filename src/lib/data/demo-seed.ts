@@ -175,7 +175,7 @@ export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks
     nodes.map((node, i) => {
       const id = `blk-${++n}`;
       const json = JSON.stringify({ ...node, attrs: { id, ...node.attrs } });
-      return { id, page_id, position: (i + 1) * 1024, type: node.type, text: nodeText(node), ...splitJson(json), updated_at: "", updated_by: "" };
+      return { id, page_id, position: (i + 1) * 1024, type: node.type, text: nodeText(node), ...splitJson(json), mentions: "", updated_at: "", updated_by: "" };
     });
   const at = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
   const comment = (id: string, page_id: string, extra: Partial<PageComment>): PageComment => ({

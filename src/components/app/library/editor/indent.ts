@@ -3,13 +3,12 @@ import { Extension, type Editor } from "@tiptap/core";
 const MAX_INDENT = 6;
 const TYPES = ["paragraph", "heading"];
 
-/** Inside a list item, Tab nests the item instead (the list's own shortcut). */
+/** Lists nest their items with Tab and tables move between cells; both keep the key. */
+const OWNS_TAB = new Set(["listItem", "taskItem", "tableCell", "tableHeader"]);
+
 function inList(editor: Editor) {
   const { $from } = editor.state.selection;
-  for (let d = $from.depth; d > 0; d--) {
-    const name = $from.node(d).type.name;
-    if (name === "listItem" || name === "taskItem") return true;
-  }
+  for (let d = $from.depth; d > 0; d--) if (OWNS_TAB.has($from.node(d).type.name)) return true;
   return false;
 }
 
@@ -30,7 +29,7 @@ function shift(editor: Editor, by: 1 | -1): boolean {
 
 /**
  * Tab pushes a paragraph or heading in a step, Shift+Tab brings it back
- * (lists nest their items instead; code gets two spaces). Shift+Tab at the
+ * (lists nest their items and tables move between cells instead; code gets two spaces). Shift+Tab at the
  * left edge does nothing, so keyboard users can still Tab out of the page.
  */
 export const Indent = Extension.create({

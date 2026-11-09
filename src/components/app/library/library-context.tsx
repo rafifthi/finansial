@@ -12,11 +12,19 @@ import { undoToast } from "../undo";
 
 const POLL_MS = 30_000;
 
+export interface LibraryMember {
+  id: string;
+  name: string;
+}
+
 interface LibraryValue {
   pages: Page[];
   canEdit: boolean;
   user: string;
   userName: string;
+  userId: string;
+  /** People in the book, for @mentions. */
+  members: LibraryMember[];
   href: (pageId?: string) => string;
   /** Adds a page (under `parentId`) and opens it. */
   create: (parentId?: string) => void;
@@ -39,7 +47,7 @@ export function useLibrary(): LibraryValue {
  * new pages, renames and archiving show before the sheet has them. The other
  * person's changes arrive by polling.
  */
-export function LibraryProvider({ initial, canEdit, user, userName, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; children: ReactNode }) {
+export function LibraryProvider({ initial, canEdit, user, userName, userId, members, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; userId: string; members: LibraryMember[]; children: ReactNode }) {
   const bookId = useBookId();
   const router = useRouter();
   const [pages, setPages] = useState(initial);
@@ -122,6 +130,6 @@ export function LibraryProvider({ initial, canEdit, user, userName, children }: 
     [bookId, href, router, sync],
   );
 
-  const value = useMemo(() => ({ pages, canEdit, user, userName, href, create, archive, patchLocal }), [pages, canEdit, user, userName, href, create, archive, patchLocal]);
+  const value = useMemo(() => ({ pages, canEdit, user, userName, userId, members, href, create, archive, patchLocal }), [pages, canEdit, user, userName, userId, members, href, create, archive, patchLocal]);
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }

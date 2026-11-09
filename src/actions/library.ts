@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { bookAction, FieldErrors } from "@/lib/data/action";
 import { libraryStore } from "@/lib/data/store";
-import { MAX_BLOCK_CHARS, nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
+import { MAX_BLOCK_CHARS, mentionIds, nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
 import { nextPosition, withDescendants } from "@/lib/library/tree";
 import { quoteOf } from "@/lib/library/comments";
 import { PageCommentSchema, PageSchema, type Page, type PageBlock, type PageComment } from "@/lib/sheets/schema";
@@ -15,7 +15,8 @@ import { PageCommentSchema, PageSchema, type Page, type PageBlock, type PageComm
  */
 const NO_REFRESH = { refresh: false };
 
-const clientId = z.string().regex(/^[a-z0-9-]{4,40}$/, "Invalid id");
+// Ids come from the browser (nanoid, UUIDs) or from rows typed into the sheet by hand, which can be short.
+const clientId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "Invalid id");
 
 /** Every page (archived ones too, for undo); the client polls this to pick up the other person's changes. */
 export const syncLibrary = bookAction(
@@ -110,7 +111,7 @@ export const savePage = bookAction(
       }
       const existing = byId.get(b.id);
       if (existing && existing.page_id !== input.id) throw new Error("Two pages share a block. Reload the page and try again.");
-      const row = { position: b.position, type: node.type, text: nodeText(node), ...splitJson(b.json), updated_at: now, updated_by: user.email };
+      const row = { position: b.position, type: node.type, text: nodeText(node), ...splitJson(b.json), mentions: mentionIds(node).join(","), updated_at: now, updated_by: user.email };
       if (existing) updates.push({ key: b.id, patch: row });
       else inserts.push({ id: b.id, page_id: input.id, ...row });
     }

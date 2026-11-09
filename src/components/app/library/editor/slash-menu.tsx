@@ -2,25 +2,20 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Extension } from "@tiptap/core";
-import { ReactRenderer } from "@tiptap/react";
-import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from "@tiptap/suggestion";
+import Suggestion, { type SuggestionProps } from "@tiptap/suggestion";
 import { MENU_ITEM, MENU_ITEM_ACTIVE, MENU_POPOVER_SURFACE } from "@/components/base/dropdown/menu-styles";
 import { cx } from "@/utils/cx";
+import { suggestionPopup, type SuggestionHandle } from "./suggestion-popup";
 import { filterSlashItems, runSlashItem, SLASH_SECTIONS, slashContext, type SlashItem } from "./slash-items";
 
-interface MenuHandle {
-  onKeyDown: (e: KeyboardEvent) => boolean;
-}
 
 type MenuProps = Pick<SuggestionProps<SlashItem, SlashItem>, "items" | "command" | "query" | "editor">;
-
-let menuCount = 0;
 
 /**
  * The / menu's list. Typing stays in the editor, so the list is a listbox the
  * editor points at with aria-activedescendant rather than one that takes focus.
  */
-const SlashList = forwardRef<MenuHandle, MenuProps & { id: string }>(function SlashList({ items, command, query, editor, id }, ref) {
+const SlashList = forwardRef<SuggestionHandle, MenuProps & { id: string }>(function SlashList({ items, command, query, editor, id }, ref) {
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const at = Math.min(active, Math.max(0, items.length - 1));
@@ -119,37 +114,7 @@ export const SlashMenu = Extension.create({
         },
         items: ({ query, editor }) => filterSlashItems(query, slashContext(editor)),
         command: ({ editor, range, props }) => runSlashItem(editor, range, props),
-        render: () => {
-          let renderer: ReactRenderer<MenuHandle, MenuProps & { id: string }> | undefined;
-          let unmount: (() => void) | undefined;
-          const id = `slash-menu-${++menuCount}`;
-          const point = (props: SuggestionProps<SlashItem, SlashItem>, on: boolean) => {
-            const dom = props.editor.view.dom;
-            if (on) {
-              dom.setAttribute("aria-controls", id);
-              dom.setAttribute("aria-expanded", "true");
-            } else {
-              dom.removeAttribute("aria-controls");
-              dom.removeAttribute("aria-expanded");
-              dom.removeAttribute("aria-activedescendant");
-            }
-          };
-          return {
-            onStart: (props) => {
-              renderer = new ReactRenderer(SlashList, { props: { ...props, id }, editor: props.editor });
-              unmount = props.mount(renderer.element as HTMLElement);
-              point(props, true);
-            },
-            onUpdate: (props) => renderer?.updateProps({ ...props, id }),
-            onKeyDown: (props: SuggestionKeyDownProps) => renderer?.ref?.onKeyDown(props.event) ?? false,
-            onExit: (props) => {
-              point(props, false);
-              unmount?.();
-              renderer?.destroy();
-              renderer = undefined;
-            },
-          };
-        },
+        render: suggestionPopup<SlashItem, MenuProps & { id: string }>(SlashList, "slash-menu"),
       }),
     ];
   },

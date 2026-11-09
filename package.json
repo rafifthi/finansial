@@ -24,6 +24,8 @@
     "@tanstack/react-table": "^8.21.3",
     "@tiptap/core": "3.33.0",
     "@tiptap/extension-list": "^3.33.0",
+    "@tiptap/extension-mention": "3.33.0",
+    "@tiptap/extension-table": "3.33.0",
     "@tiptap/extension-unique-id": "^3.33.0",
     "@tiptap/extensions": "^3.33.0",
     "@tiptap/pm": "^3.33.0",

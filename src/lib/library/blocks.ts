@@ -43,8 +43,12 @@ const INLINE_PARENTS = new Set(["paragraph", "heading", "codeBlock"]);
 export function nodeText(node: DocNode): string {
   if (node.type === "text") return node.text ?? "";
   if (node.type === "hardBreak") return "\n";
+  if (node.type === "mention") return `@${String(node.attrs?.label ?? "")}`;
+  if (node.type === "dateChip") return String(node.attrs?.value ?? "");
   const kids = node.content ?? [];
   if (INLINE_PARENTS.has(node.type)) return kids.map(nodeText).join("");
+  // A table row reads as one line, its cells apart by a tab, so the sheet copy keeps the grid.
+  if (node.type === "tableRow") return kids.map((c) => nodeText(c).replace(/\n/g, " ")).join("\t");
   return kids
     .map(nodeText)
     .filter((t) => t !== "")
@@ -174,4 +178,15 @@ export function savedMap(rows: PageBlock[]): Map<string, { position: number; jso
     out.set(row.id, { position: row.position, json: joinJson(row) ? JSON.stringify(rowNode(row)[0]) : "" });
   }
   return out;
+}
+
+/** The ids of people @mentioned anywhere in a node, each once. */
+export function mentionIds(node: DocNode): string[] {
+  const out = new Set<string>();
+  const walk = (n: DocNode) => {
+    if (n.type === "mention" && typeof n.attrs?.id === "string" && n.attrs.id) out.add(n.attrs.id);
+    n.content?.forEach(walk);
+  };
+  walk(node);
+  return [...out];
 }

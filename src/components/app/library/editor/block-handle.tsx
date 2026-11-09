@@ -143,7 +143,8 @@ export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?:
   const onDragStart = (e: React.DragEvent) => startDrag(editor, current().pos, target.dom, e.dataTransfer);
 
   const close = () => setMenu(false);
-  const turnInto = SLASH_ITEMS.filter((i) => i.key !== "divider");
+  // Only block types a line can become; tables, dividers and inline bits are inserted, not turned into.
+  const turnInto = SLASH_ITEMS.filter((i) => !i.inline && i.key !== "divider" && i.key !== "table");
   const textual = target.node.isTextblock || isItem;
 
   return createPortal(

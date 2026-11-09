@@ -7,6 +7,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
 import UniqueID from "@tiptap/extension-unique-id";
+import { TableKit } from "@tiptap/extension-table";
 import { RiArrowLeftSLine, RiChat3Line, RiCheckLine, RiCloudOffLine, RiLoader4Line, RiPencilLine } from "@remixicon/react";
 import { InputBase, TextField } from "@/components/base/input/input";
 import { docFromRows } from "@/lib/library/blocks";
@@ -20,6 +21,9 @@ import { CommentMarkers, CommentMarks, setCommentMarks } from "./editor/comment-
 import { EditorBubble } from "./editor/editor-bubble";
 import { LinkShortcut } from "./editor/link";
 import { BlockHandle } from "./editor/block-handle";
+import { DateChip } from "./editor/date-chip";
+import { peopleMentions } from "./editor/mention";
+import { TableMenu } from "./editor/table-menu";
 import { Indent } from "./editor/indent";
 import { SlashMenu } from "./editor/slash-menu";
 import { TocMenu, TocRail, useActiveHeading, useToc } from "./editor/toc";
@@ -29,7 +33,7 @@ import { useComments } from "./use-comments";
 import { usePageSave, type SaveStatus } from "./use-page-save";
 
 /** Nodes that get a stable id: every top-level block (one sheet row each) and list items, for comments to point at later. */
-const ID_TYPES = ["paragraph", "heading", "bulletList", "orderedList", "taskList", "listItem", "taskItem", "blockquote", "codeBlock", "horizontalRule"];
+const ID_TYPES = ["paragraph", "heading", "bulletList", "orderedList", "taskList", "listItem", "taskItem", "blockquote", "codeBlock", "horizontalRule", "table"];
 
 const BARE = "min-h-0 bg-transparent px-0 py-0 shadow-none ring-0 max-sm:min-h-0";
 
@@ -60,7 +64,7 @@ function edited(page: Pick<Page, "updated_at">) {
 /** One Library page: breadcrumbs, title, then the document, saved as it's typed. */
 export function PageEditor({ page: initialPage, rows, comments }: { page: Page; rows: PageBlock[]; comments: PageComment[] }) {
   const bookId = useBookId();
-  const { pages, canEdit, href, patchLocal, user, userName } = useLibrary();
+  const { pages, canEdit, href, patchLocal, user, userName, members } = useLibrary();
   const [title, setTitle] = useState(initialPage.title);
   const [meta, setMeta] = useState(initialPage);
   // ⌘K in the editor tells the link popover to open.
@@ -98,12 +102,15 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
         placeholder: ({ node }) => (node.type.name === "heading" ? "Heading" : canEdit ? "Type / for blocks" : ""),
         showOnlyCurrent: true,
       }),
+      TableKit.configure({ table: { resizable: canEdit, cellMinWidth: 96 } }),
+      DateChip,
+      peopleMentions(members),
       UniqueID.configure({ types: ID_TYPES }),
       Indent,
       CommentMarks,
       ...(canEdit ? [SlashMenu, LinkShortcut.configure({ open: () => linkEvents.dispatchEvent(new Event("open")) })] : []),
     ],
-    [canEdit, linkEvents],
+    [canEdit, linkEvents, members],
   );
 
   const editor = useEditor({
@@ -319,6 +326,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
         {editor && canEdit ? <BlockHandle editor={editor} onComment={startComment} /> : null}
         {editor ? <CommentMarkers editor={editor} counts={counts} onOpen={openFromMarker} /> : null}
         {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} onComment={startComment} /> : null}
+        {editor && canEdit ? <TableMenu editor={editor} /> : null}
       </article>
       {railShown ? (
         <aside className="sticky top-6 hidden max-h-[calc(100dvh-3rem)] overflow-y-auto pt-14 @min-[680px]:block">

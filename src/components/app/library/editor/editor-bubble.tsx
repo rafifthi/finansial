@@ -27,7 +27,7 @@ import { blockAtSelection } from "./comment-marks";
 import { applyLink, linkDraftAt, normalizeHref, removeLink, type LinkDraft } from "./link";
 
 /** A panel pinned to a stretch of the document, following it as the page scrolls. */
-function Floating({ editor, from, to, children, label, placement = "top" }: { editor: Editor; from: number; to: number; children: ReactNode; label: string; placement?: "top" | "top-start" }) {
+export function Floating({ editor, from, to, children, label, placement = "top" }: { editor: Editor; from: number; to: number; children: ReactNode; label: string; placement?: "top" | "top-start" | "bottom-start" }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -40,7 +40,7 @@ function Floating({ editor, from, to, children, label, placement = "top" }: { ed
       void computePosition(reference, el, {
         placement,
         strategy: "fixed",
-        middleware: [offset(8), flip({ fallbackPlacements: [placement === "top" ? "bottom" : "bottom-start"] }), shift({ padding: 12 })],
+        middleware: [offset(8), flip({ fallbackPlacements: [placement === "top" ? "bottom" : placement === "top-start" ? "bottom-start" : "top-start"] }), shift({ padding: 12 })],
       }).then(({ x, y }) => {
         el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
         el.style.visibility = "visible";
@@ -55,7 +55,7 @@ function Floating({ editor, from, to, children, label, placement = "top" }: { ed
   );
 }
 
-function ToolButton({ icon: Icon, label, active, onPress }: { icon: RemixiconComponentType; label: string; active?: boolean; onPress: () => void }) {
+export function ToolButton({ icon: Icon, label, active, onPress }: { icon: RemixiconComponentType; label: string; active?: boolean; onPress: () => void }) {
   return (
     <button
       type="button"
@@ -75,7 +75,7 @@ function ToolButton({ icon: Icon, label, active, onPress }: { icon: RemixiconCom
   );
 }
 
-const BAR = cx(MENU_POPOVER_SURFACE, "flex items-center gap-0.5 p-1");
+export const BAR = cx(MENU_POPOVER_SURFACE, "flex items-center gap-0.5 p-1");
 
 function LinkForm({ draft, onDone, editor }: { draft: LinkDraft; onDone: () => void; editor: Editor }) {
   const [text, setText] = useState(draft.text);

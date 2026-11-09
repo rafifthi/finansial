@@ -451,6 +451,8 @@ export const PageBlockSchema = z.object({
   json_2: z.string().default(""),
   json_3: z.string().default(""),
   json_4: z.string().default(""),
+  /** Ids of the people @mentioned in the block, comma-separated, for finding mentions without reading JSON. */
+  mentions: z.string().default(""),
   updated_at: z.string().default(""),
   updated_by: z.string().default(""),
 });
@@ -508,6 +510,7 @@ export const LIBRARY_TABLES = {
     json_2: "string",
     json_3: "string",
     json_4: "string",
+    mentions: "string",
     updated_at: "string",
     updated_by: "string",
   }),

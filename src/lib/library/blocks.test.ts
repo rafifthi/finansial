@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Page, PageBlock } from "@/lib/sheets/schema";
-import { assignPositions, CELL_CHARS, diffBlocks, docFromRows, joinJson, nodeText, savedMap, splitJson, type DocNode } from "./blocks";
+import { assignPositions, CELL_CHARS, diffBlocks, docFromRows, joinJson, mentionIds, nodeText, savedMap, splitJson, type DocNode } from "./blocks";
 import { ancestors, buildTree, withDescendants } from "./tree";
 
 const p = (id: string, text: string): DocNode => ({ type: "paragraph", attrs: { id }, content: [{ type: "text", text }] });
@@ -12,6 +12,7 @@ const row = (id: string, position: number, node?: DocNode, text = ""): PageBlock
   type: node?.type ?? "paragraph",
   text,
   ...splitJson(node ? JSON.stringify(node) : ""),
+  mentions: "",
   updated_at: "",
   updated_by: "",
 });
@@ -51,6 +52,25 @@ describe("nodeText", () => {
       ],
     };
     expect(nodeText(node)).toBe("Pay PLN");
+  });
+});
+
+describe("mentions, dates and tables in the plain copy", () => {
+  const mention = (id: string, label: string): DocNode => ({ type: "mention", attrs: { id, label } });
+  it("writes people as @Name and dates as YYYY-MM-DD", () => {
+    const node: DocNode = { type: "paragraph", content: [{ type: "text", text: "Ask " }, mention("u-kanza", "Kanza"), { type: "text", text: " by " }, { type: "dateChip", attrs: { value: "2026-11-20" } }] };
+    expect(nodeText(node)).toBe("Ask @Kanza by 2026-11-20");
+  });
+
+  it("collects each mentioned person once", () => {
+    const node: DocNode = { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [mention("a", "A"), mention("b", "B"), mention("a", "A")] }] }] };
+    expect(mentionIds(node)).toEqual(["a", "b"]);
+  });
+
+  it("keeps a table's rows on lines and cells apart by tabs", () => {
+    const cell = (t: string): DocNode => ({ type: "tableCell", content: [p("x", t)] });
+    const table: DocNode = { type: "table", content: [{ type: "tableRow", content: [cell("Bill"), cell("Due")] }, { type: "tableRow", content: [cell("PLN"), cell("20th")] }] };
+    expect(nodeText(table)).toBe("Bill\tDue\nPLN\t20th");
   });
 });
 

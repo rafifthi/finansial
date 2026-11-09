@@ -11,17 +11,17 @@ import { cx } from "@/utils/cx";
 import { EmptyState } from "../card";
 import { PageHeader } from "../page-header";
 import { useNavSlot } from "../shell-context";
-import { LibraryProvider, useLibrary } from "./library-context";
+import { LibraryProvider, useLibrary, type LibraryMember } from "./library-context";
 import { PageEditor } from "./page-editor";
 import { PageTree } from "./page-tree";
 
 const PANEL = "rounded-3xl border border-separator-border bg-background-primary-default";
 
 /** The page tree lives in the main sidebar (under Library) on desktop; on phones the Library home is the tree. */
-export function LibraryShell({ initial, canEdit, user, userName, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; children: ReactNode }) {
+export function LibraryShell({ initial, canEdit, user, userName, userId, members, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; userId: string; members: LibraryMember[]; children: ReactNode }) {
   const { librarySlot } = useNavSlot();
   return (
-    <LibraryProvider initial={initial} canEdit={canEdit} user={user} userName={userName}>
+    <LibraryProvider initial={initial} canEdit={canEdit} user={user} userName={userName} userId={userId} members={members}>
       {librarySlot ? createPortal(<PageTree variant="sidebar" />, librarySlot) : null}
       {children}
     </LibraryProvider>

@@ -218,10 +218,17 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   const live = pages.find((p) => p.id === initialPage.id);
 
   return (
+    // The contents rail appears whenever the page area has room for it (a container query, not the window size),
+    // so it shows beside the page from a 1024px window up.
+    <div className="@container">
     <div
       className={cx(
         "mx-auto grid w-full items-start gap-8 lg:ps-12 xl:gap-12",
-        panelOpen ? "max-w-3xl xl:max-w-none xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)] xl:justify-center" : railShown ? "max-w-3xl xl:max-w-[calc(48rem+13rem+3rem)] xl:grid-cols-[minmax(0,48rem)_13rem]" : "max-w-3xl",
+        panelOpen
+          ? "max-w-3xl xl:max-w-none xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)] xl:justify-center"
+          : railShown
+            ? "max-w-3xl @min-[680px]:max-w-[calc(48rem+11rem+2rem)] @min-[680px]:grid-cols-[minmax(0,48rem)_11rem] @min-[1000px]:max-w-[calc(48rem+13rem+3rem)] @min-[1000px]:grid-cols-[minmax(0,48rem)_13rem]"
+            : "max-w-3xl",
       )}
     >
       <article className="flex min-w-0 flex-col gap-4 lg:pt-2">
@@ -249,7 +256,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
           </nav>
           <div className="flex shrink-0 items-center gap-3">
             {showToc ? (
-              <span className={cx(railShown && "xl:hidden")}>
+              <span className={cx(railShown && "@min-[680px]:hidden")}>
                 <TocMenu items={toc} active={activeHeading} onPick={pickHeading} />
               </span>
             ) : null}
@@ -314,7 +321,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
         {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} onComment={startComment} /> : null}
       </article>
       {railShown ? (
-        <aside className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pt-14 max-xl:hidden">
+        <aside className="sticky top-6 hidden max-h-[calc(100dvh-3rem)] overflow-y-auto pt-14 @min-[680px]:block">
           <TocRail items={toc} active={activeHeading} onPick={pickHeading} />
         </aside>
       ) : null}
@@ -333,6 +340,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
         activeId={activeId}
         onActivate={activate}
       />
+    </div>
     </div>
   );
 }

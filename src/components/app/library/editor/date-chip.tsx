@@ -77,9 +77,10 @@ function DateChipView({ node, updateAttributes, editor, selected }: ReactNodeVie
         aria-label={`Date: ${dateLabel(value)}${editor.isEditable ? ". Change date" : ""}`}
         onClick={() => editor.isEditable && setOpen(true)}
         className={cx(
-          "date-chip inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 align-baseline text-body-medium outline-none transition-colors disabled:cursor-text",
-          "bg-background-tertiary-default hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-          overdue ? "text-text-negative" : "text-text-primary",
+          "date-chip inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 align-baseline text-body-medium outline-none transition-shadow hover:ring-1 hover:ring-inset hover:ring-current disabled:cursor-text disabled:hover:ring-0",
+          "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+          // Green while it's ahead (today included), red once it has passed.
+          overdue ? "bg-chip-overdue-background text-chip-overdue-foreground" : "bg-chip-date-background text-chip-date-foreground",
           selected && "ring-2 ring-border-focus-ring",
         )}
       >

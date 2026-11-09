@@ -74,11 +74,16 @@ const MentionList = forwardRef<SuggestionHandle, ListProps>(function MentionList
  * "@" lists the book's people; picking one drops a chip that names them.
  * The chip keeps the person's id, so it still points at them if they rename.
  */
-export function peopleMentions(members: LibraryMember[]) {
+export function peopleMentions(members: LibraryMember[], me: string) {
   return Mention.configure({
     HTMLAttributes: { class: "mention" },
     renderText: ({ node }) => `@${node.attrs.label ?? ""}`,
-    renderHTML: ({ options, node }) => ["span", { ...options.HTMLAttributes, "data-mention-id": node.attrs.id }, `@${node.attrs.label ?? ""}`],
+    // A mention of whoever is reading stands out (the solid fill in library.css).
+    renderHTML: ({ options, node }) => [
+      "span",
+      { ...options.HTMLAttributes, class: node.attrs.id === me ? "mention mention-me" : "mention", "data-mention-id": node.attrs.id },
+      `@${node.attrs.label ?? ""}`,
+    ],
     suggestion: {
       char: "@",
       allowedPrefixes: [" ", "("],

@@ -144,10 +144,14 @@
   @apply rounded-md bg-button-ghost-hover;
 }
 
-/* @mentions: a quiet chip that still reads as a name. */
+/* @mentions: a blue chip, like a person link; a mention of you is the solid green fill so it finds you. */
 .library-prose .mention {
-  @apply rounded-md bg-background-tertiary-default px-1 py-px text-body-medium text-text-primary;
+  @apply rounded-md bg-chip-person-background px-1 py-px text-body-medium text-chip-person-foreground;
   box-decoration-break: clone;
+}
+
+.library-prose .mention.mention-me {
+  @apply bg-accent-solid text-on-accent;
 }
 
 /* Tables: hairline grid, a tinted header row, and a scroller when it's wider than the page. */

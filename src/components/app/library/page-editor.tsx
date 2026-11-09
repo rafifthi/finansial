@@ -64,7 +64,7 @@ function edited(page: Pick<Page, "updated_at">) {
 /** One Library page: breadcrumbs, title, then the document, saved as it's typed. */
 export function PageEditor({ page: initialPage, rows, comments }: { page: Page; rows: PageBlock[]; comments: PageComment[] }) {
   const bookId = useBookId();
-  const { pages, canEdit, href, patchLocal, user, userName, members } = useLibrary();
+  const { pages, canEdit, href, patchLocal, user, userName, userId, members } = useLibrary();
   const [title, setTitle] = useState(initialPage.title);
   const [meta, setMeta] = useState(initialPage);
   // ⌘K in the editor tells the link popover to open.
@@ -104,13 +104,13 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       }),
       TableKit.configure({ table: { resizable: canEdit, cellMinWidth: 96 } }),
       DateChip,
-      peopleMentions(members),
+      peopleMentions(members, userId),
       UniqueID.configure({ types: ID_TYPES }),
       Indent,
       CommentMarks,
       ...(canEdit ? [SlashMenu, LinkShortcut.configure({ open: () => linkEvents.dispatchEvent(new Event("open")) })] : []),
     ],
-    [canEdit, linkEvents, members],
+    [canEdit, linkEvents, members, userId],
   );
 
   const editor = useEditor({

@@ -18,10 +18,28 @@ import { PageTree } from "./page-tree";
 const PANEL = "rounded-3xl border border-separator-border bg-background-primary-default";
 
 /** The page tree lives in the main sidebar (under Library) on desktop; on phones the Library home is the tree. */
-export function LibraryShell({ initial, canEdit, user, userName, userId, members, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; userId: string; members: LibraryMember[]; children: ReactNode }) {
+export function LibraryShell({
+  initial,
+  canEdit,
+  user,
+  userName,
+  userId,
+  members,
+  unread,
+  children,
+}: {
+  initial: Page[];
+  canEdit: boolean;
+  user: string;
+  userName: string;
+  userId: string;
+  members: LibraryMember[];
+  unread: number;
+  children: ReactNode;
+}) {
   const { librarySlot } = useNavSlot();
   return (
-    <LibraryProvider initial={initial} canEdit={canEdit} user={user} userName={userName} userId={userId} members={members}>
+    <LibraryProvider initial={initial} canEdit={canEdit} user={user} userName={userName} userId={userId} members={members} unread={unread}>
       {librarySlot ? createPortal(<PageTree variant="sidebar" />, librarySlot) : null}
       {children}
     </LibraryProvider>

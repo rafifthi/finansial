@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
@@ -162,10 +163,14 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   }, [api.comments, where, editor]);
   const counts = useMemo(() => openCounts(placed.blocks), [placed]);
 
-  const [panelOpen, setPanelOpen] = useState(false);
+  // Arriving from the Mentions inbox: ?thread= opens that thread, ?block= points at the block for a moment.
+  const params = useSearchParams();
+  const [arrivedAt] = useState(() => ({ thread: params.get("thread"), block: params.get("block") }));
+  const [panelOpen, setPanelOpen] = useState(Boolean(arrivedAt.thread));
   const [pending, setPending] = useState<PendingComment | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const ctx: CommentContext = { api, me: user, canEdit };
+  const [activeId, setActiveId] = useState<string | null>(arrivedAt.thread);
+  const [flash, setFlash] = useState<string | null>(arrivedAt.block);
+  const ctx: CommentContext = { api, me: user, meId: userId, canEdit };
   const pageName = pageTitle({ title });
 
   const locate = useCallback(
@@ -211,8 +216,23 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   );
   const openCount = [...counts.values()].reduce((a, b) => a + b, 0) + [...placed.page, ...placed.orphaned].filter((t) => !t.root.resolved).length;
 
-  // The block being discussed is tinted in the page.
-  const activeBlock = !panelOpen ? null : (pending?.blockId || api.comments.find((c) => c.id === activeId)?.block_id || null);
+  // The block being discussed (or just arrived at) is tinted in the page.
+  const activeBlock = flash ?? (!panelOpen ? null : pending?.blockId || api.comments.find((c) => c.id === activeId)?.block_id || null);
+
+  // Once the page is drawn, go to where the inbox pointed, then tidy the address so a reload doesn't do it again.
+  const arrivedBlock = arrivedAt.block ?? api.comments.find((c) => c.id === arrivedAt.thread)?.block_id ?? null;
+  useEffect(() => {
+    if (!editor || (!arrivedAt.thread && !arrivedAt.block)) return;
+    const go = window.setTimeout(() => {
+      if (arrivedBlock) scrollToBlock(arrivedBlock);
+      window.history.replaceState(null, "", window.location.pathname);
+    }, 50);
+    const fade = window.setTimeout(() => setFlash(null), 2600);
+    return () => {
+      window.clearTimeout(go);
+      window.clearTimeout(fade);
+    };
+  }, [editor, arrivedAt, arrivedBlock, scrollToBlock]);
   useEffect(() => {
     if (editor) setCommentMarks(editor, new Set(counts.keys()), activeBlock);
   }, [editor, counts, activeBlock]);

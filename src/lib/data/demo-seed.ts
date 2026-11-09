@@ -16,7 +16,7 @@ import type {
   User,
 } from "@/lib/sheets/schema";
 import { hashPasswordSync } from "@/lib/auth/password";
-import { nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
+import { mentionIds, nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
 import { budgetMonth, closeMonthPlan } from "@/lib/finance/budget";
 import { addDays, addMonths, dayInMonth, monthOf, monthsEnding, today } from "@/lib/finance/dates";
 
@@ -175,7 +175,10 @@ export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks
     nodes.map((node, i) => {
       const id = `blk-${++n}`;
       const json = JSON.stringify({ ...node, attrs: { id, ...node.attrs } });
-      return { id, page_id, position: (i + 1) * 1024, type: node.type, text: nodeText(node), ...splitJson(json), mentions: "", updated_at: "", updated_by: "" };
+      const mentions = mentionIds(node).join(",");
+      // A block that mentions someone was written by Kanza an hour ago, so Rafif's inbox has it.
+      const by = mentions ? { updated_at: new Date(Date.now() - 3_600_000).toISOString(), updated_by: "member@demo.local" } : { updated_at: "", updated_by: "" };
+      return { id, page_id, position: (i + 1) * 1024, type: node.type, text: nodeText(node), ...splitJson(json), mentions, ...by };
     });
   const at = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
   const comment = (id: string, page_id: string, extra: Partial<PageComment>): PageComment => ({
@@ -190,6 +193,7 @@ export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks
     resolved_at: "",
     deleted: false,
     author_name: "Kanza",
+    mentions: "",
     created_at: at(5),
     created_by: "member@demo.local",
     updated_at: at(5),
@@ -200,6 +204,7 @@ export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks
       comment("cm-1", "house", { block_id: "blk-3", quote: "RT: Pak Budi, 0812 0000 1111 Security post: ext. 21 AC service: Dingin Jaya, 0813 2222 3333", body: "Dingin Jaya has a new number since October, I'll ask them." }),
       comment("cm-2", "house", { parent_id: "cm-1", body: "Thanks! Update it here when you have it.", author_name: "Rafif", created_by: "admin@demo.local", created_at: at(3), updated_at: at(3) }),
       comment("cm-3", "house", { body: "Should we add the plumber here too?", created_at: at(26), updated_at: at(26) }),
+      comment("cm-4", "tax", { body: "@[Rafif](u-rafif) the 2026 SPPT came today, it's on the fridge.", mentions: "u-rafif", created_at: at(2), updated_at: at(2) }),
     ],
     pages: [page("house", "House info", "🏠", 1024), page("utilities", "Wi-Fi & utilities", "💡", 1024, "house"), page("tax", "Paying PBB", "🧾", 2048)],
     blocks: [
@@ -209,6 +214,7 @@ export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks
         bullets("RT: Pak Budi, 0812 0000 1111", "Security post: ext. 21", "AC service: Dingin Jaya, 0813 2222 3333"),
         heading(2, "Keys"),
         para(t("Spare keys are in the "), t("blue box", [{ type: "bold" }]), t(" in the study.")),
+        para(t("The garage remote is with "), { type: "mention", attrs: { id: "u-rafif", label: "Rafif" } }, t(" until the spare is cut.")),
       ]),
       ...blocks("utilities", [
         heading(2, "Internet"),

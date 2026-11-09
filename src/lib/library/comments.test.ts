@@ -15,6 +15,7 @@ const c = (id: string, extra: Partial<PageComment> = {}): PageComment => ({
   resolved_at: "",
   deleted: false,
   author_name: "",
+  mentions: "",
   created_at: `2026-11-09T10:00:${String(++t).padStart(2, "0")}Z`,
   created_by: "",
   updated_at: "",

@@ -5,6 +5,7 @@ import { addComment, deleteComment, editComment, listComments, resolveThread } f
 import { toast } from "@/components/base/toast/toast";
 import type { ActionResult } from "@/lib/data/action";
 import type { PageComment } from "@/lib/sheets/schema";
+import { bodyMentionIds } from "@/lib/library/comment-body";
 import { newClientId } from "../lists/use-lists";
 
 const POLL_MS = 30_000;
@@ -75,6 +76,7 @@ export function useComments(bookId: string, pageId: string, initial: PageComment
         resolved_at: "",
         deleted: false,
         author_name: me.name,
+        mentions: bodyMentionIds(input.body).join(","),
         created_at: now,
         created_by: me.email,
         updated_at: now,
@@ -90,7 +92,7 @@ export function useComments(bookId: string, pageId: string, initial: PageComment
   const edit = useCallback(
     (id: string, body: string) =>
       run(
-        (all) => all.map((c) => (c.id === id ? { ...c, body: body.trim(), updated_at: new Date().toISOString() } : c)),
+        (all) => all.map((c) => (c.id === id ? { ...c, body: body.trim(), mentions: bodyMentionIds(body).join(","), updated_at: new Date().toISOString() } : c)),
         () => editComment(bookId, { id, body }),
       ),
     [bookId, run],

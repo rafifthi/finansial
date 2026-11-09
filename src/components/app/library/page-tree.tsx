@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { RiAddLine, RiArrowRightSLine, RiDeleteBinLine, RiFileTextLine, RiMoreLine } from "@remixicon/react";
+import { RiAddLine, RiArrowRightSLine, RiAtLine, RiDeleteBinLine, RiFileTextLine, RiMoreLine } from "@remixicon/react";
+import { Badge } from "@/components/base/badges/badge";
 import { Dropdown, DropdownItem, DropdownPopover, DropdownTrigger } from "@/components/base/dropdown/dropdown";
 import { SpinnerGlyph } from "@/components/base/spinner/spinner";
 import { ancestors, buildTree, pageTitle, type PageNode } from "@/lib/library/tree";
@@ -123,6 +124,33 @@ function TreeRow({ node, depth, currentId, expanded, toggle, variant }: { node: 
   );
 }
 
+/** The inbox of pages and comments that mention you, with how many are new. */
+function MentionsRow({ variant }: { variant: Variant }) {
+  const { href, unreadMentions } = useLibrary();
+  const pathname = usePathname();
+  const target = `${href()}/mentions`;
+  const current = pathname === target;
+  return (
+    <Link
+      href={target}
+      aria-current={current ? "page" : undefined}
+      className={cx(
+        // Its icon lines up with the page icons below (past the expand arrow's slot).
+        "flex h-7 items-center gap-2 rounded-lg ps-[30px] pe-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring max-sm:h-11",
+        current ? ROW[variant].current : ROW[variant].rest,
+      )}
+    >
+      <RiAtLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
+      <span className={cx("flex-1 truncate text-body-medium", current ? "text-text-primary" : "text-text-secondary")}>Mentions</span>
+      {unreadMentions ? (
+        <Badge color="neutral" aria-label={`${unreadMentions} new`}>
+          {unreadMentions}
+        </Badge>
+      ) : null}
+    </Link>
+  );
+}
+
 /**
  * The Library's pages as a tree; the open page and the pages above it start
  * expanded. On desktop it sits in the main sidebar under the Library row; on
@@ -161,6 +189,9 @@ export function PageTree({ className, variant = "panel" }: { className?: string;
   if (variant === "sidebar") {
     return (
       <ul aria-label="Library pages" className={cx("flex flex-col gap-0.5 pt-0.5", className)}>
+        <li>
+          <MentionsRow variant="sidebar" />
+        </li>
         {tree.map((n) => (
           <TreeRow key={n.page.id} node={n} depth={0} currentId={currentId} expanded={expanded} toggle={toggle} variant="sidebar" />
         ))}
@@ -190,6 +221,7 @@ export function PageTree({ className, variant = "panel" }: { className?: string;
           </button>
         ) : null}
       </div>
+      <MentionsRow variant="panel" />
       {tree.length ? (
         <ul className="flex flex-col gap-0.5">
           {tree.map((n) => (

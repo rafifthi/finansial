@@ -476,14 +476,23 @@ export const PageCommentSchema = z.object({
   /** Hidden but kept, so a thread's replies still make sense. */
   deleted: z.boolean().default(false),
   author_name: z.string().default(""),
+  /** Ids of the people @mentioned in the body, comma-separated (see lib/library/comment-body.ts). */
+  mentions: z.string().default(""),
   created_at: z.string().default(""),
   created_by: z.string().default(""),
   updated_at: z.string().default(""),
 });
 
+/** When each person last opened their Library mentions; newer ones count as unread. */
+export const LibraryReadSchema = z.object({
+  user_id: id,
+  mentions_seen_at: z.string().default(""),
+});
+
 export type Page = z.infer<typeof PageSchema>;
 export type PageBlock = z.infer<typeof PageBlockSchema>;
 export type PageComment = z.infer<typeof PageCommentSchema>;
+export type LibraryRead = z.infer<typeof LibraryReadSchema>;
 
 /** Their own tabs, added the first time a book opens the Library. */
 export const LIBRARY_TABLES = {
@@ -526,10 +535,20 @@ export const LIBRARY_TABLES = {
     resolved_at: "string",
     deleted: "boolean",
     author_name: "string",
+    mentions: "string",
     created_at: "string",
     created_by: "string",
     updated_at: "string",
   }),
+  reads: table(
+    "LibraryReads",
+    LibraryReadSchema,
+    {
+      user_id: "string",
+      mentions_seen_at: "string",
+    },
+    "user_id",
+  ),
 } as const;
 
 export type LibraryTables = typeof LIBRARY_TABLES;

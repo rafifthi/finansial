@@ -25,6 +25,9 @@ interface LibraryValue {
   userId: string;
   /** People in the book, for @mentions. */
   members: LibraryMember[];
+  /** Mentions of the signed-in person they haven't opened yet. */
+  unreadMentions: number;
+  clearUnread: () => void;
   href: (pageId?: string) => string;
   /** Adds a page (under `parentId`) and opens it. */
   create: (parentId?: string) => void;
@@ -47,10 +50,30 @@ export function useLibrary(): LibraryValue {
  * new pages, renames and archiving show before the sheet has them. The other
  * person's changes arrive by polling.
  */
-export function LibraryProvider({ initial, canEdit, user, userName, userId, members, children }: { initial: Page[]; canEdit: boolean; user: string; userName: string; userId: string; members: LibraryMember[]; children: ReactNode }) {
+export function LibraryProvider({
+  initial,
+  canEdit,
+  user,
+  userName,
+  userId,
+  members,
+  unread,
+  children,
+}: {
+  initial: Page[];
+  canEdit: boolean;
+  user: string;
+  userName: string;
+  userId: string;
+  members: LibraryMember[];
+  unread: number;
+  children: ReactNode;
+}) {
   const bookId = useBookId();
   const router = useRouter();
   const [pages, setPages] = useState(initial);
+  const [unreadMentions, setUnread] = useState(unread);
+  const clearUnread = useCallback(() => setUnread(0), []);
   const pending = useRef(0);
   const local = useRef(new Map<string, Partial<Page>>());
 
@@ -62,6 +85,7 @@ export function LibraryProvider({ initial, canEdit, user, userName, userId, memb
     if (!res.ok || !res.data || pending.current) return;
     // Titles typed here but not saved yet win over the sheet's.
     setPages(res.data.pages.map((p) => ({ ...p, ...local.current.get(p.id) })));
+    setUnread(res.data.unread);
   }, [bookId]);
 
   useEffect(() => {
@@ -130,6 +154,9 @@ export function LibraryProvider({ initial, canEdit, user, userName, userId, memb
     [bookId, href, router, sync],
   );
 
-  const value = useMemo(() => ({ pages, canEdit, user, userName, userId, members, href, create, archive, patchLocal }), [pages, canEdit, user, userName, userId, members, href, create, archive, patchLocal]);
+  const value = useMemo(
+    () => ({ pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal }),
+    [pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal],
+  );
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }

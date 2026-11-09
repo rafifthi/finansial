@@ -8,10 +8,11 @@ import { Drawer } from "@/components/base/drawer/drawer";
 import { Dropdown, DropdownItem, DropdownPopover, DropdownTrigger } from "@/components/base/dropdown/dropdown";
 import { Tab, TabList, TabPanel, Tabs } from "@/components/base/tabs/tabs";
 import { ScrollFade, useScrollFade } from "@/components/foundations/scroll-fade/scroll-fade";
-import { Textarea } from "@/components/base/textarea/textarea";
+import { bodyParts } from "@/lib/library/comment-body";
 import type { PlacedThreads, Thread } from "@/lib/library/comments";
 import type { PageComment } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
+import { CommentEditor } from "./comment-editor";
 import type { CommentsApi } from "./use-comments";
 
 const MINUTE = 60_000;
@@ -31,69 +32,29 @@ const initials = (name: string, email: string) => (name || email).trim().slice(0
 
 export interface CommentContext {
   api: CommentsApi;
+  /** The signed-in person's email (whose comments they may edit) and user id (whose mentions stand out). */
   me: string;
+  meId: string;
   canEdit: boolean;
 }
 
-/** Text box with a send button; ⌘/Ctrl+Enter sends. */
-function Composer({ label, placeholder, onSend, onCancel, initial = "", submit = "Comment", autoFocus }: { label: string; placeholder: string; onSend: (body: string) => Promise<boolean>; onCancel?: () => void; initial?: string; submit?: string; autoFocus?: boolean }) {
-  const [body, setBody] = useState(initial);
-  const [sending, setSending] = useState(false);
-  const field = useRef<HTMLTextAreaElement>(null);
-  // Explicit, since a menu closing can hand focus back to the page in the same tick.
-  useEffect(() => {
-    if (!autoFocus) return;
-    const id = window.setTimeout(() => field.current?.focus(), 0);
-    return () => window.clearTimeout(id);
-  }, [autoFocus]);
-  const send = async () => {
-    if (!body.trim() || sending) return;
-    setSending(true);
-    const ok = await onSend(body);
-    setSending(false);
-    if (ok) setBody("");
-  };
+/** The comment box: @mentions, ⌘/Ctrl+Enter to send. */
+const Composer = CommentEditor;
+
+/** A comment's words, with @mentions as chips (a mention of you stands out). */
+function CommentBody({ body, meId }: { body: string; meId: string }) {
   return (
-    <form
-      className="flex flex-col gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void send();
-      }}
-    >
-      <Textarea
-        aria-label={label}
-        placeholder={placeholder}
-        value={body}
-        onChange={setBody}
-        autoResize
-        rows={2}
-        maxRows={10}
-        maxLength={5000}
-        ref={field}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            void send();
-          } else if (e.key === "Escape" && onCancel) {
-            onCancel();
-          } else {
-            // React Aria stops key events at fields with their own handler; let Escape reach the drawer.
-            e.continuePropagation();
-          }
-        }}
-      />
-      <div className="flex justify-end gap-2">
-        {onCancel ? (
-          <Button type="button" variant="secondary" size="small" onClick={onCancel}>
-            Cancel
-          </Button>
-        ) : null}
-        <Button type="submit" size="small" disabled={!body.trim() || sending}>
-          {submit}
-        </Button>
-      </div>
-    </form>
+    <p className="comment-body whitespace-pre-wrap break-words text-body-regular text-text-primary">
+      {bodyParts(body).map((part, i) =>
+        part.kind === "text" ? (
+          part.text
+        ) : (
+          <span key={i} className={cx("mention", part.id === meId && "mention-me")}>
+            @{part.label}
+          </span>
+        ),
+      )}
+    </p>
   );
 }
 
@@ -173,7 +134,7 @@ function CommentItem({ comment, ctx, isRoot, thread }: { comment: PageComment; c
             }}
           />
         ) : (
-          <p className="whitespace-pre-wrap break-words text-body-regular text-text-primary">{comment.body}</p>
+          <CommentBody body={comment.body} meId={ctx.meId} />
         )}
       </div>
     </div>
@@ -243,7 +204,8 @@ function ThreadCard({ thread, ctx, location, active, onActivate }: { thread: Thr
         </span>
       ) : ctx.canEdit ? (
         active ? (
-          <Composer label="Reply" placeholder="Reply…" submit="Reply" onSend={(body) => ctx.api.add({ parent_id: root.id, body })} />
+          // As in Google Docs, opening a thread puts the cursor in its reply box.
+          <Composer label="Reply" placeholder="Reply…" submit="Reply" autoFocus onSend={(body) => ctx.api.add({ parent_id: root.id, body })} />
         ) : (
           <button
             type="button"

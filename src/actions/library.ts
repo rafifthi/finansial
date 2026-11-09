@@ -5,7 +5,9 @@ import { bookAction, FieldErrors } from "@/lib/data/action";
 import { libraryStore } from "@/lib/data/store";
 import { MAX_BLOCK_CHARS, mentionIds, nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
 import { nextPosition, withDescendants } from "@/lib/library/tree";
+import { bodyMentionIds } from "@/lib/library/comment-body";
 import { quoteOf } from "@/lib/library/comments";
+import { mentionInbox } from "@/lib/data/library-inbox";
 import { PageCommentSchema, PageSchema, type Page, type PageBlock, type PageComment } from "@/lib/sheets/schema";
 
 /*
@@ -18,13 +20,28 @@ const NO_REFRESH = { refresh: false };
 // Ids come from the browser (nanoid, UUIDs) or from rows typed into the sheet by hand, which can be short.
 const clientId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "Invalid id");
 
-/** Every page (archived ones too, for undo); the client polls this to pick up the other person's changes. */
+/** Every page (archived ones too, for undo) and the caller's unread mentions; the client polls this. */
 export const syncLibrary = bookAction(
   null,
   z.object({}),
-  async (_input, { book }) => {
+  async (_input, { book, user }) => {
     const store = await libraryStore(book);
-    return { pages: (await store.rows("pages")) as Page[] };
+    const inbox = await mentionInbox(store, user);
+    return { pages: (await store.rows("pages")) as Page[], unread: inbox.items.filter((i) => i.unread).length };
+  },
+  NO_REFRESH,
+);
+
+/** Opening the inbox marks everything in it as read, on every device. */
+export const markMentionsSeen = bookAction(
+  null,
+  z.object({}),
+  async (_input, { book, user }) => {
+    const store = await libraryStore(book);
+    const now = new Date().toISOString();
+    const reads = await store.fresh("reads");
+    if (reads.some((r) => r.user_id === user.id)) await store.update("reads", user.id, { mentions_seen_at: now });
+    else await store.insert("reads", [{ user_id: user.id, mentions_seen_at: now }]);
   },
   NO_REFRESH,
 );
@@ -102,6 +119,7 @@ export const savePage = bookAction(
     const byId = new Map(allBlocks.map((b) => [b.id, b]));
     const inserts: PageBlock[] = [];
     const updates: { key: string; patch: Partial<PageBlock> }[] = [];
+    let reworded = false;
     for (const b of input.upserts) {
       let node: DocNode;
       try {
@@ -111,7 +129,15 @@ export const savePage = bookAction(
       }
       const existing = byId.get(b.id);
       if (existing && existing.page_id !== input.id) throw new Error("Two pages share a block. Reload the page and try again.");
-      const row = { position: b.position, type: node.type, text: nodeText(node), ...splitJson(b.json), mentions: mentionIds(node).join(","), updated_at: now, updated_by: user.email };
+      const text = nodeText(node);
+      const mentions = mentionIds(node).join(",");
+      // A block is "edited by" whoever last changed its words. Moves and the editor's own housekeeping
+      // (ids for list items, default attributes) rewrite the row but keep its author, so they don't
+      // claim someone else's words or resurface their mentions.
+      const changedWords = !existing || existing.text !== text || existing.mentions !== mentions || existing.type !== node.type;
+      reworded ||= changedWords;
+      const stamp = changedWords ? { updated_at: now, updated_by: user.email } : { updated_at: existing.updated_at, updated_by: existing.updated_by };
+      const row = { position: b.position, type: node.type, text, ...splitJson(b.json), mentions, ...stamp };
       if (existing) updates.push({ key: b.id, patch: row });
       else inserts.push({ id: b.id, page_id: input.id, ...row });
     }
@@ -128,8 +154,8 @@ export const savePage = bookAction(
       saved = await store.update("pages", page.id, {
         ...(retitled ? { title: input.title } : {}),
         version: page.version + 1,
-        updated_at: now,
-        updated_by: user.email,
+        // "Edited" moves only when words change (or a block goes): not for moves or housekeeping.
+        ...(retitled || reworded || removes.length ? { updated_at: now, updated_by: user.email } : {}),
       });
     }
 
@@ -214,6 +240,7 @@ export const addComment = bookAction(
       block_id: root ? root.block_id : input.block_id,
       quote: root ? "" : quoteOf(input.quote),
       author_name: user.name,
+      mentions: bodyMentionIds(input.body).join(","),
       created_at: now,
       created_by: user.email,
       updated_at: now,
@@ -238,7 +265,7 @@ export const editComment = bookAction(
   z.object({ id: clientId, body: Body }),
   async ({ id, body }, { book, user }) => {
     const { store } = await ownComment(book, id, user.email, false);
-    return store.update("comments", id, { body, updated_at: new Date().toISOString() });
+    return store.update("comments", id, { body, mentions: bodyMentionIds(body).join(","), updated_at: new Date().toISOString() });
   },
   NO_REFRESH,
 );

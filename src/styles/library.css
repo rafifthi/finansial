@@ -145,12 +145,13 @@
 }
 
 /* @mentions: a blue chip, like a person link; a mention of you is the solid green fill so it finds you. */
-.library-prose .mention {
+/* Also in comments: the comment box and posted comments. */
+:is(.library-prose, .comment-input, .comment-body) .mention {
   @apply rounded-md bg-chip-person-background px-1 py-px text-body-medium text-chip-person-foreground;
   box-decoration-break: clone;
 }
 
-.library-prose .mention.mention-me {
+:is(.library-prose, .comment-input, .comment-body) .mention.mention-me {
   @apply bg-accent-solid text-on-accent;
 }
 
@@ -192,4 +193,14 @@
 .library-prose.resize-cursor,
 .resize-cursor .library-prose {
   cursor: col-resize;
+}
+
+/* The comment box's own placeholder (the page's uses .library-prose). */
+.comment-input p.is-editor-empty:first-child::before {
+  @apply pointer-events-none float-start h-0 text-text-placeholder;
+  content: attr(data-placeholder);
+}
+
+.comment-input p {
+  @apply m-0;
 }

@@ -64,8 +64,10 @@ interface SaverEvents {
  */
 class PageSaver {
   private editor: Editor | null = null;
-  /** What the server has confirmed, as far as this editor knows. */
+  /** What the server has confirmed, in the editor's own form: what edits are measured against. */
   private saved: Map<string, { position: number; json: string }>;
+  /** The server's copy as it last came back, to tell when the other person has changed something. */
+  private lastServer: Map<string, { position: number; json: string }>;
   private savedTitle: string;
   private title: string;
   private version: number;
@@ -86,6 +88,7 @@ class PageSaver {
     private on: SaverEvents,
   ) {
     this.saved = savedMap(rows);
+    this.lastServer = savedMap(rows);
     this.savedTitle = this.title = page.title;
     this.version = page.version;
     this.draftKey = `finansial:library-draft:${bookId}:${pageId}`;
@@ -100,6 +103,7 @@ class PageSaver {
   attach(editor: Editor) {
     if (this.editor === editor) return;
     this.editor = editor;
+    this.rebaseline(editor);
     const draft = readDraft(this.draftKey);
     if (!draft) return;
     editor.commands.setContent(draft.doc, { emitUpdate: false });
@@ -107,6 +111,22 @@ class PageSaver {
     this.on.title(draft.title);
     if (this.dirty()) this.schedule(IDLE_MS);
     else writeDraft(this.draftKey, null);
+  }
+
+  /**
+   * The editor fills in default attributes the stored JSON doesn't have
+   * (indent: 0, a mention's trigger character), so its copy of an untouched
+   * block never matches the sheet's. Count its own first copy as what's
+   * saved, or the first edit anywhere would rewrite every block of the page
+   * as the editor's work. Rows typed into the sheet by hand (no JSON) stay
+   * unmatched, so they're still written properly on the first save.
+   */
+  private rebaseline(editor: Editor) {
+    for (const node of (editor.getJSON() as DocNode).content ?? []) {
+      const id = node.attrs?.id;
+      const saved = typeof id === "string" ? this.saved.get(id) : undefined;
+      if (saved?.json) this.saved.set(id as string, { position: saved.position, json: JSON.stringify(node) });
+    }
   }
 
   /** Leaving the page: save what's left now. */
@@ -177,8 +197,14 @@ class PageSaver {
     }
     this.retries = 0;
     // Record what we sent as saved, then see what else the server has.
-    for (const u of upserts) this.saved.set(u.id, { position: u.position, json: u.json });
-    for (const id of removes) this.saved.delete(id);
+    for (const u of upserts) {
+      this.saved.set(u.id, { position: u.position, json: u.json });
+      this.lastServer.set(u.id, { position: u.position, json: u.json });
+    }
+    for (const id of removes) {
+      this.saved.delete(id);
+      this.lastServer.delete(id);
+    }
     if (title !== undefined) this.savedTitle = title;
     this.version = res.data.page.version;
     this.on.page(res.data.page);
@@ -195,7 +221,8 @@ class PageSaver {
     const editor = this.editor;
     if (!editor || editor.isDestroyed) return;
     const fresh = savedMap(blocks);
-    const same = fresh.size === this.saved.size && [...fresh].every(([id, b]) => this.saved.get(id)?.json === b.json && this.saved.get(id)?.position === b.position);
+    const known = this.lastServer;
+    const same = fresh.size === known.size && [...fresh].every(([id, b]) => known.get(id)?.json === b.json && known.get(id)?.position === b.position);
     if (same) {
       this.incoming = null;
       return;
@@ -206,6 +233,8 @@ class PageSaver {
     }
     replaceDoc(editor, docFromRows(blocks));
     this.saved = fresh;
+    this.lastServer = new Map(fresh);
+    this.rebaseline(editor);
     this.incoming = null;
   }
 

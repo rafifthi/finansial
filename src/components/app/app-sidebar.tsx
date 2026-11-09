@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { useId, useTransition } from "react";
 import {
   type RemixiconComponentType,
   RiAddLine,
@@ -43,10 +43,21 @@ import { BookSwitcher, type ShellBook } from "./book-switcher";
 import type { ShellValue } from "./shell-context";
 import { useCan } from "./permissions";
 
+/** What a page is for; the sidebar and the More page both group by it, in this order. */
+export const NAV_GROUPS = [
+  { key: "finance", label: "Finance" },
+  { key: "others", label: "Others" },
+  // Setting up the book rather than a purpose: the sidebar shows it without a heading.
+  { key: "book", label: "Book" },
+] as const;
+
+export type NavGroup = (typeof NAV_GROUPS)[number]["key"];
+
 interface NavEntry {
   path: string;
   label: string;
   icon: RemixiconComponentType;
+  group: NavGroup;
   badgeKey?: "unverified";
   /** Shown only to book admins. */
   admins?: boolean;
@@ -54,17 +65,17 @@ interface NavEntry {
 
 /** In-book destinations; `path` is relative to /b/<bookId>. */
 const BOOK_NAV: NavEntry[] = [
-  { path: "", label: "Dashboard", icon: RiHomeLine },
-  { path: "/transactions", label: "Transactions", icon: RiArrowLeftRightLine },
-  { path: "/reconcile", label: "Reconcile", icon: RiCheckDoubleLine, badgeKey: "unverified" },
-  { path: "/bill-check", label: "Bill check", icon: RiBankCard2Line },
-  { path: "/budget", label: "Budget", icon: RiPieChartLine },
-  { path: "/lists", label: "Lists", icon: RiListCheck3 },
-  { path: "/savings", label: "Savings", icon: RiSafe2Line },
-  { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine },
-  { path: "/recurring", label: "Recurring", icon: RiRepeatLine },
-  { path: "/members", label: "Members", icon: RiGroupLine, admins: true },
-  { path: "/settings", label: "Settings", icon: RiSettings4Line },
+  { path: "", label: "Dashboard", icon: RiHomeLine, group: "finance" },
+  { path: "/transactions", label: "Transactions", icon: RiArrowLeftRightLine, group: "finance" },
+  { path: "/reconcile", label: "Reconcile", icon: RiCheckDoubleLine, group: "finance", badgeKey: "unverified" },
+  { path: "/bill-check", label: "Bill check", icon: RiBankCard2Line, group: "finance" },
+  { path: "/budget", label: "Budget", icon: RiPieChartLine, group: "finance" },
+  { path: "/savings", label: "Savings", icon: RiSafe2Line, group: "finance" },
+  { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine, group: "finance" },
+  { path: "/recurring", label: "Recurring", icon: RiRepeatLine, group: "finance" },
+  { path: "/lists", label: "Lists", icon: RiListCheck3, group: "others" },
+  { path: "/members", label: "Members", icon: RiGroupLine, group: "book", admins: true },
+  { path: "/settings", label: "Settings", icon: RiSettings4Line, group: "book" },
 ];
 
 type ShellProps = ShellValue;
@@ -75,6 +86,20 @@ export interface ResolvedNav {
   icon: RemixiconComponentType;
   badge?: number;
   exact?: boolean;
+  /** In-book pages only; account pages aren't grouped. */
+  group?: NavGroup;
+}
+
+export interface ResolvedNavGroup {
+  key: NavGroup | "account";
+  label: string;
+  items: ResolvedNav[];
+}
+
+/** Nav entries in their purpose groups, empty groups dropped. Account pages form one group. */
+export function groupNav(nav: ResolvedNav[]): ResolvedNavGroup[] {
+  if (!nav.some((n) => n.group)) return [{ key: "account", label: "Account", items: nav }];
+  return NAV_GROUPS.map((g) => ({ key: g.key, label: g.label, items: nav.filter((n) => n.group === g.key) })).filter((g) => g.items.length);
 }
 
 export function navFor({ current, user, badges }: Pick<ShellProps, "current" | "user" | "badges">): ResolvedNav[] {
@@ -85,6 +110,7 @@ export function navFor({ current, user, badges }: Pick<ShellProps, "current" | "
       icon: n.icon,
       badge: n.badgeKey ? badges[n.badgeKey] : undefined,
       exact: n.path === "",
+      group: n.group,
     }));
   }
   return [
@@ -111,6 +137,7 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
   const canCatat = useCan("data:write") && Boolean(current);
   const catatHref = current ? `/b/${current.id}/catat` : "";
   const onCatat = pathname === catatHref;
+  const navId = useId();
 
   return (
     <div className="flex h-full flex-col justify-between gap-4">
@@ -132,28 +159,22 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
             <span className="text-body-semibold">Catat</span>
           </Link>
         ) : null}
-        <nav aria-label="Main" className="flex flex-col gap-0.5">
-          {nav.map((item) => {
-            const active = isActive(pathname, item);
+        <nav aria-label="Main" className="flex flex-col gap-4">
+          {groupNav(nav).map((group) => {
+            // Finance and Others get a heading; the book's own pages and account pages don't.
+            const titled = group.key === "finance" || group.key === "others";
+            const headingId = `${navId}-${group.key}`;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cx(
-                  "flex h-7 items-center justify-between rounded-lg px-2 outline-none transition-colors",
-                  "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-                  // Soft raised pill: the solid blue is kept for the Catat call to action.
-                  active ? "bg-background-primary-default shadow-xs" : "hover:bg-background-secondary-hover",
-                )}
-              >
-                <span className="flex items-center gap-2">
-                  <item.icon className={cx("size-4 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
-                  <span className={cx(active ? "text-body-medium text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
-                </span>
-                <NavTrailing badge={item.badge} />
-              </Link>
+              <div key={group.key} role="group" aria-labelledby={titled ? headingId : undefined} className="flex flex-col gap-0.5">
+                {titled ? (
+                  <h2 id={headingId} className="px-2 pb-1 text-caption-1-semibold text-text-tertiary">
+                    {group.label}
+                  </h2>
+                ) : null}
+                {group.items.map((item) => (
+                  <NavLink key={item.href} item={item} active={isActive(pathname, item)} onNavigate={onNavigate} />
+                ))}
+              </div>
             );
           })}
         </nav>
@@ -165,6 +186,28 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
         <ThemeToggle collapsed />
       </div>
     </div>
+  );
+}
+
+function NavLink({ item, active, onNavigate }: { item: ResolvedNav; active: boolean; onNavigate?: () => void }) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={cx(
+        "flex h-7 items-center justify-between rounded-lg px-2 outline-none transition-colors",
+        "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+        // Soft raised pill: the solid blue is kept for the Catat call to action.
+        active ? "bg-background-primary-default shadow-xs" : "hover:bg-background-secondary-hover",
+      )}
+    >
+      <span className="flex items-center gap-2">
+        <item.icon className={cx("size-4 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
+        <span className={cx(active ? "text-body-medium text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
+      </span>
+      <NavTrailing badge={item.badge} />
+    </Link>
   );
 }
 

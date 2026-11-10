@@ -18,7 +18,7 @@ import type { Page, PageBlock, PageComment } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
 import { useBookId } from "../permissions";
 import { CommentsPanel, type CommentContext, type PendingComment, type ThreadLocation } from "./comments";
-import { CommentMarkers, CommentMarks, setCommentMarks } from "./editor/comment-marks";
+import { blockText, CommentMarkers, CommentMarks, setCommentMarks } from "./editor/comment-marks";
 import { EditorBubble } from "./editor/editor-bubble";
 import { LinkShortcut } from "./editor/link";
 import { BlockHandle } from "./editor/block-handle";
@@ -30,6 +30,9 @@ import { SlashMenu } from "./editor/slash-menu";
 import { TocMenu, TocRail, useActiveHeading, useToc } from "./editor/toc";
 import { useLibrary } from "./library-context";
 import { PageMenu } from "./page-tree";
+import { markEditing } from "@/actions/library";
+import { ConflictBanner, EditingNow } from "./editing-presence";
+import { PageIcon } from "./page-icon";
 import { useComments } from "./use-comments";
 import { usePageSave, type SaveStatus } from "./use-page-save";
 
@@ -62,10 +65,39 @@ function edited(page: Pick<Page, "updated_at">) {
   return `Edited ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
+/** How often "still editing" goes out while typing; the other side shows it for 90s (lib/library/presence.ts). */
+const BEAT_MS = 40_000;
+
+/**
+ * Tells the sheet this person is typing in the page: a beat when typing
+ * starts, then at most every BEAT_MS while it goes on, and "left" when the
+ * page closes or the tab is hidden. One small write each, nothing per key.
+ */
+class EditingBeat {
+  private last = 0;
+  constructor(
+    private readonly bookId: string,
+    private readonly pageId: string,
+  ) {}
+
+  typed() {
+    const now = Date.now();
+    if (now - this.last < BEAT_MS) return;
+    this.last = now;
+    void markEditing(this.bookId, { id: this.pageId, active: true });
+  }
+
+  leave() {
+    if (!this.last) return;
+    this.last = 0;
+    void markEditing(this.bookId, { id: this.pageId, active: false });
+  }
+}
+
 /** One Library page: breadcrumbs, title, then the document, saved as it's typed. */
 export function PageEditor({ page: initialPage, rows, comments }: { page: Page; rows: PageBlock[]; comments: PageComment[] }) {
   const bookId = useBookId();
-  const { pages, canEdit, href, patchLocal, user, userName, userId, members } = useLibrary();
+  const { pages, canEdit, href, patchLocal, user, userName, userId, members, setIcon } = useLibrary();
   const [title, setTitle] = useState(initialPage.title);
   const [meta, setMeta] = useState(initialPage);
   // ⌘K in the editor tells the link popover to open.
@@ -74,10 +106,20 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   const onPage = useCallback(
     (p: Page) => {
       setMeta(p);
-      patchLocal(p.id, { version: p.version, updated_at: p.updated_at, updated_by: p.updated_by });
+      patchLocal(p.id, { version: p.version, updated_at: p.updated_at, updated_by: p.updated_by, editing: p.editing });
     },
     [patchLocal],
   );
+  // "Still editing" beats so the other person sees who's typing (see EditingNow).
+  const [beat] = useState(() => new EditingBeat(bookId, initialPage.id));
+  useEffect(() => {
+    const onHide = () => document.visibilityState === "hidden" && beat.leave();
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      beat.leave();
+    };
+  }, [beat]);
   // Before the editor, so the saver is listening by the time the editor attaches.
   const save = usePageSave({ bookId, page: initialPage, rows, setTitle, onPage });
   const { saver } = save;
@@ -121,7 +163,11 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
     immediatelyRender: false,
     editorProps: { attributes: { class: "library-prose min-h-40 pb-6", "aria-label": "Page content" } },
     // Id fills from the UniqueID extension aren't edits.
-    onUpdate: ({ transaction }) => transaction.getMeta("addToHistory") !== false && saver.changed(),
+    onUpdate: ({ transaction }) => {
+      if (transaction.getMeta("addToHistory") === false) return;
+      saver.changed();
+      if (canEdit) beat.typed();
+    },
   });
 
   useEffect(() => {
@@ -234,8 +280,8 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
     };
   }, [editor, arrivedAt, arrivedBlock, scrollToBlock]);
   useEffect(() => {
-    if (editor) setCommentMarks(editor, new Set(counts.keys()), activeBlock);
-  }, [editor, counts, activeBlock]);
+    if (editor) setCommentMarks(editor, new Set(counts.keys()), activeBlock, new Set(save.conflicts.map((c) => c.id)));
+  }, [editor, counts, activeBlock, save.conflicts]);
 
   // The contents rail and the comments panel share the right-hand column; comments win while open.
   const railShown = showToc && !panelOpen;
@@ -263,7 +309,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-body-2-regular text-text-tertiary">
             <Link href={parent ? href(parent.id) : href()} className="flex items-center gap-0.5 rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring lg:hidden">
               <RiArrowLeftSLine className="size-4 shrink-0 rtl:-scale-x-100" aria-hidden />
-              <span className="truncate">{parent ? pageTitle(parent) : "Library"}</span>
+              <span className="truncate">{parent ? `${parent.emoji ? `${parent.emoji} ` : ""}${pageTitle(parent)}` : "Library"}</span>
             </Link>
             <ol className="flex min-w-0 items-center gap-1 max-lg:hidden">
               <li>
@@ -275,6 +321,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
                 <li key={p.id} className="flex min-w-0 items-center gap-1">
                   <span aria-hidden>/</span>
                   <Link href={href(p.id)} className="truncate rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+                    {p.emoji ? `${p.emoji} ` : ""}
                     {pageTitle(p)}
                   </Link>
                 </li>
@@ -303,12 +350,21 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
               <RiChat3Line className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
               {openCount ? <span className="tabular-nums">{openCount}</span> : <span className="max-sm:sr-only">Comments</span>}
             </button>
+            {live ? <EditingNow cell={live.editing} /> : null}
             {canEdit ? <SaveState status={save.status} error={save.error} /> : null}
             {canEdit && live ? <PageMenu page={live} /> : null}
           </div>
         </div>
 
-        <header className="flex flex-col gap-1">
+        <header className="group/title flex flex-col gap-1">
+          {/* No icon yet: "Add icon" waits above the title (shown on hover); with one, it sits beside the title. */}
+          {!live?.emoji && canEdit ? (
+            <div className="-ms-2 flex h-7 items-center">
+              <PageIcon emoji="" canEdit onChange={(e) => setIcon(initialPage.id, e)} />
+            </div>
+          ) : null}
+          <div className="flex items-center gap-2">
+          {live?.emoji ? <PageIcon emoji={live.emoji} canEdit={canEdit} onChange={(e) => setIcon(initialPage.id, e)} /> : null}
           {canEdit ? (
             <TextField
               aria-label="Title"
@@ -318,6 +374,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
                 setTitle(t);
                 patchLocal(initialPage.id, { title: t });
                 saver.changed(t);
+                beat.typed();
               }}
               onKeyDown={(e) => {
                 // Enter moves on to the first line of the page.
@@ -335,8 +392,16 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
           ) : (
             <h1 className="text-large-title-semibold text-text-primary">{pageTitle({ title })}</h1>
           )}
+          </div>
           {edited(meta) ? <p className="text-body-2-regular text-text-tertiary">{edited(meta)}</p> : null}
         </header>
+
+        <ConflictBanner
+          conflicts={save.conflicts}
+          mineOf={(id) => (editor ? blockText(editor, id) : "")}
+          onShow={scrollToBlock}
+          onResolve={(id, choice) => saver.resolve(id, choice)}
+        />
 
         {/* The left gutter holds each block's + and drag handle, and counts as hovering that block. */}
         <div data-block-area className="lg:-ms-14 lg:ps-14">

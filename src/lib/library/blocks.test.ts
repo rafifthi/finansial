@@ -154,6 +154,7 @@ const page = (id: string, parent_id = "", position = 0, archived = false): Page 
   position,
   version: 0,
   archived,
+  editing: "",
   created_at: "",
   created_by: "",
   updated_at: "",

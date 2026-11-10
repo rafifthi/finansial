@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { archivePage, createPage, restorePages, syncLibrary } from "@/actions/library";
+import { archivePage, createPage, movePage, restorePages, setPageIcon, syncLibrary } from "@/actions/library";
 import { toast } from "@/components/base/toast/toast";
 import { nextPosition, withDescendants } from "@/lib/library/tree";
 import type { Page } from "@/lib/sheets/schema";
@@ -15,6 +15,7 @@ const POLL_MS = 30_000;
 export interface LibraryMember {
   id: string;
   name: string;
+  email: string;
 }
 
 interface LibraryValue {
@@ -35,6 +36,16 @@ interface LibraryValue {
   archive: (page: Page) => void;
   /** Shows a page's new title or version in the tree before the server has it. */
   patchLocal: (id: string, patch: Partial<Page>) => void;
+  /** Sets (or clears) the emoji beside a page's title. */
+  setIcon: (id: string, emoji: string) => void;
+  /** Puts a page under another (or the top) at a position among its siblings. */
+  move: (id: string, to: { parent_id: string; position: number }) => void;
+  /** A member's name from their email or id, for "Kanza changed this". */
+  nameOf: (emailOrId: string) => string;
+  /** The search dialog (also ⌘/Ctrl+Shift+F). */
+  searchOpen: boolean;
+  openSearch: () => void;
+  setSearchOpen: (open: boolean) => void;
 }
 
 const LibraryContext = createContext<LibraryValue | null>(null);
@@ -109,7 +120,7 @@ export function LibraryProvider({
       const now = new Date().toISOString();
       setPages((all) => [
         ...all,
-        { id, parent_id: parentId, title: "", emoji: "", position: nextPosition(all, parentId), version: 0, archived: false, created_at: now, created_by: user, updated_at: now, updated_by: user },
+        { id, parent_id: parentId, title: "", emoji: "", position: nextPosition(all, parentId), version: 0, archived: false, editing: "", created_at: now, created_by: user, updated_at: now, updated_by: user },
       ]);
       pending.current++;
       router.push(href(id));
@@ -154,9 +165,53 @@ export function LibraryProvider({
     [bookId, href, router, sync],
   );
 
+  const setIcon = useCallback(
+    (id: string, emoji: string) => {
+      setPages((all) => all.map((p) => (p.id === id ? { ...p, emoji } : p)));
+      void setPageIcon(bookId, { id, emoji }).then((res) => {
+        if (!res.ok) {
+          toast(res.error, { status: "error" });
+          void sync();
+        }
+      });
+    },
+    [bookId, sync],
+  );
+
+  const move = useCallback(
+    (id: string, to: { parent_id: string; position: number }) => {
+      pending.current++;
+      setPages((all) => all.map((p) => (p.id === id ? { ...p, ...to } : p)));
+      void movePage(bookId, { id, ...to })
+        .then((res) => {
+          if (!res.ok) {
+            toast(res.error, { status: "error" });
+            void sync();
+          }
+        })
+        .finally(() => pending.current--);
+    },
+    [bookId, sync],
+  );
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const nameOf = useCallback((key: string) => members.find((m) => m.email === key || m.id === key)?.name ?? "Someone", [members]);
+
   const value = useMemo(
-    () => ({ pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal }),
-    [pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal],
+    () => ({ pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal, setIcon, move, nameOf, searchOpen, openSearch, setSearchOpen }),
+    [pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal, setIcon, move, nameOf, searchOpen, openSearch],
   );
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }

@@ -428,6 +428,8 @@ export const PageSchema = z.object({
   /** Goes up on every save; a save from an older version is merged block by block (see lib/library/blocks.ts). */
   version: z.number().int().nonnegative().default(0),
   archived: z.boolean().default(false),
+  /** Who has the page open and is typing: "userId@ISO-time" entries, comma-separated; stale ones are ignored. */
+  editing: z.string().default(""),
   created_at: z.string().default(""),
   created_by: z.string().default(""),
   updated_at: z.string().default(""),
@@ -504,6 +506,7 @@ export const LIBRARY_TABLES = {
     position: "number",
     version: "number",
     archived: "boolean",
+    editing: "string",
     created_at: "string",
     created_by: "string",
     updated_at: "string",

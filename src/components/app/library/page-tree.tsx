@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState, type DragEvent } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { RiAddLine, RiArrowRightSLine, RiAtLine, RiDeleteBinLine, RiFileTextLine, RiMoreLine } from "@remixicon/react";
+import { RiAddLine, RiArrowDownLine, RiArrowLeftUpLine, RiArrowRightSLine, RiArrowUpLine, RiAtLine, RiDeleteBinLine, RiFileTextLine, RiMoreLine, RiSearchLine } from "@remixicon/react";
 import { Badge } from "@/components/base/badges/badge";
-import { Dropdown, DropdownItem, DropdownPopover, DropdownTrigger } from "@/components/base/dropdown/dropdown";
+import { Dropdown, DropdownDivider, DropdownItem, DropdownPopover, DropdownTrigger } from "@/components/base/dropdown/dropdown";
 import { SpinnerGlyph } from "@/components/base/spinner/spinner";
-import { ancestors, buildTree, pageTitle, type PageNode } from "@/lib/library/tree";
+import { ancestors, buildTree, pageTitle, planMove, stepMove, type DropZone, type PageNode } from "@/lib/library/tree";
 import type { Page } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
 import { useLibrary } from "./library-context";
@@ -19,8 +19,16 @@ const ICON_BUTTON = cx(
 
 /** A page's actions: add a page inside it, or move it (and what's under it) to the trash. */
 export function PageMenu({ page, compact }: { page: Page; compact?: boolean }) {
-  const { create, archive } = useLibrary();
+  const { create, archive, pages, move } = useLibrary();
   const [open, setOpen] = useState(false);
+  // The keyboard way to reorder (dragging needs a pointer).
+  const steps = [
+    { step: "up" as const, label: "Move up", icon: RiArrowUpLine },
+    { step: "down" as const, label: "Move down", icon: RiArrowDownLine },
+    { step: "out" as const, label: "Move out of its parent", icon: RiArrowLeftUpLine },
+  ]
+    .map((s) => ({ ...s, to: stepMove(pages, page.id, s.step) }))
+    .filter((s) => s.to);
   return (
     <Dropdown isOpen={open} onOpenChange={setOpen}>
       <DropdownTrigger aria-label={`More for ${pageTitle(page)}`} className={cx(ICON_BUTTON, !compact && "size-7 text-foreground-icon-secondary")}>
@@ -36,6 +44,19 @@ export function PageMenu({ page, compact }: { page: Page; compact?: boolean }) {
           <RiAddLine className="size-4 text-foreground-icon-secondary" aria-hidden />
           <span className="text-body-medium">Add a page inside</span>
         </DropdownItem>
+        {steps.map((s) => (
+          <DropdownItem
+            key={s.step}
+            onSelect={() => {
+              setOpen(false);
+              move(page.id, s.to!);
+            }}
+          >
+            <s.icon className="size-4 text-foreground-icon-secondary" aria-hidden />
+            <span className="text-body-medium">{s.label}</span>
+          </DropdownItem>
+        ))}
+        <DropdownDivider />
         <DropdownItem
           onSelect={() => {
             setOpen(false);
@@ -76,17 +97,47 @@ const ROW: Record<Variant, { current: string; rest: string; indent: number }> = 
   panel: { current: "bg-background-secondary-hover", rest: "hover:bg-background-secondary-default", indent: 0 },
 };
 
+interface TreeDrag {
+  dragging: string | null;
+  drop: { id: string; zone: DropZone } | null;
+  start: (id: string, e: DragEvent) => void;
+  over: (id: string, e: DragEvent) => void;
+  land: (id: string, e: DragEvent) => void;
+  end: () => void;
+}
+
+const TreeDragContext = createContext<TreeDrag | null>(null);
+
+/** Top quarter: before it. Bottom quarter: after it. Middle: inside it. */
+function zoneAt(e: DragEvent): DropZone {
+  const box = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  const y = (e.clientY - box.top) / box.height;
+  return y < 0.25 ? "before" : y > 0.75 ? "after" : "inside";
+}
+
 function TreeRow({ node, depth, currentId, expanded, toggle, variant }: { node: PageNode; depth: number; currentId?: string; expanded: Set<string>; toggle: (id: string) => void; variant: Variant }) {
   const { href, canEdit, create } = useLibrary();
+  const drag = useContext(TreeDragContext);
   const { page, children } = node;
   const open = expanded.has(page.id);
   const current = page.id === currentId;
+  const zone = drag?.drop?.id === page.id ? drag.drop.zone : null;
   return (
     <li className="flex flex-col">
       <div
+        draggable={canEdit && Boolean(drag)}
+        onDragStart={(e) => drag?.start(page.id, e)}
+        onDragOver={(e) => drag?.over(page.id, e)}
+        onDrop={(e) => drag?.land(page.id, e)}
+        onDragEnd={() => drag?.end()}
         className={cx(
-          "group flex h-7 items-center gap-0.5 rounded-lg pe-1 transition-colors max-sm:h-11",
+          "group relative flex h-7 items-center gap-0.5 rounded-lg pe-1 transition-colors max-sm:h-11",
           current ? ROW[variant].current : ROW[variant].rest,
+          drag?.dragging === page.id && "opacity-50",
+          // Dropping inside: the row lights up. Before or after: a line where it will land.
+          zone === "inside" && "ring-2 ring-inset ring-border-focus-ring",
+          zone === "before" && "before:absolute before:inset-x-1 before:-top-px before:h-0.5 before:rounded-full before:bg-accent-solid",
+          zone === "after" && "after:absolute after:inset-x-1 after:-bottom-px after:h-0.5 after:rounded-full after:bg-accent-solid",
         )}
         style={{ paddingInlineStart: `${ROW[variant].indent + depth * 12}px` }}
       >
@@ -100,6 +151,7 @@ function TreeRow({ node, depth, currentId, expanded, toggle, variant }: { node: 
         <Link
           href={href(page.id)}
           aria-current={current ? "page" : undefined}
+          draggable={false}
           className="flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-md outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring"
         >
           <RowLabel page={page} current={current} />
@@ -121,6 +173,25 @@ function TreeRow({ node, depth, currentId, expanded, toggle, variant }: { node: 
         </ul>
       ) : null}
     </li>
+  );
+}
+
+/** Opens the Library search (also ⌘/Ctrl+Shift+F). */
+function SearchRow({ variant }: { variant: Variant }) {
+  const { openSearch } = useLibrary();
+  return (
+    <button
+      type="button"
+      onClick={openSearch}
+      aria-keyshortcuts="Meta+Shift+F Control+Shift+F"
+      className={cx(
+        "flex h-7 w-full cursor-pointer items-center gap-2 rounded-lg ps-[30px] pe-1.5 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring max-sm:h-11",
+        ROW[variant].rest,
+      )}
+    >
+      <RiSearchLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
+      <span className="flex-1 truncate text-body-medium text-text-secondary">Search</span>
+    </button>
   );
 }
 
@@ -186,9 +257,50 @@ export function PageTree({ className, variant = "panel" }: { className?: string;
     });
   };
 
+  // Dragging a page onto another: before it, after it, or inside it.
+  const { move } = useLibrary();
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [drop, setDrop] = useState<{ id: string; zone: DropZone } | null>(null);
+  const drag: TreeDrag = {
+    dragging,
+    drop,
+    start: (id, e) => {
+      setDragging(id);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", pageTitle(pages.find((p) => p.id === id) ?? { title: "" }));
+    },
+    over: (id, e) => {
+      if (!dragging) return;
+      const zone = zoneAt(e);
+      if (!planMove(pages, dragging, id, zone)) return setDrop(null);
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (drop?.id !== id || drop.zone !== zone) setDrop({ id, zone });
+    },
+    land: (id, e) => {
+      e.preventDefault();
+      const to = dragging ? planMove(pages, dragging, id, zoneAt(e)) : null;
+      if (dragging && to) {
+        move(dragging, to);
+        // Dropped inside a page: show it there.
+        if (to.parent_id && !expanded.has(to.parent_id)) toggle(to.parent_id);
+      }
+      setDragging(null);
+      setDrop(null);
+    },
+    end: () => {
+      setDragging(null);
+      setDrop(null);
+    },
+  };
+
   if (variant === "sidebar") {
     return (
+      <TreeDragContext.Provider value={drag}>
       <ul aria-label="Library pages" className={cx("flex flex-col gap-0.5 pt-0.5", className)}>
+        <li>
+          <SearchRow variant="sidebar" />
+        </li>
         <li>
           <MentionsRow variant="sidebar" />
         </li>
@@ -208,6 +320,7 @@ export function PageTree({ className, variant = "panel" }: { className?: string;
           </li>
         ) : null}
       </ul>
+      </TreeDragContext.Provider>
     );
   }
 
@@ -221,13 +334,16 @@ export function PageTree({ className, variant = "panel" }: { className?: string;
           </button>
         ) : null}
       </div>
+      <SearchRow variant="panel" />
       <MentionsRow variant="panel" />
       {tree.length ? (
-        <ul className="flex flex-col gap-0.5">
-          {tree.map((n) => (
-            <TreeRow key={n.page.id} node={n} depth={0} currentId={currentId} expanded={expanded} toggle={toggle} variant="panel" />
-          ))}
-        </ul>
+        <TreeDragContext.Provider value={drag}>
+          <ul className="flex flex-col gap-0.5">
+            {tree.map((n) => (
+              <TreeRow key={n.page.id} node={n} depth={0} currentId={currentId} expanded={expanded} toggle={toggle} variant="panel" />
+            ))}
+          </ul>
+        </TreeDragContext.Provider>
       ) : (
         <p className="px-2 py-3 text-body-2-regular text-text-tertiary">{canEdit ? "No pages yet. Add one with +." : "No pages yet."}</p>
       )}

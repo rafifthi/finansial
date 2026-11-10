@@ -58,3 +58,35 @@ export function nextPosition(pages: Page[], parentId: string): number {
 }
 
 export const pageTitle = (p: Pick<Page, "title">) => p.title.trim() || "Untitled";
+
+export type DropZone = "before" | "after" | "inside";
+
+/**
+ * Where a page dragged onto another lands: just before or after it among its
+ * siblings, or as its last child. Null when the move makes no sense (onto
+ * itself, or under one of its own pages, which would cut it off the tree).
+ */
+export function planMove(pages: Page[], id: string, targetId: string, zone: DropZone): { parent_id: string; position: number } | null {
+  if (id === targetId) return null;
+  const target = pages.find((p) => p.id === targetId);
+  if (!target || withDescendants(pages, id).includes(targetId)) return null;
+  if (zone === "inside") return { parent_id: target.id, position: nextPosition(pages.filter((p) => p.id !== id), target.id) };
+  const siblings = pages.filter((p) => p.parent_id === target.parent_id && p.id !== id && !p.archived).sort(byPosition);
+  const at = siblings.findIndex((p) => p.id === targetId);
+  const before = zone === "before" ? siblings[at - 1] : siblings[at];
+  const after = zone === "before" ? siblings[at] : siblings[at + 1];
+  const position =
+    before && after ? (before.position + after.position) / 2 : before ? before.position + STEP : after ? after.position - STEP : STEP;
+  return { parent_id: target.parent_id, position };
+}
+
+/** Keyboard moves from a page's menu: up or down among its siblings, or out to sit after its parent. */
+export function stepMove(pages: Page[], id: string, step: "up" | "down" | "out"): { parent_id: string; position: number } | null {
+  const page = pages.find((p) => p.id === id);
+  if (!page) return null;
+  if (step === "out") return page.parent_id ? planMove(pages, id, page.parent_id, "after") : null;
+  const siblings = pages.filter((p) => p.parent_id === page.parent_id && !p.archived).sort(byPosition);
+  const at = siblings.findIndex((p) => p.id === id);
+  const neighbour = siblings[step === "up" ? at - 1 : at + 1];
+  return neighbour ? planMove(pages, id, neighbour.id, step === "up" ? "before" : "after") : null;
+}

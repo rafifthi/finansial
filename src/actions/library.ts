@@ -3,7 +3,9 @@
 import { z } from "zod";
 import { bookAction, FieldErrors } from "@/lib/data/action";
 import { libraryStore } from "@/lib/data/store";
-import { MAX_BLOCK_CHARS, mentionIds, nodeText, splitJson, type DocNode } from "@/lib/library/blocks";
+import { MAX_BLOCK_CHARS, mentionIds, nodeText, rowNode, splitJson, type DocNode } from "@/lib/library/blocks";
+import { withBeat } from "@/lib/library/presence";
+import { searchPages } from "@/lib/library/search";
 import { nextPosition, withDescendants } from "@/lib/library/tree";
 import { bodyMentionIds } from "@/lib/library/comment-body";
 import { quoteOf } from "@/lib/library/comments";
@@ -92,7 +94,26 @@ const BlockSchema = z.object({
   type: z.string().regex(/^[a-zA-Z]{1,40}$/),
   position: z.number().finite(),
   json: z.string().max(MAX_BLOCK_CHARS, "This block is too long to save. Split it into smaller ones."),
+  /** The block as this editor last saw it from the server ("" for a new one), to notice someone else's change. */
+  base: z.string().max(MAX_BLOCK_CHARS).optional(),
 });
+
+/** A block someone else reworded since this editor last saw it; their version was kept. */
+export interface BlockConflict {
+  id: string;
+  /** "edited": both changed it. "removed": you deleted it, they changed it. */
+  kind: "edited" | "removed";
+  theirs: { json: string; text: string; by: string; at: string; position: number };
+}
+
+/** The words of a stored or sent block, for telling whether anyone changed what it says. */
+const wordsOf = (json: string) => {
+  try {
+    return nodeText(JSON.parse(json) as DocNode);
+  } catch {
+    return "";
+  }
+};
 
 /**
  * Saves the blocks that changed since the client's last save, plus the title.
@@ -107,6 +128,8 @@ export const savePage = bookAction(
     title: z.string().max(200).optional(),
     upserts: z.array(BlockSchema).max(2000),
     removes: z.array(clientId).max(2000),
+    /** For each removed block, how it looked when this editor last saw it. */
+    removeBases: z.record(z.string(), z.string().max(MAX_BLOCK_CHARS)).default({}),
   }),
   async (input, { book, user }) => {
     const store = await libraryStore(book);
@@ -120,6 +143,21 @@ export const savePage = bookAction(
     const inserts: PageBlock[] = [];
     const updates: { key: string; patch: Partial<PageBlock> }[] = [];
     let reworded = false;
+    const conflicts: BlockConflict[] = [];
+    /**
+     * Someone else (not this person on another device) changed the block's words since `base`.
+     * Changes that leave the words alone (moves, ids, formatting housekeeping) don't count.
+     */
+    const changedByOther = (existing: PageBlock, base: string | undefined) =>
+      base !== undefined && base !== "" && existing.updated_by !== user.email && existing.text !== wordsOf(base);
+    const theirs = (existing: PageBlock) => ({
+      json: JSON.stringify(rowNode(existing)[0]),
+      text: existing.text,
+      by: existing.updated_by,
+      at: existing.updated_at,
+      position: existing.position,
+    });
+
     for (const b of input.upserts) {
       let node: DocNode;
       try {
@@ -129,6 +167,11 @@ export const savePage = bookAction(
       }
       const existing = byId.get(b.id);
       if (existing && existing.page_id !== input.id) throw new Error("Two pages share a block. Reload the page and try again.");
+      // Both of you reworded it: keep theirs and say so, rather than overwrite it unseen.
+      if (existing && changedByOther(existing, b.base) && existing.text !== nodeText(node)) {
+        conflicts.push({ id: b.id, kind: "edited", theirs: theirs(existing) });
+        continue;
+      }
       const text = nodeText(node);
       const mentions = mentionIds(node).join(",");
       // A block is "edited by" whoever last changed its words. Moves and the editor's own housekeeping
@@ -141,7 +184,16 @@ export const savePage = bookAction(
       if (existing) updates.push({ key: b.id, patch: row });
       else inserts.push({ id: b.id, page_id: input.id, ...row });
     }
-    const removes = input.removes.filter((id) => byId.get(id)?.page_id === input.id);
+    const removes = input.removes.filter((id) => {
+      const existing = byId.get(id);
+      if (existing?.page_id !== input.id) return false;
+      // Deleted here, reworded there: keep their words and ask.
+      if (changedByOther(existing, input.removeBases[id])) {
+        conflicts.push({ id, kind: "removed", theirs: theirs(existing) });
+        return false;
+      }
+      return true;
+    });
 
     // Each call is one read and one write of its tab; skip the ones with nothing to do.
     if (inserts.length) await store.insert("blocks", inserts);
@@ -165,7 +217,7 @@ export const savePage = bookAction(
       .filter((b) => b.page_id === input.id && !gone.has(b.id))
       .map((b) => written.get(b.id) ?? b)
       .concat(inserts);
-    return { page: saved, blocks };
+    return { page: saved, blocks, conflicts };
   },
   NO_REFRESH,
 );
@@ -295,6 +347,66 @@ export const resolveThread = bookAction(
       resolved_at: resolved ? now : "",
       updated_at: now,
     });
+  },
+  NO_REFRESH,
+);
+
+/* ---- Page icon, moving, search and who's editing ---- */
+
+/** The emoji beside a page's title (or none). Not an edit to its words, so "Edited" stays. */
+export const setPageIcon = bookAction(
+  "data:write",
+  z.object({ id: clientId, emoji: z.string().max(16) }),
+  async ({ id, emoji }, { book }) => {
+    const store = await libraryStore(book);
+    if (!(await store.fresh("pages")).some((p) => p.id === id)) throw new Error("This page doesn't exist any more.");
+    return store.update("pages", id, { emoji });
+  },
+  NO_REFRESH,
+);
+
+/** Moves a page in the tree: under another page (or the top) at a position among its new siblings. */
+export const movePage = bookAction(
+  "data:write",
+  z.object({ id: clientId, parent_id: clientId.or(z.literal("")), position: z.number().finite() }),
+  async ({ id, parent_id, position }, { book }) => {
+    const store = await libraryStore(book);
+    const pages = await store.fresh("pages");
+    if (!pages.some((p) => p.id === id)) throw new Error("This page doesn't exist any more.");
+    if (parent_id && !pages.some((p) => p.id === parent_id && !p.archived)) throw new Error("That page is gone.");
+    // Under itself or one of its own pages would cut it off the tree.
+    if (parent_id && withDescendants(pages, id).includes(parent_id)) throw new Error("A page can't go inside itself.");
+    return store.update("pages", id, { parent_id, position });
+  },
+  NO_REFRESH,
+);
+
+/** Pages whose title and words hold every word typed (one cached read). */
+export const searchLibrary = bookAction(
+  null,
+  z.object({ q: z.string().max(200) }),
+  async ({ q }, { book }) => {
+    const store = await libraryStore(book);
+    const snap = await store.snapshot();
+    return searchPages(
+      snap.pages.rows.map((r) => r.data),
+      snap.blocks.rows.map((r) => r.data),
+      q,
+    );
+  },
+  NO_REFRESH,
+);
+
+/** "Still typing here" (or "left"), so the other person sees who's editing the page. */
+export const markEditing = bookAction(
+  "data:write",
+  z.object({ id: clientId, active: z.boolean() }),
+  async ({ id, active }, { book, user }) => {
+    const store = await libraryStore(book);
+    const page = (await store.fresh("pages")).find((p) => p.id === id);
+    if (!page) return;
+    const editing = withBeat(page.editing, user.id, active);
+    if (editing !== page.editing) await store.update("pages", id, { editing });
   },
   NO_REFRESH,
 );

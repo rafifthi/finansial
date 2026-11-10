@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Editor } from "@tiptap/core";
-import { getPage, savePage } from "@/actions/library";
+import { getPage, savePage, type BlockConflict } from "@/actions/library";
 import { diffBlocks, docFromRows, savedMap, type DocNode } from "@/lib/library/blocks";
 import type { Page, PageBlock } from "@/lib/sheets/schema";
 
@@ -54,6 +54,7 @@ interface SaverEvents {
   status: (status: SaveStatus, error: string) => void;
   page: (page: Page) => void;
   title: (title: string) => void;
+  conflicts: (list: BlockConflict[]) => void;
 }
 
 /**
@@ -78,6 +79,8 @@ class PageSaver {
   private firstChange = 0;
   private retries = 0;
   private editsSinceSend = 0;
+  /** Blocks both people reworded: held back from saving until this person picks a version. */
+  private conflicts = new Map<string, BlockConflict>();
   private readonly draftKey: string;
 
   constructor(
@@ -135,9 +138,18 @@ class PageSaver {
     if (this.dirty()) void this.flush();
   }
 
+  /** What to send: every changed block except the ones waiting on a conflict. */
+  private changes(editor: Editor) {
+    const diff = diffBlocks(this.saved, editor.getJSON() as DocNode);
+    return {
+      upserts: diff.upserts.filter((u) => !this.conflicts.has(u.id)),
+      removes: diff.removes.filter((id) => !this.conflicts.has(id)),
+    };
+  }
+
   dirty() {
     if (!this.editor || this.editor.isDestroyed) return false;
-    const diff = diffBlocks(this.saved, this.editor.getJSON() as DocNode);
+    const diff = this.changes(this.editor);
     return diff.upserts.length > 0 || diff.removes.length > 0 || this.title !== this.savedTitle;
   }
 
@@ -167,7 +179,7 @@ class PageSaver {
       if (this.dirty()) return this.flush();
       return;
     }
-    const { upserts, removes } = diffBlocks(this.saved, editor.getJSON() as DocNode);
+    const { upserts, removes } = this.changes(editor);
     const title = this.title;
     const retitled = title !== this.savedTitle;
     if (!upserts.length && !removes.length && !retitled) {
@@ -186,7 +198,15 @@ class PageSaver {
   private async send(upserts: Parameters<typeof savePage>[1]["upserts"], removes: string[], title: string | undefined) {
     let res: Awaited<ReturnType<typeof savePage>>;
     try {
-      res = await savePage(this.bookId, { id: this.pageId, title, upserts, removes });
+      // Each block goes with how it looked when this editor last saw it, so the server can tell
+      // whether someone else reworded it in the meantime.
+      res = await savePage(this.bookId, {
+        id: this.pageId,
+        title,
+        upserts: upserts.map((u) => ({ ...u, base: this.lastServer.get(u.id)?.json ?? "" })),
+        removes,
+        removeBases: Object.fromEntries(removes.map((id) => [id, this.lastServer.get(id)?.json ?? ""])),
+      });
     } catch {
       res = { ok: false, error: "You're offline." };
     }
@@ -196,12 +216,17 @@ class PageSaver {
       return;
     }
     this.retries = 0;
+    // Blocks the other person reworded meanwhile weren't written: hold them for this person to decide.
+    for (const c of res.data.conflicts) this.conflicts.set(c.id, c);
+    if (res.data.conflicts.length) this.on.conflicts([...this.conflicts.values()]);
     // Record what we sent as saved, then see what else the server has.
     for (const u of upserts) {
+      if (this.conflicts.has(u.id)) continue;
       this.saved.set(u.id, { position: u.position, json: u.json });
       this.lastServer.set(u.id, { position: u.position, json: u.json });
     }
     for (const id of removes) {
+      if (this.conflicts.has(id)) continue;
       this.saved.delete(id);
       this.lastServer.delete(id);
     }
@@ -227,7 +252,8 @@ class PageSaver {
       this.incoming = null;
       return;
     }
-    if (this.editsSinceSend || this.dirty()) {
+    // Not while edits are on their way, or while a conflict waits on a choice (it would be swept away).
+    if (this.editsSinceSend || this.dirty() || this.conflicts.size) {
       this.incoming = blocks;
       return;
     }
@@ -236,6 +262,40 @@ class PageSaver {
     this.lastServer = new Map(fresh);
     this.rebaseline(editor);
     this.incoming = null;
+  }
+
+  /**
+   * Settles a block both people reworded. "mine" writes this person's version
+   * over theirs (or deletes it, if that's what they did); "theirs" puts the
+   * other person's version back in this editor.
+   */
+  resolve(id: string, choice: "mine" | "theirs") {
+    const editor = this.editor;
+    const c = this.conflicts.get(id);
+    if (!editor || editor.isDestroyed || !c) return;
+    this.conflicts.delete(id);
+    // Either way, their version is now the one this editor has seen.
+    this.lastServer.set(id, { position: c.theirs.position, json: c.theirs.json });
+    if (choice === "theirs") {
+      const node = editor.schema.nodeFromJSON(JSON.parse(c.theirs.json));
+      const end = editor.state.doc.content.size;
+      const spot = { from: -1, to: -1, insertAt: end };
+      editor.state.doc.forEach((n, pos) => {
+        if (n.attrs.id === id) Object.assign(spot, { from: pos, to: pos + n.nodeSize });
+        // A deleted block comes back before the first block that sat after it.
+        const p = this.saved.get(String(n.attrs.id))?.position;
+        if (p !== undefined && p > c.theirs.position && spot.insertAt === end) spot.insertAt = pos;
+      });
+      const tr = editor.state.tr;
+      if (spot.from >= 0) tr.replaceWith(spot.from, spot.to, node);
+      else tr.insert(spot.insertAt, node);
+      editor.view.dispatch(tr.setMeta("addToHistory", false));
+      const now = (editor.getJSON() as DocNode).content?.find((n) => n.attrs?.id === id);
+      if (now) this.saved.set(id, { position: c.theirs.position, json: JSON.stringify(now) });
+    }
+    this.on.conflicts([...this.conflicts.values()]);
+    if (choice === "mine") void this.flush();
+    else if (!this.conflicts.size && this.incoming) this.absorb(this.incoming);
   }
 
   /** Picks up the other person's saves while this page is open and idle. */
@@ -264,10 +324,11 @@ export function usePageSave({
   onPage: (page: Page) => void;
 }) {
   const [status, setStatus] = useState<{ status: SaveStatus; error: string }>({ status: "saved", error: "" });
-  const [saver] = useState(() => new PageSaver(bookId, page.id, page, rows, { status: () => {}, page: () => {}, title: () => {} }));
+  const [conflicts, setConflicts] = useState<BlockConflict[]>([]);
+  const [saver] = useState(() => new PageSaver(bookId, page.id, page, rows, { status: () => {}, page: () => {}, title: () => {}, conflicts: () => {} }));
 
   useEffect(() => {
-    saver.listen({ status: (s, error) => setStatus({ status: s, error }), page: onPage, title: setTitle });
+    saver.listen({ status: (s, error) => setStatus({ status: s, error }), page: onPage, title: setTitle, conflicts: setConflicts });
   }, [saver, onPage, setTitle]);
 
   // Leaving the page or the tab saves now; closing with unsaved work asks first.
@@ -289,5 +350,5 @@ export function usePageSave({
     };
   }, [saver]);
 
-  return { ...status, saver };
+  return { ...status, saver, conflicts };
 }

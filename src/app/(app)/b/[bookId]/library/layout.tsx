@@ -15,11 +15,11 @@ export default async function LibraryLayout({ children, params }: LayoutProps<"/
     registry().rows("memberships"),
     mentionInbox(store, ctx.user),
   ]);
-  // Everyone who can open the book, for @mentions. Only names and ids go to the browser.
+  // Everyone who can open the book, for @mentions and for naming who changed what.
   const byId = new Map(users.map((u) => [u.id, u]));
   const members = memberships
     .filter((m) => m.book_id === ctx.book.id && byId.has(m.user_id))
-    .map((m) => ({ id: m.user_id, name: byId.get(m.user_id)!.name }))
+    .map((m) => ({ id: m.user_id, name: byId.get(m.user_id)!.name, email: byId.get(m.user_id)!.email }))
     .sort((a, b) => a.name.localeCompare(b.name));
   return (
     <LibraryShell initial={pages} canEdit={can(ctx.membership.role, "data:write")} user={ctx.user.email} userName={ctx.user.name} userId={ctx.user.id} members={members} unread={inbox.items.filter((i) => i.unread).length}>

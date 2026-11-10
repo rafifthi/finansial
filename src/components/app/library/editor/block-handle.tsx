@@ -10,6 +10,7 @@ import { RiAddLine, RiChat3Line, RiDeleteBinLine, RiDraggable, RiFileCopyLine } 
 import { DropdownDivider, DropdownGroup, DropdownItem } from "@/components/base/dropdown/dropdown";
 import { MENU_POPOVER_SURFACE } from "@/components/base/dropdown/menu-styles";
 import { cx } from "@/utils/cx";
+import { useOverlayRoot } from "./overlay-root";
 import { SLASH_ITEMS } from "./slash-items";
 
 interface Target {
@@ -60,6 +61,7 @@ const HANDLE = cx(
  */
 export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?: (id: string, text: string) => void }) {
   const host = editor.view.dom.parentElement;
+  const overlay = useOverlayRoot(host);
   const [target, setTarget] = useState<Target | null>(null);
   const [menu, setMenu] = useState(false);
   const grip = useRef<HTMLButtonElement>(null);
@@ -104,7 +106,7 @@ export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?:
     return () => void editor.off("update", onUpdate);
   }, [editor]);
 
-  if (!host || !target || !editor.isEditable) return null;
+  if (!host || !overlay || !target || !editor.isEditable) return null;
 
   const hostBox = host.getBoundingClientRect();
   const box = target.dom.getBoundingClientRect();
@@ -253,7 +255,7 @@ export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?:
         </AriaDialog>
       </AriaPopover>
     </>,
-    host,
+    overlay,
   );
 }
 

@@ -13,6 +13,7 @@ import { PageHeader } from "../page-header";
 import { useNavSlot } from "../shell-context";
 import { LibraryProvider, useLibrary, type LibraryMember } from "./library-context";
 import { PageEditor } from "./page-editor";
+import { LibrarySearch } from "./library-search";
 import { PageTree } from "./page-tree";
 
 const PANEL = "rounded-3xl border border-separator-border bg-background-primary-default";
@@ -42,6 +43,7 @@ export function LibraryShell({
     <LibraryProvider initial={initial} canEdit={canEdit} user={user} userName={userName} userId={userId} members={members} unread={unread}>
       {librarySlot ? createPortal(<PageTree variant="sidebar" />, librarySlot) : null}
       {children}
+      <LibrarySearch />
     </LibraryProvider>
   );
 }

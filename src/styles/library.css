@@ -204,3 +204,8 @@
 .comment-input p {
   @apply m-0;
 }
+
+/* A block both people reworded at once, until one version is picked. */
+.library-prose .has-conflict {
+  @apply rounded-md bg-chip-overdue-background;
+}

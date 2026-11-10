@@ -161,6 +161,7 @@ export function demoLibrarySeed(spreadsheetId: string): { pages?: Page[]; blocks
     position,
     version: 1,
     archived: false,
+    editing: "",
     created_at: "",
     created_by: "admin@demo.local",
     updated_at: `${today()}T09:00:00.000Z`,

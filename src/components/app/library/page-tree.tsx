@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo, useState, type DragEvent } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { RiAddLine, RiArrowDownLine, RiArrowLeftUpLine, RiArrowRightSLine, RiArrowUpLine, RiAtLine, RiDeleteBinLine, RiFileTextLine, RiMoreLine, RiSearchLine } from "@remixicon/react";
+import { RiAddLine, RiArrowDownLine, RiArrowLeftUpLine, RiArrowRightSLine, RiArrowUpLine, RiAtLine, RiDeleteBinLine, RiFileTextLine, RiMoreLine } from "@remixicon/react";
 import { Badge } from "@/components/base/badges/badge";
 import { Dropdown, DropdownDivider, DropdownItem, DropdownPopover, DropdownTrigger } from "@/components/base/dropdown/dropdown";
 import { SpinnerGlyph } from "@/components/base/spinner/spinner";
@@ -176,25 +176,6 @@ function TreeRow({ node, depth, currentId, expanded, toggle, variant }: { node: 
   );
 }
 
-/** Opens the Library search (also ⌘/Ctrl+Shift+F). */
-function SearchRow({ variant }: { variant: Variant }) {
-  const { openSearch } = useLibrary();
-  return (
-    <button
-      type="button"
-      onClick={openSearch}
-      aria-keyshortcuts="Meta+Shift+F Control+Shift+F"
-      className={cx(
-        "flex h-7 w-full cursor-pointer items-center gap-2 rounded-lg ps-[30px] pe-1.5 text-start outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring max-sm:h-11",
-        ROW[variant].rest,
-      )}
-    >
-      <RiSearchLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
-      <span className="flex-1 truncate text-body-medium text-text-secondary">Search</span>
-    </button>
-  );
-}
-
 /** The inbox of pages and comments that mention you, with how many are new. */
 function MentionsRow({ variant }: { variant: Variant }) {
   const { href, unreadMentions } = useLibrary();
@@ -299,9 +280,6 @@ export function PageTree({ className, variant = "panel" }: { className?: string;
       <TreeDragContext.Provider value={drag}>
       <ul aria-label="Library pages" className={cx("flex flex-col gap-0.5 pt-0.5", className)}>
         <li>
-          <SearchRow variant="sidebar" />
-        </li>
-        <li>
           <MentionsRow variant="sidebar" />
         </li>
         {tree.map((n) => (
@@ -334,7 +312,6 @@ export function PageTree({ className, variant = "panel" }: { className?: string;
           </button>
         ) : null}
       </div>
-      <SearchRow variant="panel" />
       <MentionsRow variant="panel" />
       {tree.length ? (
         <TreeDragContext.Provider value={drag}>

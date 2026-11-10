@@ -42,10 +42,6 @@ interface LibraryValue {
   move: (id: string, to: { parent_id: string; position: number }) => void;
   /** A member's name from their email or id, for "Kanza changed this". */
   nameOf: (emailOrId: string) => string;
-  /** The search dialog (also ⌘/Ctrl+Shift+F). */
-  searchOpen: boolean;
-  openSearch: () => void;
-  setSearchOpen: (open: boolean) => void;
 }
 
 const LibraryContext = createContext<LibraryValue | null>(null);
@@ -194,24 +190,11 @@ export function LibraryProvider({
     [bookId, sync],
   );
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const openSearch = useCallback(() => setSearchOpen(true), []);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "f") {
-        e.preventDefault();
-        setSearchOpen(true);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const nameOf = useCallback((key: string) => members.find((m) => m.email === key || m.id === key)?.name ?? "Someone", [members]);
 
   const value = useMemo(
-    () => ({ pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal, setIcon, move, nameOf, searchOpen, openSearch, setSearchOpen }),
-    [pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal, setIcon, move, nameOf, searchOpen, openSearch],
+    () => ({ pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal, setIcon, move, nameOf }),
+    [pages, canEdit, user, userName, userId, members, unreadMentions, clearUnread, href, create, archive, patchLocal, setIcon, move, nameOf],
   );
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }

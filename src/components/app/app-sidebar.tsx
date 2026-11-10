@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useId, useSyncExternalStore, useTransition } from "react";
+import { Fragment, useEffect, useId, useState, useSyncExternalStore, useTransition } from "react";
 import {
   type RemixiconComponentType,
   RiAddLine,
@@ -21,6 +21,7 @@ import {
   RiMoreLine,
   RiPieChartLine,
   RiSafe2Line,
+  RiSearchLine,
   RiRepeatLine,
   RiSettings4Line,
   RiShieldUserLine,
@@ -42,6 +43,8 @@ import { ROLE_INFO } from "@/lib/auth/roles";
 import type { FormOptions } from "@/lib/data/app-data";
 import { cx } from "@/utils/cx";
 import { BookSwitcher, type ShellBook } from "./book-switcher";
+import { GlobalSearch } from "./global-search";
+import { Kbd } from "@/components/base/kbd/kbd";
 import { useNavSlot, type ShellValue } from "./shell-context";
 import { useCan } from "./permissions";
 
@@ -162,7 +165,7 @@ function setTreeOpen(open: boolean) {
   window.dispatchEvent(new Event(TREE_EVENT));
 }
 
-function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () => void }) {
+function SidebarPanel({ onNavigate, onSearch, ...props }: ShellProps & { onNavigate?: () => void; onSearch: () => void }) {
   const { user, current, books, signOutAction } = props;
   const pathname = usePathname();
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
@@ -179,6 +182,20 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
     <div className="flex h-full flex-col justify-between gap-4">
       <div className="flex flex-col gap-3">
         <BookSwitcher books={books} current={current} onNavigate={onNavigate} />
+        {/* One search for the whole book: pages of the app, Library pages, transactions, lists. */}
+        <button
+          type="button"
+          onClick={onSearch}
+          aria-keyshortcuts="Meta+K Control+K"
+          className={cx(
+            "flex h-8 w-full cursor-pointer items-center gap-2 rounded-lg border border-border-button-default bg-background-primary-default px-2 text-start outline-none transition-colors",
+            "hover:border-border-button-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+          )}
+        >
+          <RiSearchLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
+          <span className="flex-1 truncate text-body-regular text-text-placeholder">Search</span>
+          <Kbd aria-hidden>⌘K</Kbd>
+        </button>
         {canCatat ? (
           // The main action: record a transaction with AI, above everything else.
           <Link
@@ -327,6 +344,20 @@ const TAB_PATHS = ["", "/transactions", "/budget"];
 
 export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: FormOptions }) {
   const pathname = usePathname();
+  const [searching, setSearching] = useState(false);
+  // ⌘K / Ctrl+K anywhere (⌘⇧F too), unless something focused already used it (a page's link shortcut).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || !(e.metaKey || e.ctrlKey)) return;
+      const key = e.key.toLowerCase();
+      if ((key === "k" && !e.shiftKey) || (key === "f" && e.shiftKey)) {
+        e.preventDefault();
+        setSearching(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const canAdd = useCan("data:write") && Boolean(quickAdd && props.current);
   const nav = navFor(props);
   const tabs = props.current
@@ -353,7 +384,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
     <>
       {/* Flat on the canvas, as in Linear: no glass, no card, no edge. */}
       <aside className="sticky top-2 hidden h-[calc(100dvh-16px)] w-[232px] shrink-0 overflow-y-auto p-2 lg:block">
-        <SidebarPanel {...props} />
+        <SidebarPanel {...props} onSearch={() => setSearching(true)} />
       </aside>
 
       {/* Phone / tablet: slim top bar (book switcher) + bottom tab bar */}
@@ -361,6 +392,14 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
         <div className="min-w-0 flex-1">
           <BookSwitcher books={props.books} current={props.current} compact />
         </div>
+        <button
+          type="button"
+          aria-label="Search"
+          onClick={() => setSearching(true)}
+          className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground-icon-secondary outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+        >
+          <RiSearchLine className="size-5" aria-hidden />
+        </button>
         <Link href={accountHref(props.current)} aria-label="Account settings" className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
           <Avatar size="md" initials={initials} />
         </Link>
@@ -396,6 +435,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
         </div>
       </nav>
 
+      <GlobalSearch open={searching} onOpenChange={setSearching} current={props.current} nav={nav} />
     </>
   );
 }

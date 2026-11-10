@@ -5,7 +5,6 @@ import { bookAction, FieldErrors } from "@/lib/data/action";
 import { libraryStore } from "@/lib/data/store";
 import { MAX_BLOCK_CHARS, mentionIds, nodeText, rowNode, splitJson, type DocNode } from "@/lib/library/blocks";
 import { withBeat } from "@/lib/library/presence";
-import { searchPages } from "@/lib/library/search";
 import { nextPosition, withDescendants } from "@/lib/library/tree";
 import { bodyMentionIds } from "@/lib/library/comment-body";
 import { quoteOf } from "@/lib/library/comments";
@@ -377,22 +376,6 @@ export const movePage = bookAction(
     // Under itself or one of its own pages would cut it off the tree.
     if (parent_id && withDescendants(pages, id).includes(parent_id)) throw new Error("A page can't go inside itself.");
     return store.update("pages", id, { parent_id, position });
-  },
-  NO_REFRESH,
-);
-
-/** Pages whose title and words hold every word typed (one cached read). */
-export const searchLibrary = bookAction(
-  null,
-  z.object({ q: z.string().max(200) }),
-  async ({ q }, { book }) => {
-    const store = await libraryStore(book);
-    const snap = await store.snapshot();
-    return searchPages(
-      snap.pages.rows.map((r) => r.data),
-      snap.blocks.rows.map((r) => r.data),
-      q,
-    );
   },
   NO_REFRESH,
 );

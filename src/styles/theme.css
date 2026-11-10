@@ -335,6 +335,15 @@
   --color-notification-error-foreground:       var(--color-rose-600);
   --color-notification-center-background:      var(--color-white);
 
+  /* Library chips: @mentions (blue) and dates (green ahead, rose once past).
+   * Text steps darker than the notification pairs so it clears 4.5:1 on the tint. */
+  --color-chip-person-background:   var(--color-blue-100);
+  --color-chip-person-foreground:   var(--color-blue-800);
+  --color-chip-date-background:     var(--color-lime-100);
+  --color-chip-date-foreground:     var(--color-lime-800);
+  --color-chip-overdue-background:   var(--color-rose-100);
+  --color-chip-overdue-foreground:   var(--color-rose-800);
+
   /* Table status chips. Dark mappings come from the medical dashboard table
    * in Figma (4139:7202, 4139:7240, 4139:7278, 4139:7315). */
   --color-status-lime-background:   var(--color-lime-200);
@@ -560,6 +569,13 @@
   --color-notification-error-foreground:       var(--color-rose-300);
   --color-notification-center-background:      var(--color-neutral-900);
 
+  --color-chip-person-background:   color-mix(in srgb, var(--color-blue-800) 50%, transparent);
+  --color-chip-person-foreground:   var(--color-blue-200);
+  --color-chip-date-background:     color-mix(in srgb, var(--color-lime-800) 50%, transparent);
+  --color-chip-date-foreground:     var(--color-lime-200);
+  --color-chip-overdue-background:   color-mix(in srgb, var(--color-rose-800) 50%, transparent);
+  --color-chip-overdue-foreground:   var(--color-rose-200);
+
   /* Borders and separators */
   --color-border-button-default:   var(--color-neutral-700);
   --color-border-button-hover:     var(--color-neutral-500);
@@ -777,6 +793,12 @@
   --color-notification-error-background:       var(--color-notification-error-background);
   --color-notification-error-foreground:       var(--color-notification-error-foreground);
   --color-notification-center-background:      var(--color-notification-center-background);
+  --color-chip-person-background:   var(--color-chip-person-background);
+  --color-chip-person-foreground:   var(--color-chip-person-foreground);
+  --color-chip-date-background:     var(--color-chip-date-background);
+  --color-chip-date-foreground:     var(--color-chip-date-foreground);
+  --color-chip-overdue-background:  var(--color-chip-overdue-background);
+  --color-chip-overdue-foreground:  var(--color-chip-overdue-foreground);
   --color-status-lime-background:   var(--color-status-lime-background);
   --color-status-lime-text:         var(--color-status-lime-text);
   --color-status-yellow-background: var(--color-status-yellow-background);

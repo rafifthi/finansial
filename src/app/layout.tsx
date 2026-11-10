@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import "@/styles/app.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], axes: ["opsz"] });
+// The code face behind theme.css's --font-mono (Library code blocks and inline code).
+const mono = JetBrains_Mono({ variable: "--font-mono-source", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: { default: "Finansial", template: "%s · Finansial" },
@@ -19,7 +21,7 @@ const themeScript = `try{var t=localStorage.getItem("boardui:theme");if(t==="dar
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${mono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

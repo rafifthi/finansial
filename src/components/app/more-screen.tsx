@@ -17,20 +17,13 @@ import { SearchField } from "@/components/base/search-field/search-field";
 import { SwitchTrack } from "@/components/base/switch/switch";
 import { ROLE_INFO } from "@/lib/auth/roles";
 import { cx } from "@/utils/cx";
-import { accountHref, navFor, type ResolvedNav } from "./app-sidebar";
+import { accountHref, groupNav, navFor, type ResolvedNav } from "./app-sidebar";
 import { BookIcon } from "./book-switcher";
 import { PageHeader } from "./page-header";
 import { useShell } from "./shell-context";
 
 /** Pages the phone tab bar already shows, so More leaves them out. */
 const IN_TAB_BAR = ["", "/transactions", "/budget"];
-
-/** In-book pages grouped the way they get used; paths are relative to /b/<bookId>. */
-const GROUPS: { label: string; paths: string[] }[] = [
-  { label: "Check", paths: ["/reconcile", "/bill-check"] },
-  { label: "Plan", paths: ["/savings", "/installments", "/recurring"] },
-  { label: "Book", paths: ["/members", "/settings"] },
-];
 
 const chevron = <RiArrowRightSLine className="size-5 shrink-0 text-foreground-icon-tertiary rtl:-scale-x-100" aria-hidden />;
 
@@ -120,14 +113,8 @@ export function MoreScreen() {
   const active = (item: ResolvedNav) => pathname === item.href || pathname.startsWith(`${item.href}/`);
 
   const base = current ? `/b/${current.id}` : "";
-  const byPath = (path: string) => nav.find((n) => n.href === `${base}${path}`);
-  const groups = current
-    ? GROUPS.map((g) => ({ label: g.label, items: g.paths.map(byPath).filter((n): n is ResolvedNav => Boolean(n)) })).filter((g) => g.items.length)
-    : [{ label: "Account", items: nav }];
-  // Anything a future nav entry adds still shows up, after the known groups.
-  const grouped = new Set(groups.flatMap((g) => g.items.map((i) => i.href)));
-  const rest = current ? nav.filter((n) => !grouped.has(n.href) && !IN_TAB_BAR.some((p) => n.href === `${base}${p}`)) : [];
-  if (rest.length) groups.push({ label: "More", items: rest });
+  // Same purpose groups as the sidebar, minus what the tab bar already shows.
+  const groups = groupNav(nav.filter((n) => !current || !IN_TAB_BAR.some((p) => n.href === `${base}${p}`)));
 
   const q = query.trim().toLowerCase();
   const matches = q ? nav.filter((n) => n.label.toLowerCase().includes(q)) : [];

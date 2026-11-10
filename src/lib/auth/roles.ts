@@ -6,12 +6,12 @@ export type Role = "admin" | "member" | "viewer";
 
 export const ROLE_INFO: Record<Role, { label: string; description: string }> = {
   admin: { label: "Admin", description: "Everything, including users, settings and categories" },
-  member: { label: "Member", description: "Add and edit transactions, budgets, savings adjustments, installments, recurring rules and lists" },
+  member: { label: "Member", description: "Add and edit transactions, budgets, savings adjustments, installments, recurring rules, lists and Library pages" },
   viewer: { label: "Viewer", description: "Read-only access to every page" },
 };
 
 export const PERMISSIONS = {
-  /** Transactions, budgets, savings adjustments, installments, recurring, reconcile, lists. */
+  /** Transactions, budgets, savings adjustments, installments, recurring, reconcile, lists, Library pages. */
   "data:write": ["admin", "member"],
   /** Categories, household settings. */
   "setup:write": ["admin"],

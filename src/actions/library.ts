@@ -1,0 +1,395 @@
+"use server";
+
+import { z } from "zod";
+import { bookAction, FieldErrors } from "@/lib/data/action";
+import { libraryStore } from "@/lib/data/store";
+import { MAX_BLOCK_CHARS, mentionIds, nodeText, rowNode, splitJson, type DocNode } from "@/lib/library/blocks";
+import { withBeat } from "@/lib/library/presence";
+import { nextPosition, withDescendants } from "@/lib/library/tree";
+import { bodyMentionIds } from "@/lib/library/comment-body";
+import { quoteOf } from "@/lib/library/comments";
+import { mentionInbox } from "@/lib/data/library-inbox";
+import { PageCommentSchema, PageSchema, type Page, type PageBlock, type PageComment } from "@/lib/sheets/schema";
+
+/*
+ * The Library updates the screen before the server answers, so these actions
+ * don't re-render the page (`refresh: false`). The client makes page ids and
+ * the editor makes block ids, which makes a retried save harmless.
+ */
+const NO_REFRESH = { refresh: false };
+
+// Ids come from the browser (nanoid, UUIDs) or from rows typed into the sheet by hand, which can be short.
+const clientId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, "Invalid id");
+
+/** Every page (archived ones too, for undo) and the caller's unread mentions; the client polls this. */
+export const syncLibrary = bookAction(
+  null,
+  z.object({}),
+  async (_input, { book, user }) => {
+    const store = await libraryStore(book);
+    const inbox = await mentionInbox(store, user);
+    return { pages: (await store.rows("pages")) as Page[], unread: inbox.items.filter((i) => i.unread).length };
+  },
+  NO_REFRESH,
+);
+
+/** Opening the inbox marks everything in it as read, on every device. */
+export const markMentionsSeen = bookAction(
+  null,
+  z.object({}),
+  async (_input, { book, user }) => {
+    const store = await libraryStore(book);
+    const now = new Date().toISOString();
+    const reads = await store.fresh("reads");
+    if (reads.some((r) => r.user_id === user.id)) await store.update("reads", user.id, { mentions_seen_at: now });
+    else await store.insert("reads", [{ user_id: user.id, mentions_seen_at: now }]);
+  },
+  NO_REFRESH,
+);
+
+/** One page and its blocks, read fresh so a poll sees the other person's last save. */
+export const getPage = bookAction(
+  null,
+  z.object({ id: clientId }),
+  async ({ id }, { book }) => {
+    const store = await libraryStore(book);
+    const [pages, blocks] = await Promise.all([store.fresh("pages"), store.fresh("blocks")]);
+    const page = pages.find((p) => p.id === id);
+    if (!page) throw new Error("This page doesn't exist any more.");
+    return { page, blocks: blocks.filter((b) => b.page_id === id) };
+  },
+  NO_REFRESH,
+);
+
+export const createPage = bookAction(
+  "data:write",
+  z.object({ id: clientId, parent_id: clientId.or(z.literal("")).default(""), title: z.string().max(200).default("") }),
+  async (input, { book, user }) => {
+    const store = await libraryStore(book);
+    const pages = await store.fresh("pages");
+    const existing = pages.find((p) => p.id === input.id);
+    if (existing) return existing; // a retried create
+    if (input.parent_id && !pages.some((p) => p.id === input.parent_id && !p.archived)) throw new Error("The parent page is gone.");
+    const now = new Date().toISOString();
+    const page = PageSchema.parse({
+      ...input,
+      position: nextPosition(pages, input.parent_id),
+      version: 0,
+      created_at: now,
+      created_by: user.email,
+      updated_at: now,
+      updated_by: user.email,
+    });
+    await store.insert("pages", [page]);
+    return page;
+  },
+  NO_REFRESH,
+);
+
+const NodeSchema = z.object({ type: z.string().min(1), attrs: z.record(z.string(), z.unknown()).optional() }).loose();
+
+const BlockSchema = z.object({
+  id: clientId,
+  type: z.string().regex(/^[a-zA-Z]{1,40}$/),
+  position: z.number().finite(),
+  json: z.string().max(MAX_BLOCK_CHARS, "This block is too long to save. Split it into smaller ones."),
+  /** The block as this editor last saw it from the server ("" for a new one), to notice someone else's change. */
+  base: z.string().max(MAX_BLOCK_CHARS).optional(),
+});
+
+/** A block someone else reworded since this editor last saw it; their version was kept. */
+export interface BlockConflict {
+  id: string;
+  /** "edited": both changed it. "removed": you deleted it, they changed it. */
+  kind: "edited" | "removed";
+  theirs: { json: string; text: string; by: string; at: string; position: number };
+}
+
+/** The words of a stored or sent block, for telling whether anyone changed what it says. */
+const wordsOf = (json: string) => {
+  try {
+    return nodeText(JSON.parse(json) as DocNode);
+  } catch {
+    return "";
+  }
+};
+
+/**
+ * Saves the blocks that changed since the client's last save, plus the title.
+ * Blocks the client didn't send keep whatever the sheet has, so two people
+ * editing different blocks of one page both keep their work; the answer is
+ * the page as it now stands, for the client to catch up with.
+ */
+export const savePage = bookAction(
+  "data:write",
+  z.object({
+    id: clientId,
+    title: z.string().max(200).optional(),
+    upserts: z.array(BlockSchema).max(2000),
+    removes: z.array(clientId).max(2000),
+    /** For each removed block, how it looked when this editor last saw it. */
+    removeBases: z.record(z.string(), z.string().max(MAX_BLOCK_CHARS)).default({}),
+  }),
+  async (input, { book, user }) => {
+    const store = await libraryStore(book);
+    const [pages, allBlocks] = await Promise.all([store.fresh("pages"), store.fresh("blocks")]);
+    const page = pages.find((p) => p.id === input.id);
+    if (!page) throw new Error("This page doesn't exist any more.");
+    if (page.archived) throw new Error("This page is in the trash. Restore it to keep editing.");
+
+    const now = new Date().toISOString();
+    const byId = new Map(allBlocks.map((b) => [b.id, b]));
+    const inserts: PageBlock[] = [];
+    const updates: { key: string; patch: Partial<PageBlock> }[] = [];
+    let reworded = false;
+    const conflicts: BlockConflict[] = [];
+    /**
+     * Someone else (not this person on another device) changed the block's words since `base`.
+     * Changes that leave the words alone (moves, ids, formatting housekeeping) don't count.
+     */
+    const changedByOther = (existing: PageBlock, base: string | undefined) =>
+      base !== undefined && base !== "" && existing.updated_by !== user.email && existing.text !== wordsOf(base);
+    const theirs = (existing: PageBlock) => ({
+      json: JSON.stringify(rowNode(existing)[0]),
+      text: existing.text,
+      by: existing.updated_by,
+      at: existing.updated_at,
+      position: existing.position,
+    });
+
+    for (const b of input.upserts) {
+      let node: DocNode;
+      try {
+        node = NodeSchema.parse(JSON.parse(b.json)) as DocNode;
+      } catch {
+        throw new FieldErrors({ upserts: "A block couldn't be read. Reload the page and try again." });
+      }
+      const existing = byId.get(b.id);
+      if (existing && existing.page_id !== input.id) throw new Error("Two pages share a block. Reload the page and try again.");
+      // Both of you reworded it: keep theirs and say so, rather than overwrite it unseen.
+      if (existing && changedByOther(existing, b.base) && existing.text !== nodeText(node)) {
+        conflicts.push({ id: b.id, kind: "edited", theirs: theirs(existing) });
+        continue;
+      }
+      const text = nodeText(node);
+      const mentions = mentionIds(node).join(",");
+      // A block is "edited by" whoever last changed its words. Moves and the editor's own housekeeping
+      // (ids for list items, default attributes) rewrite the row but keep its author, so they don't
+      // claim someone else's words or resurface their mentions.
+      const changedWords = !existing || existing.text !== text || existing.mentions !== mentions || existing.type !== node.type;
+      reworded ||= changedWords;
+      const stamp = changedWords ? { updated_at: now, updated_by: user.email } : { updated_at: existing.updated_at, updated_by: existing.updated_by };
+      const row = { position: b.position, type: node.type, text, ...splitJson(b.json), mentions, ...stamp };
+      if (existing) updates.push({ key: b.id, patch: row });
+      else inserts.push({ id: b.id, page_id: input.id, ...row });
+    }
+    const removes = input.removes.filter((id) => {
+      const existing = byId.get(id);
+      if (existing?.page_id !== input.id) return false;
+      // Deleted here, reworded there: keep their words and ask.
+      if (changedByOther(existing, input.removeBases[id])) {
+        conflicts.push({ id, kind: "removed", theirs: theirs(existing) });
+        return false;
+      }
+      return true;
+    });
+
+    // Each call is one read and one write of its tab; skip the ones with nothing to do.
+    if (inserts.length) await store.insert("blocks", inserts);
+    if (updates.length) await store.updateMany("blocks", updates);
+    if (removes.length) await store.remove("blocks", removes);
+    const changed = inserts.length + updates.length + removes.length > 0;
+    const retitled = input.title !== undefined && input.title !== page.title;
+    let saved = page;
+    if (changed || retitled) {
+      saved = await store.update("pages", page.id, {
+        ...(retitled ? { title: input.title } : {}),
+        version: page.version + 1,
+        // "Edited" moves only when words change (or a block goes): not for moves or housekeeping.
+        ...(retitled || reworded || removes.length ? { updated_at: now, updated_by: user.email } : {}),
+      });
+    }
+
+    const gone = new Set(removes);
+    const written = new Map([...inserts, ...updates.map((u) => ({ ...byId.get(u.key)!, ...u.patch }))].map((b) => [b.id, b]));
+    const blocks = allBlocks
+      .filter((b) => b.page_id === input.id && !gone.has(b.id))
+      .map((b) => written.get(b.id) ?? b)
+      .concat(inserts);
+    return { page: saved, blocks, conflicts };
+  },
+  NO_REFRESH,
+);
+
+/** Moves a page and everything under it to the trash. */
+export const archivePage = bookAction(
+  "data:write",
+  z.object({ id: clientId }),
+  async ({ id }, { book, user }) => {
+    const store = await libraryStore(book);
+    const pages = await store.fresh("pages");
+    if (!pages.some((p) => p.id === id)) throw new Error("This page doesn't exist any more.");
+    const ids = withDescendants(pages, id).filter((pid) => !pages.find((p) => p.id === pid)?.archived);
+    const now = new Date().toISOString();
+    await store.updateMany("pages", ids.map((key) => ({ key, patch: { archived: true, updated_at: now, updated_by: user.email } })));
+    return { ids };
+  },
+  NO_REFRESH,
+);
+
+/** Undo for archivePage: brings back exactly the pages it archived. */
+export const restorePages = bookAction(
+  "data:write",
+  z.object({ ids: z.array(clientId).min(1).max(500) }),
+  async ({ ids }, { book, user }) => {
+    const store = await libraryStore(book);
+    const pages = await store.fresh("pages");
+    const known = ids.filter((id) => pages.some((p) => p.id === id));
+    const now = new Date().toISOString();
+    await store.updateMany("pages", known.map((key) => ({ key, patch: { archived: false, updated_at: now, updated_by: user.email } })));
+  },
+  NO_REFRESH,
+);
+
+/* ---- Comments: on a block or the whole page ---- */
+
+/** A page's comments, read fresh; the open page polls this for the other person's. */
+export const listComments = bookAction(
+  null,
+  z.object({ page_id: clientId }),
+  async ({ page_id }, { book }) => {
+    const store = await libraryStore(book);
+    return (await store.fresh("comments")).filter((c) => c.page_id === page_id) as PageComment[];
+  },
+  NO_REFRESH,
+);
+
+const Body = z.string().trim().min(1, "Write a comment first.").max(5000, "Keep it under 5,000 characters.");
+
+export const addComment = bookAction(
+  "data:write",
+  z.object({
+    id: clientId,
+    page_id: clientId,
+    block_id: z.string().max(40).default(""),
+    parent_id: clientId.or(z.literal("")).default(""),
+    quote: z.string().max(2000).default(""),
+    body: Body,
+  }),
+  async (input, { book, user }) => {
+    const store = await libraryStore(book);
+    const [pages, comments] = await Promise.all([store.fresh("pages"), store.fresh("comments")]);
+    const existing = comments.find((c) => c.id === input.id);
+    if (existing) return existing; // a retried send
+    if (!pages.some((p) => p.id === input.page_id && !p.archived)) throw new Error("This page doesn't exist any more.");
+    // A reply joins its thread's block; only first comments carry a quote.
+    const root = input.parent_id ? comments.find((c) => c.id === input.parent_id && c.page_id === input.page_id) : undefined;
+    if (input.parent_id && !root) throw new Error("That thread was deleted.");
+    const now = new Date().toISOString();
+    const comment = PageCommentSchema.parse({
+      ...input,
+      block_id: root ? root.block_id : input.block_id,
+      quote: root ? "" : quoteOf(input.quote),
+      author_name: user.name,
+      mentions: bodyMentionIds(input.body).join(","),
+      created_at: now,
+      created_by: user.email,
+      updated_at: now,
+    });
+    await store.insert("comments", [comment]);
+    return comment;
+  },
+  NO_REFRESH,
+);
+
+/** Only the author edits or deletes a comment (book admins may delete any). */
+async function ownComment(book: Parameters<typeof libraryStore>[0], id: string, email: string, admin: boolean) {
+  const store = await libraryStore(book);
+  const comment = (await store.fresh("comments")).find((c) => c.id === id);
+  if (!comment || comment.deleted) throw new Error("That comment was deleted.");
+  if (comment.created_by !== email && !admin) throw new Error("Only the person who wrote a comment can change it.");
+  return { store, comment };
+}
+
+export const editComment = bookAction(
+  "data:write",
+  z.object({ id: clientId, body: Body }),
+  async ({ id, body }, { book, user }) => {
+    const { store } = await ownComment(book, id, user.email, false);
+    return store.update("comments", id, { body, mentions: bodyMentionIds(body).join(","), updated_at: new Date().toISOString() });
+  },
+  NO_REFRESH,
+);
+
+export const deleteComment = bookAction(
+  "data:write",
+  z.object({ id: clientId }),
+  async ({ id }, { book, user, membership }) => {
+    const { store } = await ownComment(book, id, user.email, membership.role === "admin");
+    await store.update("comments", id, { deleted: true, updated_at: new Date().toISOString() });
+  },
+  NO_REFRESH,
+);
+
+/** Resolving closes a thread for everyone; reopening brings it back. */
+export const resolveThread = bookAction(
+  "data:write",
+  z.object({ id: clientId, resolved: z.boolean() }),
+  async ({ id, resolved }, { book, user }) => {
+    const store = await libraryStore(book);
+    const comment = (await store.fresh("comments")).find((c) => c.id === id);
+    if (!comment) throw new Error("That thread was deleted.");
+    const now = new Date().toISOString();
+    return store.update("comments", comment.parent_id || comment.id, {
+      resolved,
+      resolved_by: resolved ? user.email : "",
+      resolved_at: resolved ? now : "",
+      updated_at: now,
+    });
+  },
+  NO_REFRESH,
+);
+
+/* ---- Page icon, moving, search and who's editing ---- */
+
+/** The emoji beside a page's title (or none). Not an edit to its words, so "Edited" stays. */
+export const setPageIcon = bookAction(
+  "data:write",
+  z.object({ id: clientId, emoji: z.string().max(16) }),
+  async ({ id, emoji }, { book }) => {
+    const store = await libraryStore(book);
+    if (!(await store.fresh("pages")).some((p) => p.id === id)) throw new Error("This page doesn't exist any more.");
+    return store.update("pages", id, { emoji });
+  },
+  NO_REFRESH,
+);
+
+/** Moves a page in the tree: under another page (or the top) at a position among its new siblings. */
+export const movePage = bookAction(
+  "data:write",
+  z.object({ id: clientId, parent_id: clientId.or(z.literal("")), position: z.number().finite() }),
+  async ({ id, parent_id, position }, { book }) => {
+    const store = await libraryStore(book);
+    const pages = await store.fresh("pages");
+    if (!pages.some((p) => p.id === id)) throw new Error("This page doesn't exist any more.");
+    if (parent_id && !pages.some((p) => p.id === parent_id && !p.archived)) throw new Error("That page is gone.");
+    // Under itself or one of its own pages would cut it off the tree.
+    if (parent_id && withDescendants(pages, id).includes(parent_id)) throw new Error("A page can't go inside itself.");
+    return store.update("pages", id, { parent_id, position });
+  },
+  NO_REFRESH,
+);
+
+/** "Still typing here" (or "left"), so the other person sees who's editing the page. */
+export const markEditing = bookAction(
+  "data:write",
+  z.object({ id: clientId, active: z.boolean() }),
+  async ({ id, active }, { book, user }) => {
+    const store = await libraryStore(book);
+    const page = (await store.fresh("pages")).find((p) => p.id === id);
+    if (!page) return;
+    const editing = withBeat(page.editing, user.id, active);
+    if (editing !== page.editing) await store.update("pages", id, { editing });
+  },
+  NO_REFRESH,
+);

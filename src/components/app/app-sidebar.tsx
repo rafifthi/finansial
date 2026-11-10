@@ -2,12 +2,14 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useTransition } from "react";
+import { Fragment, useEffect, useId, useState, useSyncExternalStore, useTransition } from "react";
 import {
   type RemixiconComponentType,
   RiAddLine,
+  RiArrowDownSLine,
   RiArrowLeftRightLine,
   RiBankCard2Line,
+  RiBookOpenLine,
   RiBookShelfLine,
   RiCalendarScheduleLine,
   RiCheckDoubleLine,
@@ -19,6 +21,7 @@ import {
   RiMoreLine,
   RiPieChartLine,
   RiSafe2Line,
+  RiSearchLine,
   RiRepeatLine,
   RiSettings4Line,
   RiShieldUserLine,
@@ -40,31 +43,48 @@ import { ROLE_INFO } from "@/lib/auth/roles";
 import type { FormOptions } from "@/lib/data/app-data";
 import { cx } from "@/utils/cx";
 import { BookSwitcher, type ShellBook } from "./book-switcher";
-import type { ShellValue } from "./shell-context";
+import { GlobalSearch } from "./global-search";
+import { Kbd } from "@/components/base/kbd/kbd";
+import { useNavSlot, type ShellValue } from "./shell-context";
 import { useCan } from "./permissions";
+
+/** What a page is for; the sidebar and the More page both group by it, in this order. */
+export const NAV_GROUPS = [
+  { key: "finance", label: "Finance" },
+  { key: "others", label: "Others" },
+  // Setting up the book rather than a purpose: the sidebar shows it without a heading.
+  { key: "book", label: "Book" },
+] as const;
+
+export type NavGroup = (typeof NAV_GROUPS)[number]["key"];
 
 interface NavEntry {
   path: string;
   label: string;
   icon: RemixiconComponentType;
+  group: NavGroup;
   badgeKey?: "unverified";
   /** Shown only to book admins. */
   admins?: boolean;
+  /** Current only on this exact path, not the pages under it. */
+  exact?: boolean;
 }
 
 /** In-book destinations; `path` is relative to /b/<bookId>. */
 const BOOK_NAV: NavEntry[] = [
-  { path: "", label: "Dashboard", icon: RiHomeLine },
-  { path: "/transactions", label: "Transactions", icon: RiArrowLeftRightLine },
-  { path: "/reconcile", label: "Reconcile", icon: RiCheckDoubleLine, badgeKey: "unverified" },
-  { path: "/bill-check", label: "Bill check", icon: RiBankCard2Line },
-  { path: "/budget", label: "Budget", icon: RiPieChartLine },
-  { path: "/lists", label: "Lists", icon: RiListCheck3 },
-  { path: "/savings", label: "Savings", icon: RiSafe2Line },
-  { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine },
-  { path: "/recurring", label: "Recurring", icon: RiRepeatLine },
-  { path: "/members", label: "Members", icon: RiGroupLine, admins: true },
-  { path: "/settings", label: "Settings", icon: RiSettings4Line },
+  { path: "", label: "Dashboard", icon: RiHomeLine, group: "finance" },
+  { path: "/transactions", label: "Transactions", icon: RiArrowLeftRightLine, group: "finance" },
+  { path: "/reconcile", label: "Reconcile", icon: RiCheckDoubleLine, group: "finance", badgeKey: "unverified" },
+  { path: "/bill-check", label: "Bill check", icon: RiBankCard2Line, group: "finance" },
+  { path: "/budget", label: "Budget", icon: RiPieChartLine, group: "finance" },
+  { path: "/savings", label: "Savings", icon: RiSafe2Line, group: "finance" },
+  { path: "/installments", label: "Installments", icon: RiCalendarScheduleLine, group: "finance" },
+  { path: "/recurring", label: "Recurring", icon: RiRepeatLine, group: "finance" },
+  { path: "/lists", label: "Lists", icon: RiListCheck3, group: "others" },
+  // Exact: inside a page, the page's own row in the tree below is the current one.
+  { path: "/library", label: "Library", icon: RiBookOpenLine, group: "others", exact: true },
+  { path: "/members", label: "Members", icon: RiGroupLine, group: "book", admins: true },
+  { path: "/settings", label: "Settings", icon: RiSettings4Line, group: "book" },
 ];
 
 type ShellProps = ShellValue;
@@ -75,6 +95,20 @@ export interface ResolvedNav {
   icon: RemixiconComponentType;
   badge?: number;
   exact?: boolean;
+  /** In-book pages only; account pages aren't grouped. */
+  group?: NavGroup;
+}
+
+export interface ResolvedNavGroup {
+  key: NavGroup | "account";
+  label: string;
+  items: ResolvedNav[];
+}
+
+/** Nav entries in their purpose groups, empty groups dropped. Account pages form one group. */
+export function groupNav(nav: ResolvedNav[]): ResolvedNavGroup[] {
+  if (!nav.some((n) => n.group)) return [{ key: "account", label: "Account", items: nav }];
+  return NAV_GROUPS.map((g) => ({ key: g.key, label: g.label, items: nav.filter((n) => n.group === g.key) })).filter((g) => g.items.length);
 }
 
 export function navFor({ current, user, badges }: Pick<ShellProps, "current" | "user" | "badges">): ResolvedNav[] {
@@ -84,7 +118,8 @@ export function navFor({ current, user, badges }: Pick<ShellProps, "current" | "
       label: n.label,
       icon: n.icon,
       badge: n.badgeKey ? badges[n.badgeKey] : undefined,
-      exact: n.path === "",
+      exact: n.path === "" || n.exact,
+      group: n.group,
     }));
   }
   return [
@@ -103,7 +138,34 @@ export const accountHref = (current?: ShellBook) => (current ? `/b/${current.id}
 const isActive = (pathname: string, item: ResolvedNav) =>
   item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () => void }) {
+/* The Library row's page tree: open or folded away, remembered per device. */
+const TREE_KEY = "finansial:nav-library-open";
+const TREE_EVENT = "finansial:nav-library";
+function readTreeOpen() {
+  try {
+    return window.localStorage.getItem(TREE_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+function subscribeTree(onChange: () => void) {
+  window.addEventListener(TREE_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(TREE_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+function setTreeOpen(open: boolean) {
+  try {
+    window.localStorage.setItem(TREE_KEY, open ? "1" : "0");
+  } catch {
+    // Private mode: it still toggles for this visit.
+  }
+  window.dispatchEvent(new Event(TREE_EVENT));
+}
+
+function SidebarPanel({ onNavigate, onSearch, ...props }: ShellProps & { onNavigate?: () => void; onSearch: () => void }) {
   const { user, current, books, signOutAction } = props;
   const pathname = usePathname();
   const initials = (user.name || user.email).slice(0, 1).toUpperCase();
@@ -111,11 +173,29 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
   const canCatat = useCan("data:write") && Boolean(current);
   const catatHref = current ? `/b/${current.id}/catat` : "";
   const onCatat = pathname === catatHref;
+  const navId = useId();
+  const { setLibrarySlot } = useNavSlot();
+  const treeOpen = useSyncExternalStore(subscribeTree, readTreeOpen, () => true);
+  const treeId = `${navId}-library-pages`;
 
   return (
     <div className="flex h-full flex-col justify-between gap-4">
       <div className="flex flex-col gap-3">
         <BookSwitcher books={books} current={current} onNavigate={onNavigate} />
+        {/* One search for the whole book: pages of the app, Library pages, transactions, lists. */}
+        <button
+          type="button"
+          onClick={onSearch}
+          aria-keyshortcuts="Meta+K Control+K"
+          className={cx(
+            "flex h-8 w-full cursor-pointer items-center gap-2 rounded-lg border border-border-button-default bg-background-primary-default px-2 text-start outline-none transition-colors",
+            "hover:border-border-button-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+          )}
+        >
+          <RiSearchLine className="size-4 shrink-0 text-foreground-icon-tertiary" aria-hidden />
+          <span className="flex-1 truncate text-body-regular text-text-placeholder">Search</span>
+          <Kbd aria-hidden>⌘K</Kbd>
+        </button>
         {canCatat ? (
           // The main action: record a transaction with AI, above everything else.
           <Link
@@ -132,28 +212,54 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
             <span className="text-body-semibold">Catat</span>
           </Link>
         ) : null}
-        <nav aria-label="Main" className="flex flex-col gap-0.5">
-          {nav.map((item) => {
-            const active = isActive(pathname, item);
+        <nav aria-label="Main" className="flex flex-col gap-4">
+          {groupNav(nav).map((group) => {
+            // Finance and Others get a heading; the book's own pages and account pages don't.
+            const titled = group.key === "finance" || group.key === "others";
+            const headingId = `${navId}-${group.key}`;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cx(
-                  "flex h-7 items-center justify-between rounded-lg px-2 outline-none transition-colors",
-                  "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
-                  // Soft raised pill: the solid blue is kept for the Catat call to action.
-                  active ? "bg-background-primary-default shadow-xs" : "hover:bg-background-secondary-hover",
-                )}
-              >
-                <span className="flex items-center gap-2">
-                  <item.icon className={cx("size-4 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
-                  <span className={cx(active ? "text-body-medium text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
-                </span>
-                <NavTrailing badge={item.badge} />
-              </Link>
+              <div key={group.key} role="group" aria-labelledby={titled ? headingId : undefined} className="flex flex-col gap-0.5">
+                {titled ? (
+                  <h2 id={headingId} className="px-2 pb-1 text-caption-1-semibold text-text-tertiary">
+                    {group.label}
+                  </h2>
+                ) : null}
+                {group.items.map((item) => {
+                  if (!item.href.endsWith("/library")) return <NavLink key={item.href} item={item} active={isActive(pathname, item)} onNavigate={onNavigate} />;
+                  const inLibrary = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <Fragment key={item.href}>
+                      <div className="group/library relative">
+                        {/* Folded away, the Library row stands in for the open page's hidden row. */}
+                        <NavLink item={item} active={isActive(pathname, item) || (inLibrary && !treeOpen)} onNavigate={onNavigate} />
+                        {inLibrary ? (
+                          <button
+                            type="button"
+                            aria-expanded={treeOpen}
+                            aria-controls={treeId}
+                            aria-label={treeOpen ? "Hide Library pages" : "Show Library pages"}
+                            onClick={() => setTreeOpen(!treeOpen)}
+                            className="absolute end-1 top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-foreground-icon-tertiary outline-none transition-colors hover:bg-background-secondary-hover hover:text-foreground-icon-primary focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                          >
+                            <RiArrowDownSLine className={cx("size-4 transition-transform duration-200 motion-reduce:transition-none", !treeOpen && "-rotate-90 rtl:rotate-90")} aria-hidden />
+                          </button>
+                        ) : null}
+                      </div>
+                      {/* Inside the Library, its page tree opens up right here; folding it slides it shut. */}
+                      <div
+                        id={treeId}
+                        inert={!treeOpen}
+                        className={cx(
+                          "grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
+                          treeOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                        )}
+                      >
+                        <div ref={setLibrarySlot} className="min-h-0 overflow-hidden" />
+                      </div>
+                    </Fragment>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>
@@ -165,6 +271,28 @@ function SidebarPanel({ onNavigate, ...props }: ShellProps & { onNavigate?: () =
         <ThemeToggle collapsed />
       </div>
     </div>
+  );
+}
+
+function NavLink({ item, active, onNavigate }: { item: ResolvedNav; active: boolean; onNavigate?: () => void }) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={cx(
+        "flex h-7 items-center justify-between rounded-lg px-2 outline-none transition-colors",
+        "focus-visible:ring-2 focus-visible:ring-border-focus-ring",
+        // Soft raised pill: the solid blue is kept for the Catat call to action.
+        active ? "bg-background-primary-default shadow-xs" : "hover:bg-background-secondary-hover",
+      )}
+    >
+      <span className="flex items-center gap-2">
+        <item.icon className={cx("size-4 shrink-0", active ? "text-button-ghost-foreground" : "text-foreground-icon-secondary")} aria-hidden />
+        <span className={cx(active ? "text-body-medium text-text-primary" : "text-body-medium text-text-secondary")}>{item.label}</span>
+      </span>
+      <NavTrailing badge={item.badge} />
+    </Link>
   );
 }
 
@@ -216,6 +344,20 @@ const TAB_PATHS = ["", "/transactions", "/budget"];
 
 export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: FormOptions }) {
   const pathname = usePathname();
+  const [searching, setSearching] = useState(false);
+  // ⌘K / Ctrl+K anywhere (⌘⇧F too), unless something focused already used it (a page's link shortcut).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || !(e.metaKey || e.ctrlKey)) return;
+      const key = e.key.toLowerCase();
+      if ((key === "k" && !e.shiftKey) || (key === "f" && e.shiftKey)) {
+        e.preventDefault();
+        setSearching(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const canAdd = useCan("data:write") && Boolean(quickAdd && props.current);
   const nav = navFor(props);
   const tabs = props.current
@@ -242,7 +384,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
     <>
       {/* Flat on the canvas, as in Linear: no glass, no card, no edge. */}
       <aside className="sticky top-2 hidden h-[calc(100dvh-16px)] w-[232px] shrink-0 overflow-y-auto p-2 lg:block">
-        <SidebarPanel {...props} />
+        <SidebarPanel {...props} onSearch={() => setSearching(true)} />
       </aside>
 
       {/* Phone / tablet: slim top bar (book switcher) + bottom tab bar */}
@@ -250,6 +392,14 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
         <div className="min-w-0 flex-1">
           <BookSwitcher books={props.books} current={props.current} compact />
         </div>
+        <button
+          type="button"
+          aria-label="Search"
+          onClick={() => setSearching(true)}
+          className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground-icon-secondary outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+        >
+          <RiSearchLine className="size-5" aria-hidden />
+        </button>
         <Link href={accountHref(props.current)} aria-label="Account settings" className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
           <Avatar size="md" initials={initials} />
         </Link>
@@ -285,6 +435,7 @@ export function AppSidebar({ quickAdd, ...props }: ShellProps & { quickAdd?: For
         </div>
       </nav>
 
+      <GlobalSearch open={searching} onOpenChange={setSearching} current={props.current} nav={nav} />
     </>
   );
 }

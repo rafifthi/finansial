@@ -415,6 +415,147 @@ export const LIST_TABLES = {
 
 export type ListTables = typeof LIST_TABLES;
 
+/* ---- Library: pages of rich text, one row per top-level block ---- */
+
+export const PageSchema = z.object({
+  id,
+  /** "" is a top-level page. */
+  parent_id: optId,
+  title: z.string().max(200).default(""),
+  emoji: z.string().default(""),
+  /** Order among siblings; spaced apart so a move rewrites one row. */
+  position: z.number().default(0),
+  /** Goes up on every save; a save from an older version is merged block by block (see lib/library/blocks.ts). */
+  version: z.number().int().nonnegative().default(0),
+  archived: z.boolean().default(false),
+  /** Who has the page open and is typing: "userId@ISO-time" entries, comma-separated; stale ones are ignored. */
+  editing: z.string().default(""),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+  updated_at: z.string().default(""),
+  updated_by: z.string().default(""),
+});
+
+/**
+ * A top-level block of a page (paragraph, heading, list, table…). `json` is
+ * the editor's node and the source of truth; long nodes continue in json_2…
+ * because a cell holds at most 50,000 characters. `text` is a plain copy for
+ * reading the sheet and searching, rewritten on every save. A row added by
+ * hand with only `text` shows as a paragraph.
+ */
+export const PageBlockSchema = z.object({
+  id,
+  page_id: id,
+  position: z.number().default(0),
+  type: z.string().default("paragraph"),
+  text: z.string().default(""),
+  json: z.string().default(""),
+  json_2: z.string().default(""),
+  json_3: z.string().default(""),
+  json_4: z.string().default(""),
+  /** Ids of the people @mentioned in the block, comma-separated, for finding mentions without reading JSON. */
+  mentions: z.string().default(""),
+  updated_at: z.string().default(""),
+  updated_by: z.string().default(""),
+});
+
+/**
+ * A comment on a page: on one block (`block_id`) or the whole page (""). A
+ * reply points at its thread's first comment (`parent_id`); only that first
+ * comment carries `resolved`. `quote` keeps the block's words as they were,
+ * so a thread whose block is deleted still says what it was about.
+ */
+export const PageCommentSchema = z.object({
+  id,
+  page_id: id,
+  block_id: optId,
+  parent_id: optId,
+  quote: z.string().max(500).default(""),
+  body: z.string().max(5000).default(""),
+  resolved: z.boolean().default(false),
+  resolved_by: z.string().default(""),
+  resolved_at: z.string().default(""),
+  /** Hidden but kept, so a thread's replies still make sense. */
+  deleted: z.boolean().default(false),
+  author_name: z.string().default(""),
+  /** Ids of the people @mentioned in the body, comma-separated (see lib/library/comment-body.ts). */
+  mentions: z.string().default(""),
+  created_at: z.string().default(""),
+  created_by: z.string().default(""),
+  updated_at: z.string().default(""),
+});
+
+/** When each person last opened their Library mentions; newer ones count as unread. */
+export const LibraryReadSchema = z.object({
+  user_id: id,
+  mentions_seen_at: z.string().default(""),
+});
+
+export type Page = z.infer<typeof PageSchema>;
+export type PageBlock = z.infer<typeof PageBlockSchema>;
+export type PageComment = z.infer<typeof PageCommentSchema>;
+export type LibraryRead = z.infer<typeof LibraryReadSchema>;
+
+/** Their own tabs, added the first time a book opens the Library. */
+export const LIBRARY_TABLES = {
+  pages: table("Pages", PageSchema, {
+    id: "string",
+    parent_id: "string",
+    title: "string",
+    emoji: "string",
+    position: "number",
+    version: "number",
+    archived: "boolean",
+    editing: "string",
+    created_at: "string",
+    created_by: "string",
+    updated_at: "string",
+    updated_by: "string",
+  }),
+  blocks: table("PageBlocks", PageBlockSchema, {
+    id: "string",
+    page_id: "string",
+    position: "number",
+    type: "string",
+    text: "string",
+    json: "string",
+    json_2: "string",
+    json_3: "string",
+    json_4: "string",
+    mentions: "string",
+    updated_at: "string",
+    updated_by: "string",
+  }),
+  comments: table("PageComments", PageCommentSchema, {
+    id: "string",
+    page_id: "string",
+    block_id: "string",
+    parent_id: "string",
+    quote: "string",
+    body: "string",
+    resolved: "boolean",
+    resolved_by: "string",
+    resolved_at: "string",
+    deleted: "boolean",
+    author_name: "string",
+    mentions: "string",
+    created_at: "string",
+    created_by: "string",
+    updated_at: "string",
+  }),
+  reads: table(
+    "LibraryReads",
+    LibraryReadSchema,
+    {
+      user_id: "string",
+      mentions_seen_at: "string",
+    },
+    "user_id",
+  ),
+} as const;
+
+export type LibraryTables = typeof LIBRARY_TABLES;
+
 /** Any set of tables a SheetDb can serve (book sheet or registry sheet). */
 export type TableSet = Record<string, TableDef>;
 export type Tables = typeof TABLES;

@@ -1,0 +1,211 @@
+/* ---------------------------------------------------------------------------
+ * Library pages: the editor's content is ProseMirror's own DOM, so it's styled
+ * here by element rather than with classes. Body copy is a step up from the
+ * app's 13px body (headline, 14px) because pages are for reading.
+ * --------------------------------------------------------------------------- */
+
+.library-prose {
+  @apply flex flex-col gap-2 text-headline-regular text-text-primary outline-none;
+  font-feature-settings: "cv11";
+}
+
+.library-prose > * + h1,
+.library-prose > * + h2,
+.library-prose > * + h3 {
+  @apply mt-4;
+}
+
+/* Jumping to a section from the contents leaves room above it (more under the phone's sticky top bar). */
+.library-prose :is(h1, h2, h3) {
+  @apply scroll-mt-20 lg:scroll-mt-6;
+}
+
+.library-prose h1 {
+  @apply text-title-1-semibold;
+}
+
+.library-prose h2 {
+  @apply text-title-2-semibold;
+}
+
+.library-prose h3 {
+  @apply text-title-3-semibold;
+}
+
+.library-prose a {
+  @apply cursor-pointer text-button-ghost-foreground underline decoration-1 underline-offset-2;
+}
+
+.library-prose strong {
+  @apply font-semibold;
+}
+
+.library-prose code {
+  @apply rounded-md bg-background-tertiary-default px-1 py-0.5 font-mono text-body-2-regular;
+}
+
+.library-prose pre {
+  @apply overflow-x-auto rounded-xl border border-separator-border bg-background-secondary-default p-3 font-mono text-body-2-regular;
+}
+
+.library-prose pre code {
+  @apply bg-transparent p-0;
+}
+
+.library-prose blockquote {
+  @apply border-s-2 border-border-button-default ps-3 text-text-secondary;
+}
+
+.library-prose hr {
+  @apply my-2 border-separator-border;
+}
+
+.library-prose ul,
+.library-prose ol {
+  @apply flex flex-col gap-1 ps-6;
+}
+
+.library-prose ul {
+  list-style: disc;
+}
+
+.library-prose ol {
+  list-style: decimal;
+}
+
+/* Nested numbers read 1. → a. → i., like an outline. */
+.library-prose ol ol {
+  list-style: lower-alpha;
+}
+
+.library-prose ol ol ol {
+  list-style: lower-roman;
+}
+
+.library-prose ul ul {
+  list-style: circle;
+}
+
+/* A block picked with its handle (to drag or delete) shows as selected. */
+.library-prose .ProseMirror-selectednode {
+  @apply rounded-md bg-button-ghost-hover;
+}
+
+.library-prose li > p + * {
+  @apply mt-1;
+}
+
+.library-prose li::marker {
+  @apply text-text-tertiary;
+}
+
+/* Checklists: the box sits where the bullet would. */
+.library-prose ul[data-type="taskList"] {
+  @apply ps-0;
+  list-style: none;
+}
+
+.library-prose ul[data-type="taskList"] li {
+  @apply flex items-start gap-2;
+}
+
+.library-prose ul[data-type="taskList"] li > label {
+  @apply mt-0.5 flex shrink-0 select-none;
+}
+
+.library-prose ul[data-type="taskList"] li > label input {
+  @apply size-4 cursor-pointer accent-accent-solid;
+}
+
+.library-prose ul[data-type="taskList"] li > div {
+  @apply min-w-0 flex-1;
+}
+
+.library-prose ul[data-type="taskList"] li[data-checked="true"] > div {
+  @apply text-text-tertiary line-through;
+}
+
+/* Empty-line hint ("Type / for blocks") and the empty title. */
+.library-prose .is-empty::before {
+  @apply pointer-events-none float-start h-0 text-text-placeholder;
+  content: attr(data-placeholder);
+}
+
+.library-prose ::selection {
+  @apply bg-button-ghost-hover;
+}
+
+/* Blocks with open comments, and the one whose comments are being read. */
+.library-prose .has-comments {
+  @apply rounded-md bg-background-secondary-default;
+}
+
+.library-prose .comment-active {
+  @apply rounded-md bg-button-ghost-hover;
+}
+
+/* @mentions: a blue chip, like a person link; a mention of you is the solid green fill so it finds you. */
+/* Also in comments: the comment box and posted comments. */
+:is(.library-prose, .comment-input, .comment-body) .mention {
+  @apply rounded-md bg-chip-person-background px-1 py-px text-body-medium text-chip-person-foreground;
+  box-decoration-break: clone;
+}
+
+:is(.library-prose, .comment-input, .comment-body) .mention.mention-me {
+  @apply bg-accent-solid text-on-accent;
+}
+
+/* Tables: hairline grid, a tinted header row, and a scroller when it's wider than the page. */
+.library-prose .tableWrapper {
+  @apply overflow-x-auto;
+}
+
+.library-prose table {
+  @apply w-full border-collapse overflow-hidden rounded-xl text-body-regular;
+  table-layout: fixed;
+}
+
+.library-prose th,
+.library-prose td {
+  @apply relative min-w-24 border border-border-table px-2.5 py-1.5 text-start align-top;
+}
+
+.library-prose th {
+  @apply bg-background-secondary-default text-body-semibold text-text-primary;
+}
+
+.library-prose td > p,
+.library-prose th > p {
+  @apply m-0;
+}
+
+/* Cells picked by dragging across the table. */
+.library-prose .selectedCell::after {
+  @apply pointer-events-none absolute inset-0 bg-button-ghost-hover opacity-60;
+  content: "";
+}
+
+/* The column-resize grip and the cursor while dragging it. */
+.library-prose .column-resize-handle {
+  @apply pointer-events-none absolute -end-px top-0 -bottom-px w-0.5 bg-accent-solid;
+}
+
+.library-prose.resize-cursor,
+.resize-cursor .library-prose {
+  cursor: col-resize;
+}
+
+/* The comment box's own placeholder (the page's uses .library-prose). */
+.comment-input p.is-editor-empty:first-child::before {
+  @apply pointer-events-none float-start h-0 text-text-placeholder;
+  content: attr(data-placeholder);
+}
+
+.comment-input p {
+  @apply m-0;
+}
+
+/* A block both people reworded at once, until one version is picked. */
+.library-prose .has-conflict {
+  @apply rounded-md bg-chip-overdue-background;
+}

@@ -10,6 +10,7 @@ import {
   type RemixiconComponentType,
   RiBold,
   RiChat3Line,
+  RiSparkling2Line,
   RiCodeLine,
   RiExternalLinkLine,
   RiItalic,
@@ -157,7 +158,7 @@ function LinkForm({ draft, onDone, editor }: { draft: LinkDraft; onDone: () => v
  * card when the cursor sits on a link, and the link form (⌘K) with separate
  * Text and URL fields, so an address can hide behind words like "Click here".
  */
-export function EditorBubble({ editor, linkEvents, onComment }: { editor: Editor; linkEvents: EventTarget; onComment?: (id: string, text: string) => void }) {
+export function EditorBubble({ editor, linkEvents, onComment, onAskAi }: { editor: Editor; linkEvents: EventTarget; onComment?: (id: string, text: string) => void; onAskAi?: () => void }) {
   const [draft, setDraft] = useState<LinkDraft | null>(null);
   const s = useEditorState({
     editor,
@@ -232,6 +233,7 @@ export function EditorBubble({ editor, linkEvents, onComment }: { editor: Editor
           <ToolButton icon={RiCodeLine} label="Inline code" active={s.code} onPress={toggle("toggleCode")} />
           <span className="mx-0.5 h-4 w-px bg-separator-border" aria-hidden />
           <ToolButton icon={RiLinkM} label="Link (⌘K)" active={s.link !== null} onPress={() => setDraft(linkDraftAt(editor))} />
+          {onAskAi ? <ToolButton icon={RiSparkling2Line} label="Ask AI about this" onPress={onAskAi} /> : null}
           {onComment ? (
             <ToolButton
               icon={RiChat3Line}

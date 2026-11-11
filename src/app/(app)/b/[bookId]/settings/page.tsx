@@ -6,12 +6,14 @@ import { Card } from "@/components/app/card";
 import { CategoryIcon, GROUP_COLOR } from "@/components/app/category-icon";
 import { EntityFormButton } from "@/components/app/entity-form";
 import { PageHeader } from "@/components/app/page-header";
+import { LiveKeySettings } from "@/components/app/live-key-settings";
 import { HouseholdSettings, MyMember } from "@/components/app/settings-form";
 import { SettingsTabs } from "@/components/app/settings-tabs";
 import { Chip } from "@/components/base/badges/chip";
 import { loadAppData } from "@/lib/data/app-data";
 import { fieldSpecs } from "@/lib/data/field-specs";
-import { usingDemoDb } from "@/lib/data/store";
+import { bookStore, usingDemoDb } from "@/lib/data/store";
+import { keyHint, liveKey } from "@/lib/library/live-key";
 import { CATEGORY_GROUPS } from "@/lib/sheets/schema";
 import { cx } from "@/utils/cx";
 
@@ -20,7 +22,7 @@ export const metadata: Metadata = { title: "Settings" };
 export default async function SettingsPage({ params, searchParams }: PageProps<"/b/[bookId]/settings">) {
   const { group: focus } = await searchParams;
   const ctx = await requireBookPage((await params).bookId);
-  const [data, [account, appearance]] = await Promise.all([loadAppData(ctx), personalSections(ctx.user)]);
+  const [data, [account, appearance], live] = await Promise.all([loadAppData(ctx), personalSections(ctx.user), liveKey(bookStore(ctx.book))]);
   const specs = fieldSpecs(data);
   const sheetId = data.book.spreadsheet_id;
 
@@ -44,6 +46,10 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
               locale: data.money.locale,
             }}
           />
+        </Card>
+
+        <Card title="Live cursors" description="See where the others are typing in Library pages, as they type. Runs on Liveblocks.">
+          <LiveKeySettings source={live.source} hint={live.source === "book" ? keyHint(live.key) : ""} />
         </Card>
 
         <Card title={data.book.name} description={`${data.book.kind === "personal" ? "Personal book · only you can open it" : "Family book"}`}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Editor } from "@tiptap/core";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import { getPage, savePage, type BlockConflict } from "@/actions/library";
 import { diffBlocks, docFromRows, savedMap, type DocNode } from "@/lib/library/blocks";
 import type { Page, PageBlock } from "@/lib/sheets/schema";
@@ -55,6 +56,10 @@ interface SaverEvents {
   page: (page: Page) => void;
   title: (title: string) => void;
   conflicts: (list: BlockConflict[]) => void;
+  /** This person's save landed (the page is now at `version`). */
+  saved: (version: number) => void;
+  /** Someone else's save was just folded into the editor; `before` is how the page looked. */
+  arrived: (editor: Editor, before: PMNode) => void;
 }
 
 /**
@@ -233,6 +238,7 @@ class PageSaver {
     if (title !== undefined) this.savedTitle = title;
     this.version = res.data.page.version;
     this.on.page(res.data.page);
+    this.on.saved(this.version);
     this.absorb(res.data.blocks);
     if (this.dirty()) this.schedule(IDLE_MS);
     else {
@@ -257,7 +263,9 @@ class PageSaver {
       this.incoming = blocks;
       return;
     }
+    const before = editor.state.doc;
     replaceDoc(editor, docFromRows(blocks));
+    this.on.arrived(editor, before);
     this.saved = fresh;
     this.lastServer = new Map(fresh);
     this.rebaseline(editor);
@@ -315,6 +323,8 @@ export function usePageSave({
   rows,
   setTitle,
   onPage,
+  onSaved,
+  onArrived,
 }: {
   bookId: string;
   page: Pick<Page, "id" | "title" | "version">;
@@ -322,18 +332,24 @@ export function usePageSave({
   /** Called with the title of work restored from this browser. */
   setTitle: (title: string) => void;
   onPage: (page: Page) => void;
+  onSaved: (version: number) => void;
+  onArrived: (editor: Editor, before: PMNode) => void;
 }) {
   const [status, setStatus] = useState<{ status: SaveStatus; error: string }>({ status: "saved", error: "" });
   const [conflicts, setConflicts] = useState<BlockConflict[]>([]);
-  const [saver] = useState(() => new PageSaver(bookId, page.id, page, rows, { status: () => {}, page: () => {}, title: () => {}, conflicts: () => {} }));
+  const [saver] = useState(() => new PageSaver(bookId, page.id, page, rows, { status: () => {}, page: () => {}, title: () => {}, conflicts: () => {}, saved: () => {}, arrived: () => {} }));
 
   useEffect(() => {
-    saver.listen({ status: (s, error) => setStatus({ status: s, error }), page: onPage, title: setTitle, conflicts: setConflicts });
-  }, [saver, onPage, setTitle]);
+    saver.listen({ status: (s, error) => setStatus({ status: s, error }), page: onPage, title: setTitle, conflicts: setConflicts, saved: onSaved, arrived: onArrived });
+  }, [saver, onPage, setTitle, onSaved, onArrived]);
 
   // Leaving the page or the tab saves now; closing with unsaved work asks first.
   useEffect(() => {
-    const onHide = () => document.visibilityState === "hidden" && saver.dirty() && void saver.flush();
+    // Hidden, save what's typed; back in view, catch up on what others saved meanwhile.
+    const onHide = () => {
+      if (document.visibilityState === "visible") void saver.poll();
+      else if (saver.dirty()) void saver.flush();
+    };
     const onUnload = (e: BeforeUnloadEvent) => {
       if (!saver.dirty()) return;
       void saver.flush();

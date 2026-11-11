@@ -4,12 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
 import UniqueID from "@tiptap/extension-unique-id";
 import { TableKit } from "@tiptap/extension-table";
-import { RiArrowLeftSLine, RiChat3Line, RiCheckLine, RiCloudOffLine, RiLoader4Line, RiPencilLine } from "@remixicon/react";
+import { Markdown } from "@tiptap/markdown";
+import { RiArrowLeftSLine, RiChat3Line, RiSparkling2Line, RiCheckLine, RiCloudOffLine, RiLoader4Line, RiPencilLine } from "@remixicon/react";
 import { InputBase, TextField } from "@/components/base/input/input";
 import { docFromRows } from "@/lib/library/blocks";
 import { buildThreads, openCounts, placeThreads, quoteOf, type Thread } from "@/lib/library/comments";
@@ -31,10 +34,14 @@ import { TocMenu, TocRail, useActiveHeading, useToc } from "./editor/toc";
 import { useLibrary } from "./library-context";
 import { PageMenu } from "./page-tree";
 import { markEditing } from "@/actions/library";
+import { AiPanel, type AiFocus } from "./ai-panel";
 import { ConflictBanner, EditingNow } from "./editing-presence";
+import { selectionFocus } from "./editor/ai-edits";
 import { PageIcon } from "./page-icon";
 import { useComments } from "./use-comments";
 import { usePageSave, type SaveStatus } from "./use-page-save";
+import { useLiveRoom, useLiveSession, type LiveMode } from "./use-live";
+import { LiveCursors, playTyping } from "./editor/live-cursors";
 
 /** Nodes that get a stable id: every top-level block (one sheet row each) and list items, for comments to point at later. */
 const ID_TYPES = ["paragraph", "heading", "bulletList", "orderedList", "taskList", "listItem", "taskItem", "blockquote", "codeBlock", "horizontalRule", "table"];
@@ -95,7 +102,7 @@ class EditingBeat {
 }
 
 /** One Library page: breadcrumbs, title, then the document, saved as it's typed. */
-export function PageEditor({ page: initialPage, rows, comments }: { page: Page; rows: PageBlock[]; comments: PageComment[] }) {
+export function PageEditor({ page: initialPage, rows, comments, liveMode }: { page: Page; rows: PageBlock[]; comments: PageComment[]; liveMode: LiveMode }) {
   const bookId = useBookId();
   const { pages, canEdit, href, patchLocal, user, userName, userId, members, setIcon } = useLibrary();
   const [title, setTitle] = useState(initialPage.title);
@@ -120,8 +127,12 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       beat.leave();
     };
   }, [beat]);
+  // Live cursors: a save tells the others on the page, and what someone else saved plays back as typing.
+  const liveSession = useLiveSession(liveMode, bookId, initialPage.id);
+  const onSaved = useCallback((version: number) => liveSession.announce({ type: "saved", version, by: userId }), [liveSession, userId]);
+  const onArrived = useCallback((ed: Editor, before: PMNode) => void playTyping(ed, before, liveSession.lastSaver), [liveSession]);
   // Before the editor, so the saver is listening by the time the editor attaches.
-  const save = usePageSave({ bookId, page: initialPage, rows, setTitle, onPage });
+  const save = usePageSave({ bookId, page: initialPage, rows, setTitle, onPage, onSaved, onArrived });
   const { saver } = save;
 
   const extensions = useMemo(
@@ -149,8 +160,11 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       DateChip,
       peopleMentions(members, userId),
       UniqueID.configure({ types: ID_TYPES }),
+      // Markdown is how the AI assistant reads and writes the page (editor/ai-edits.ts).
+      Markdown,
       Indent,
       CommentMarks,
+      LiveCursors,
       ...(canEdit ? [SlashMenu, LinkShortcut.configure({ open: () => linkEvents.dispatchEvent(new Event("open")) })] : []),
     ],
     [canEdit, linkEvents, members, userId],
@@ -173,6 +187,8 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   useEffect(() => {
     if (editor) saver.attach(editor);
   }, [editor, saver]);
+  const pollNow = useCallback(() => void saver.poll(), [saver]);
+  const peers = useLiveRoom({ session: liveSession, editor, me: { id: userId, name: userName }, canEdit, onSaved: pollNow });
 
   // The tab's title follows the page's as it's renamed.
   useEffect(() => {
@@ -212,7 +228,24 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   // Arriving from the Mentions inbox: ?thread= opens that thread, ?block= points at the block for a moment.
   const params = useSearchParams();
   const [arrivedAt] = useState(() => ({ thread: params.get("thread"), block: params.get("block") }));
-  const [panelOpen, setPanelOpen] = useState(Boolean(arrivedAt.thread));
+  const [panelOpen, setPanelOpenRaw] = useState(Boolean(arrivedAt.thread));
+  // The right-hand column holds comments or the AI assistant, one at a time.
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiFocus, setAiFocus] = useState<AiFocus | null>(null);
+  const [aiTargets, setAiTargets] = useState<string[]>([]);
+  const setPanelOpen = useCallback(
+    (next: boolean | ((open: boolean) => boolean)) => {
+      const value = typeof next === "function" ? next(panelOpen) : next;
+      if (value) setAiOpen(false);
+      setPanelOpenRaw(value);
+    },
+    [panelOpen],
+  );
+  const openAi = useCallback((focus: AiFocus | null) => {
+    setPanelOpenRaw(false);
+    setAiFocus(focus);
+    setAiOpen(true);
+  }, []);
   const [pending, setPending] = useState<PendingComment | null>(null);
   const [activeId, setActiveId] = useState<string | null>(arrivedAt.thread);
   const [flash, setFlash] = useState<string | null>(arrivedAt.block);
@@ -242,7 +275,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
     setPending({ blockId: id, quote: quoteOf(text) });
     setActiveId(null);
     setPanelOpen(true);
-  }, []);
+  }, [setPanelOpen]);
   // From the count beside a block: open its first open thread.
   const openFromMarker = useCallback(
     (id: string) => {
@@ -251,7 +284,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       setActiveId(first?.root.id ?? null);
       setPanelOpen(true);
     },
-    [placed],
+    [placed, setPanelOpen],
   );
   const activate = useCallback(
     (t: Thread) => {
@@ -280,11 +313,12 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
     };
   }, [editor, arrivedAt, arrivedBlock, scrollToBlock]);
   useEffect(() => {
-    if (editor) setCommentMarks(editor, new Set(counts.keys()), activeBlock, new Set(save.conflicts.map((c) => c.id)));
-  }, [editor, counts, activeBlock, save.conflicts]);
+    if (editor) setCommentMarks(editor, new Set(counts.keys()), activeBlock, new Set(save.conflicts.map((c) => c.id)), new Set(aiTargets));
+  }, [editor, counts, activeBlock, save.conflicts, aiTargets]);
 
   // The contents rail and the comments panel share the right-hand column; comments win while open.
-  const railShown = showToc && !panelOpen;
+  const sideOpen = panelOpen || aiOpen;
+  const railShown = showToc && !sideOpen;
 
   const trail = ancestors(pages, initialPage.id);
   const parent = trail[trail.length - 1];
@@ -297,7 +331,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
     <div
       className={cx(
         "mx-auto grid w-full items-start gap-8 lg:ps-12 xl:gap-12",
-        panelOpen
+        sideOpen
           ? "max-w-3xl lg:max-w-none lg:grid-cols-[minmax(0,48rem)_17rem] lg:justify-center xl:grid-cols-[minmax(0,48rem)_minmax(18rem,22rem)]"
           : railShown
             ? "max-w-3xl @min-[680px]:max-w-[calc(48rem+11rem+2rem)] @min-[680px]:grid-cols-[minmax(0,48rem)_11rem] @min-[1000px]:max-w-[calc(48rem+13rem+3rem)] @min-[1000px]:grid-cols-[minmax(0,48rem)_13rem]"
@@ -307,7 +341,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       <article className="flex min-w-0 flex-col gap-4 lg:pt-2">
         <div className="flex min-h-7 items-center justify-between gap-3">
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-body-2-regular text-text-tertiary">
-            <Link href={parent ? href(parent.id) : href()} className="flex items-center gap-0.5 rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring lg:hidden">
+            <Link href={parent ? href(parent.id) : href()} className="flex min-w-0 items-center gap-0.5 rounded-md outline-none hover:text-text-secondary focus-visible:ring-2 focus-visible:ring-border-focus-ring lg:hidden">
               <RiArrowLeftSLine className="size-4 shrink-0 rtl:-scale-x-100" aria-hidden />
               <span className="truncate">{parent ? `${parent.emoji ? `${parent.emoji} ` : ""}${pageTitle(parent)}` : "Library"}</span>
             </Link>
@@ -328,11 +362,25 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
               ))}
             </ol>
           </nav>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3 max-sm:gap-0.5">
             {showToc ? (
               <span className={cx(railShown && "@min-[680px]:hidden")}>
                 <TocMenu items={toc} active={activeHeading} onPick={pickHeading} />
               </span>
+            ) : null}
+            {canEdit ? (
+              <button
+                type="button"
+                aria-pressed={aiOpen}
+                onClick={() => (aiOpen ? setAiOpen(false) : openAi(null))}
+                className={cx(
+                  "flex h-7 cursor-pointer items-center gap-1 rounded-lg px-2 text-body-2-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-border-focus-ring max-sm:h-11",
+                  aiOpen ? "bg-background-secondary-hover text-text-primary" : "text-text-secondary hover:bg-background-secondary-hover",
+                )}
+              >
+                <RiSparkling2Line className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
+                <span className="max-sm:sr-only">Ask AI</span>
+              </button>
             ) : null}
             <button
               type="button"
@@ -350,7 +398,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
               <RiChat3Line className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
               {openCount ? <span className="tabular-nums">{openCount}</span> : <span className="max-sm:sr-only">Comments</span>}
             </button>
-            {live ? <EditingNow cell={live.editing} /> : null}
+            <EditingNow cell={live?.editing ?? ""} peers={peers} />
             {canEdit ? <SaveState status={save.status} error={save.error} /> : null}
             {canEdit && live ? <PageMenu page={live} /> : null}
           </div>
@@ -408,15 +456,31 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
           {/* Room on the right for comment counts where the page has no margin to put them in. */}
           <EditorContent editor={editor} className={cx("relative", counts.size > 0 && "max-xl:pe-8")} />
         </div>
-        {editor && canEdit ? <BlockHandle editor={editor} onComment={startComment} /> : null}
+        {editor && canEdit ? <BlockHandle editor={editor} onComment={startComment} onAskAi={(id) => openAi({ ids: [id], text: "" })} /> : null}
         {editor ? <CommentMarkers editor={editor} counts={counts} onOpen={openFromMarker} /> : null}
-        {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} onComment={startComment} /> : null}
+        {editor && canEdit ? <EditorBubble editor={editor} linkEvents={linkEvents} onComment={startComment} onAskAi={() => openAi(selectionFocus(editor))} /> : null}
         {editor && canEdit ? <TableMenu editor={editor} /> : null}
       </article>
       {railShown ? (
         <aside className="sticky top-6 hidden max-h-[calc(100dvh-3rem)] overflow-y-auto pt-14 @min-[680px]:block">
           <TocRail items={toc} active={activeHeading} onPick={pickHeading} />
         </aside>
+      ) : null}
+      {editor && canEdit ? (
+        <AiPanel
+          open={aiOpen}
+          onClose={() => setAiOpen(false)}
+          editor={editor}
+          title={title}
+          onTitle={(t) => {
+            setTitle(t);
+            patchLocal(initialPage.id, { title: t });
+            saver.changed(t);
+          }}
+          focus={aiFocus}
+          clearFocus={() => setAiFocus(null)}
+          onTargets={setAiTargets}
+        />
       ) : null}
       <CommentsPanel
         open={panelOpen}

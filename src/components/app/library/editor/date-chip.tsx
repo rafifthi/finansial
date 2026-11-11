@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { InputRule, mergeAttributes, Node } from "@tiptap/core";
+import { createInlineMarkdownSpec, InputRule, mergeAttributes, Node } from "@tiptap/core";
 import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from "@tiptap/react";
 import { parseDate } from "@internationalized/date";
 import { RiCalendarLine } from "@remixicon/react";
@@ -116,6 +116,9 @@ export const DateChip = Node.create<object, DateChipStorage>({
   selectable: true,
 
   addStorage: () => ({ insertedAt: 0 }),
+
+  // In Markdown (the AI assistant's view of a page): [date value="2026-11-20"].
+  ...createInlineMarkdownSpec({ nodeName: "dateChip", name: "date", selfClosing: true, allowedAttributes: ["value"] }),
 
   addAttributes() {
     return {

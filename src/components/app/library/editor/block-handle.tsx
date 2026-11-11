@@ -6,7 +6,7 @@ import { Dialog as AriaDialog, Popover as AriaPopover } from "react-aria-compone
 import type { Editor } from "@tiptap/core";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
-import { RiAddLine, RiChat3Line, RiDeleteBinLine, RiDraggable, RiFileCopyLine } from "@remixicon/react";
+import { RiAddLine, RiChat3Line, RiDeleteBinLine, RiDraggable, RiFileCopyLine, RiSparkling2Line } from "@remixicon/react";
 import { DropdownDivider, DropdownGroup, DropdownItem } from "@/components/base/dropdown/dropdown";
 import { MENU_POPOVER_SURFACE } from "@/components/base/dropdown/menu-styles";
 import { cx } from "@/utils/cx";
@@ -59,7 +59,7 @@ const HANDLE = cx(
  * own drop, so its id and comments move with it) or, clicked, opens a menu
  * to turn it into another block, duplicate or delete it.
  */
-export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?: (id: string, text: string) => void }) {
+export function BlockHandle({ editor, onComment, onAskAi }: { editor: Editor; onComment?: (id: string, text: string) => void; onAskAi?: (id: string) => void }) {
   const host = editor.view.dom.parentElement;
   const overlay = useOverlayRoot(host);
   const [target, setTarget] = useState<Target | null>(null);
@@ -212,6 +212,18 @@ export function BlockHandle({ editor, onComment }: { editor: Editor; onComment?:
             </DropdownGroup>
           ) : null}
           {textual ? <DropdownDivider /> : null}
+          {onAskAi && typeof target.node.attrs.id === "string" ? (
+            <DropdownItem
+              className="py-1.5"
+              onSelect={() => {
+                close();
+                onAskAi(current().node.attrs.id as string);
+              }}
+            >
+              <RiSparkling2Line className="size-4 text-foreground-icon-secondary" aria-hidden />
+              <span className="text-body-medium">Ask AI</span>
+            </DropdownItem>
+          ) : null}
           {onComment && typeof target.node.attrs.id === "string" ? (
             <DropdownItem
               className="py-1.5"

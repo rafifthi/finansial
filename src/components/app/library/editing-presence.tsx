@@ -4,16 +4,21 @@ import { RiErrorWarningLine } from "@remixicon/react";
 import type { BlockConflict } from "@/actions/library";
 import { Avatar } from "@/components/base/avatar/avatar";
 import { Button } from "@/components/base/buttons/button";
+import type { Peer } from "@/lib/library/live";
 import { editorsOf } from "@/lib/library/presence";
 import { quoteOf } from "@/lib/library/comments";
 import { useLibrary } from "./library-context";
 
-/** "Kanza is editing": the other people typing in this page in the last minute and a half. */
-export function EditingNow({ cell }: { cell: string }) {
+/**
+ * "Kanza is editing": the other people typing in this page in the last
+ * minute and a half (from the sheet), and anyone with a live cursor here.
+ */
+export function EditingNow({ cell, peers }: { cell: string; peers: Peer[] }) {
   const { userId, nameOf } = useLibrary();
-  const others = editorsOf(cell).filter((e) => e.userId !== userId);
-  if (!others.length) return null;
-  const names = others.map((e) => nameOf(e.userId));
+  const ids = new Set([...editorsOf(cell).map((e) => e.userId), ...peers.filter((p) => p.presence.head).map((p) => p.userId)]);
+  ids.delete(userId);
+  if (!ids.size) return null;
+  const names = [...ids].map((id) => nameOf(id));
   return (
     <span role="status" className="flex items-center gap-1.5 text-body-2-regular text-text-secondary">
       <span className="flex -space-x-1.5">

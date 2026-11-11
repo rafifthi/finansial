@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireBookPage } from "@/auth";
 import { LibraryPage } from "@/components/app/library/library-views";
+import type { LiveMode } from "@/components/app/library/use-live";
 import { libraryStore } from "@/lib/data/store";
 import { pageTitle } from "@/lib/library/tree";
 
@@ -27,7 +28,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: page ? pageTitle(page) : "Library" };
 }
 
+/** Live cursors go through Liveblocks when there's a key; in development without one, between this browser's tabs. */
+function liveMode(): LiveMode {
+  if (process.env.LIVEBLOCKS_SECRET_KEY) return "liveblocks";
+  return process.env.NODE_ENV === "development" ? "tabs" : "off";
+}
+
 export default async function LibraryPageRoute(props: Props) {
   const { pageId, page, rows, comments } = await load(props);
-  return <LibraryPage id={pageId} page={page} rows={rows} comments={comments} />;
+  return <LibraryPage id={pageId} page={page} rows={rows} comments={comments} liveMode={liveMode()} />;
 }

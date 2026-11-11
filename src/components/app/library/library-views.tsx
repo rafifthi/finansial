@@ -13,6 +13,7 @@ import { PageHeader } from "../page-header";
 import { useNavSlot } from "../shell-context";
 import { LibraryProvider, useLibrary, type LibraryMember } from "./library-context";
 import { PageEditor } from "./page-editor";
+import type { LiveMode } from "./use-live";
 import { PageTree } from "./page-tree";
 
 const PANEL = "rounded-3xl border border-separator-border bg-background-primary-default";
@@ -101,7 +102,7 @@ export function LibraryHome() {
  * A page route. A page made a moment ago in this browser may not be in the
  * sheet yet, so it opens empty from the local list instead of "not found".
  */
-export function LibraryPage({ id, page, rows, comments }: { id: string; page: Page | null; rows: PageBlock[]; comments: PageComment[] }) {
+export function LibraryPage({ id, page, rows, comments, liveMode }: { id: string; page: Page | null; rows: PageBlock[]; comments: PageComment[]; liveMode: LiveMode }) {
   const { pages, href } = useLibrary();
   const local = pages.find((p) => p.id === id);
   const shown = page ?? local;
@@ -115,5 +116,5 @@ export function LibraryPage({ id, page, rows, comments }: { id: string; page: Pa
       </div>
     );
   }
-  return <PageEditor key={id} page={shown} rows={page ? rows : []} comments={comments} />;
+  return <PageEditor key={id} page={shown} rows={page ? rows : []} comments={comments} liveMode={liveMode} />;
 }

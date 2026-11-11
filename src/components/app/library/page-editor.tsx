@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { Placeholder } from "@tiptap/extensions";
@@ -38,6 +40,8 @@ import { selectionFocus } from "./editor/ai-edits";
 import { PageIcon } from "./page-icon";
 import { useComments } from "./use-comments";
 import { usePageSave, type SaveStatus } from "./use-page-save";
+import { useLiveRoom, useLiveSession, type LiveMode } from "./use-live";
+import { LiveCursors, playTyping } from "./editor/live-cursors";
 
 /** Nodes that get a stable id: every top-level block (one sheet row each) and list items, for comments to point at later. */
 const ID_TYPES = ["paragraph", "heading", "bulletList", "orderedList", "taskList", "listItem", "taskItem", "blockquote", "codeBlock", "horizontalRule", "table"];
@@ -98,7 +102,7 @@ class EditingBeat {
 }
 
 /** One Library page: breadcrumbs, title, then the document, saved as it's typed. */
-export function PageEditor({ page: initialPage, rows, comments }: { page: Page; rows: PageBlock[]; comments: PageComment[] }) {
+export function PageEditor({ page: initialPage, rows, comments, liveMode }: { page: Page; rows: PageBlock[]; comments: PageComment[]; liveMode: LiveMode }) {
   const bookId = useBookId();
   const { pages, canEdit, href, patchLocal, user, userName, userId, members, setIcon } = useLibrary();
   const [title, setTitle] = useState(initialPage.title);
@@ -123,8 +127,12 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       beat.leave();
     };
   }, [beat]);
+  // Live cursors: a save tells the others on the page, and what someone else saved plays back as typing.
+  const liveSession = useLiveSession(liveMode, bookId, initialPage.id);
+  const onSaved = useCallback((version: number) => liveSession.announce({ type: "saved", version, by: userId }), [liveSession, userId]);
+  const onArrived = useCallback((ed: Editor, before: PMNode) => void playTyping(ed, before, liveSession.lastSaver), [liveSession]);
   // Before the editor, so the saver is listening by the time the editor attaches.
-  const save = usePageSave({ bookId, page: initialPage, rows, setTitle, onPage });
+  const save = usePageSave({ bookId, page: initialPage, rows, setTitle, onPage, onSaved, onArrived });
   const { saver } = save;
 
   const extensions = useMemo(
@@ -156,6 +164,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
       Markdown,
       Indent,
       CommentMarks,
+      LiveCursors,
       ...(canEdit ? [SlashMenu, LinkShortcut.configure({ open: () => linkEvents.dispatchEvent(new Event("open")) })] : []),
     ],
     [canEdit, linkEvents, members, userId],
@@ -178,6 +187,8 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
   useEffect(() => {
     if (editor) saver.attach(editor);
   }, [editor, saver]);
+  const pollNow = useCallback(() => void saver.poll(), [saver]);
+  const peers = useLiveRoom({ session: liveSession, editor, me: { id: userId, name: userName }, canEdit, onSaved: pollNow });
 
   // The tab's title follows the page's as it's renamed.
   useEffect(() => {
@@ -387,7 +398,7 @@ export function PageEditor({ page: initialPage, rows, comments }: { page: Page; 
               <RiChat3Line className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
               {openCount ? <span className="tabular-nums">{openCount}</span> : <span className="max-sm:sr-only">Comments</span>}
             </button>
-            {live ? <EditingNow cell={live.editing} /> : null}
+            <EditingNow cell={live?.editing ?? ""} peers={peers} />
             {canEdit ? <SaveState status={save.status} error={save.error} /> : null}
             {canEdit && live ? <PageMenu page={live} /> : null}
           </div>

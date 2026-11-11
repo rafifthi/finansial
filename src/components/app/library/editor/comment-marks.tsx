@@ -16,6 +16,8 @@ interface MarksState {
   active: string | null;
   /** Blocks someone else reworded while this person was editing them. */
   conflicts: ReadonlySet<string>;
+  /** Blocks an AI proposal would change, while it waits for a yes. */
+  ai: ReadonlySet<string>;
 }
 
 const key = new PluginKey<MarksState>("commentMarks");
@@ -31,18 +33,18 @@ export const CommentMarks = Extension.create({
       new Plugin<MarksState>({
         key,
         state: {
-          init: () => ({ ids: new Set(), active: null, conflicts: new Set() }),
+          init: () => ({ ids: new Set(), active: null, conflicts: new Set(), ai: new Set() }),
           apply: (tr, value) => (tr.getMeta(key) as MarksState | undefined) ?? value,
         },
         props: {
           decorations(state) {
-            const { ids, active, conflicts } = key.getState(state)!;
-            if (!ids.size && !active && !conflicts.size) return null;
+            const { ids, active, conflicts, ai } = key.getState(state)!;
+            if (!ids.size && !active && !conflicts.size && !ai.size) return null;
             const decos: Decoration[] = [];
             state.doc.descendants((node, pos) => {
               const id = node.attrs.id as string | undefined;
               if (!id) return;
-              const cls = conflicts.has(id) ? "has-conflict" : id === active ? "comment-active" : ids.has(id) ? "has-comments" : null;
+              const cls = conflicts.has(id) ? "has-conflict" : ai.has(id) ? "ai-target" : id === active ? "comment-active" : ids.has(id) ? "has-comments" : null;
               if (cls) decos.push(Decoration.node(pos, pos + node.nodeSize, { class: cls }));
             });
             return DecorationSet.create(state.doc, decos);
@@ -53,9 +55,15 @@ export const CommentMarks = Extension.create({
   },
 });
 
-export function setCommentMarks(editor: Editor, ids: ReadonlySet<string>, active: string | null, conflicts: ReadonlySet<string> = new Set()) {
+export function setCommentMarks(
+  editor: Editor,
+  ids: ReadonlySet<string>,
+  active: string | null,
+  conflicts: ReadonlySet<string> = new Set(),
+  ai: ReadonlySet<string> = new Set(),
+) {
   if (editor.isDestroyed) return;
-  editor.view.dispatch(editor.state.tr.setMeta(key, { ids, active, conflicts }).setMeta("addToHistory", false));
+  editor.view.dispatch(editor.state.tr.setMeta(key, { ids, active, conflicts, ai }).setMeta("addToHistory", false));
 }
 
 /** A block's words by id, with spaces between its paragraphs and list items. */

@@ -37,6 +37,7 @@ export function SmartComposer({
   speechLang = "id-ID",
   onError,
   tools,
+  label = "What did you spend?",
 }: {
   onSend: (text: string, attachments: Attachment[]) => void;
   /** Extra controls placed before the mic (e.g. the book to save to). */
@@ -45,6 +46,8 @@ export function SmartComposer({
   placeholder?: string;
   speechLang?: string;
   onError?: (message: string) => void;
+  /** The box's accessible name. */
+  label?: string;
 }) {
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -154,7 +157,7 @@ export function SmartComposer({
       ) : null}
 
       <Textarea
-        aria-label="What did you spend?"
+        aria-label={label}
         className="max-h-48 min-h-12 resize-none rounded-none border-none bg-transparent! px-2 py-1.5 text-body-regular shadow-none focus-visible:border-transparent focus-visible:ring-0"
         placeholder={speech.listening ? "Listening… speak now" : placeholder}
         value={text}

@@ -209,3 +209,8 @@
 .library-prose .has-conflict {
   @apply rounded-md bg-chip-overdue-background;
 }
+
+/* Blocks an AI proposal would change, until it's applied or discarded. */
+.library-prose .ai-target {
+  @apply rounded-md bg-button-ghost-hover;
+}

@@ -6,13 +6,16 @@ import { newId, savingsStore } from "@/lib/data/store";
 import { planGoalMerge } from "@/lib/finance/savings";
 import { SavingsAdjustmentSchema, type SavingsAdjustment } from "@/lib/sheets/schema";
 
-/** Records a balance adjustment on a savings pot (interest, fees, a miscount). No transaction is written. */
+/**
+ * Records a balance adjustment on a savings pot (interest, fees, a miscount) or a
+ * Needs/Wants pocket (cash found, a correction). No transaction is written.
+ */
 export const saveAdjustment = bookAction(
   "data:write",
   z.object({ category_id: z.string().min(1), date: z.string(), amount: z.number(), note: z.string() }),
   async (input, { user, store, book }) => {
     const pot = (await store.rows("categories")).find((c) => c.id === input.category_id);
-    if (!pot || pot.group !== "Savings") throw new Error("That savings pot no longer exists.");
+    if (!pot || pot.group === "Income") throw new Error("That pot or pocket no longer exists.");
     const parsed = SavingsAdjustmentSchema.safeParse({
       ...input,
       id: newId(),

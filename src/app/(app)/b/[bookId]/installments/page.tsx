@@ -10,6 +10,8 @@ import { Meter } from "@/components/base/meter/meter";
 import { formOptions, loadAppData } from "@/lib/data/app-data";
 import { fieldSpecs } from "@/lib/data/field-specs";
 import { installmentStatus } from "@/lib/finance/installments";
+import Link from "next/link";
+import { RiArrowRightSLine } from "@remixicon/react";
 import { formatMoney } from "@/lib/finance/money";
 
 export const metadata: Metadata = { title: "Installments" };
@@ -28,7 +30,7 @@ export default async function InstallmentsPage({ params }: PageProps<"/b/[bookId
     <>
       <PageHeader
         title="Installments"
-        description={`Credit-card plans and loans. Committed this month: ${fmt(monthlyLoad)}`}
+        description={`Credit-card plans and loans. An expense named like an installment counts as its payment. Committed this month: ${fmt(monthlyLoad)}`}
         actions={
           <EntityFormButton
             table="installments"
@@ -50,7 +52,15 @@ export default async function InstallmentsPage({ params }: PageProps<"/b/[bookId
             return (
               <Card
                 key={i.id}
-                title={i.name}
+                title={
+                  <Link
+                    href={data.href(`/installments/${i.id}`)}
+                    className="flex items-center gap-0.5 rounded-md outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                  >
+                    {i.name}
+                    <RiArrowRightSLine className="size-5 shrink-0 text-foreground-icon-tertiary rtl:-scale-x-100" aria-hidden />
+                  </Link>
+                }
                 description={i.note || undefined}
                 action={<EntityFormButton table="installments" title="Installment" trigger="icon" fields={specs.installments} money={data.money} initial={i} />}
               >

@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { QuickAdd } from "@/components/app/quick-add";
 import { Chip } from "@/components/base/badges/chip";
 import { Meter } from "@/components/base/meter/meter";
-import { formOptions, loadAdjustments, loadAppData, monthParam } from "@/lib/data/app-data";
+import { formOptions, loadAdjustments, loadAppData, loadPockets, monthParam } from "@/lib/data/app-data";
 import { budgetMonth } from "@/lib/finance/budget";
 import { addMonths, monthsEnding } from "@/lib/finance/dates";
 import { potTarget } from "@/lib/finance/savings";
@@ -39,7 +39,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
   const { money, categories, transactions: txns, budgets, cutoffDay: cutoff } = data;
   const fmt = (n: number) => formatMoney(n, money);
 
-  const bm = budgetMonth({ month, budgets, categories, txns, cutoff });
+  const bm = budgetMonth({ month, budgets, categories, txns, cutoff, pockets: loadPockets(data, month, adjustments) });
   const prev = budgetMonth({ month: addMonths(month, -1), budgets, categories, txns, cutoff });
   const isCurrentMonth = month === data.current.period;
 
@@ -96,7 +96,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
   });
 
   // In the book's category order (Settings → Categories, or Reorder on the card).
-  const expenseLines = bm.lines.filter((l) => l.category.group !== "Savings" && (l.budget > 0 || l.actual > 0));
+  const expenseLines = bm.lines.filter((l) => l.category.group !== "Savings" && (l.available !== 0 || l.actual > 0));
   const balances = savingsBalances(categories, txns, adjustments);
   const pots = categories.filter((c) => c.group === "Savings" && (!c.archived || (balances.get(c.id) ?? 0) !== 0));
   const totalSaved = pots.reduce((s, c) => s + (balances.get(c.id) ?? 0), 0);
@@ -161,7 +161,8 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
             actual: l.actual,
             spent: l.spent,
             toSavings: l.toSavings,
-            budget: l.budget,
+            // A pocket can use what it carried over as well as this period's budget.
+            budget: l.available,
           }))}
           money={money}
           description={monthLabel(month)}
@@ -190,7 +191,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
             </Link>
           ) : null}
 
-          <Card title="Savings" description={pots.length ? `${fmt(totalSaved)} in total` : undefined} href={data.href("/savings")}>
+          <Card title="Savings" description={pots.length ? `${fmt(totalSaved)} in total` : undefined} href={data.href("/pockets")}>
             {pots.length === 0 ? (
               <EmptyState>No savings categories yet.</EmptyState>
             ) : (
@@ -198,7 +199,7 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
                 {pots.map((c) => (
                   <li key={c.id}>
                     <Link
-                      href={data.href(`/savings/${c.id}`)}
+                      href={data.href(`/pockets/${c.id}`)}
                       className="-mx-1.5 flex items-center justify-between gap-3 rounded-lg px-1.5 py-1 outline-none hover:bg-background-secondary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring"
                     >
                       <span className="flex min-w-0 items-center gap-2">
@@ -239,18 +240,18 @@ export default async function DashboardPage({ params: route, searchParams }: Pag
         </div>
       </div>
 
-      <Card title="Savings targets" href={data.href("/savings")}>
+      <Card title="Savings goals" href={data.href("/pockets")}>
         {targets.length === 0 ? (
           <EmptyState>No targets yet. Give a savings pot a target in Settings → Categories.</EmptyState>
         ) : (
           <div className="grid gap-x-8 gap-y-5 md:grid-cols-2 xl:grid-cols-4">
             {targets.map((t) => (
-              <Link key={t.pot.id} href={data.href(`/savings/${t.pot.id}`)} className="flex flex-col gap-1.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
+              <Link key={t.pot.id} href={data.href(`/pockets/${t.pot.id}`)} className="flex flex-col gap-1.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-border-focus-ring">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="truncate text-body-medium text-text-primary">{t.pot.name}</span>
                   <span className="text-body-2-regular text-text-tertiary tabular-nums">{Math.round(t.ratio * 100)}%</span>
                 </div>
-                <Meter aria-label={`${t.pot.name} target progress`} value={t.ratio * 100} tone={t.ratio >= 1 ? "success" : "accent"} size="sm" />
+                <Meter aria-label={`${t.pot.name} goal progress`} value={t.ratio * 100} tone={t.ratio >= 1 ? "success" : "accent"} size="sm" />
                 <span className="text-caption-1-medium text-text-tertiary tabular-nums">
                   {fmt(t.balance)} of {fmt(t.target)}
                   {t.requiredMonthly ? ` · ${fmt(t.requiredMonthly)}/mo to go` : ""}

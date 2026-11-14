@@ -33,7 +33,7 @@ export function MergeGoals({ rows }: { rows: GoalMergeRow[] }) {
       toast("Couldn't move the goals", { status: "error", description: res.error });
       throw new Error(res.error);
     }
-    toast(`Moved ${rows.length} ${rows.length === 1 ? "goal" : "goals"} into savings pots`, { status: "success" });
+    toast(`Moved ${rows.length} ${rows.length === 1 ? "goal" : "goals"} into Savings pockets`, { status: "success" });
   };
 
   return (
@@ -43,16 +43,16 @@ export function MergeGoals({ rows }: { rows: GoalMergeRow[] }) {
         onOpenChange={setConfirm}
         variant="default"
         icon={RiFlagLine}
-        title={`Move ${rows.length} ${rows.length === 1 ? "goal" : "goals"} into savings pots?`}
-        description="Targets, dates and already-saved amounts are written onto the pots in your sheet. The Goals tab is left as it is."
+        title={`Move ${rows.length} ${rows.length === 1 ? "goal" : "goals"} into Savings pockets?`}
+        description="Goal amounts, dates and already-saved amounts are written onto the Savings pockets in your sheet. The Goals tab is left as it is."
         confirmLabel="Move goals"
         pendingLabel="Moving…"
         onConfirm={merge}
       />
       <div className="flex flex-col gap-0.5">
-        <h2 className="text-headline-semibold text-text-primary">Goals are now savings targets</h2>
+        <h2 className="text-headline-semibold text-text-primary">Goals now live on Savings pockets</h2>
         <p className="text-body-2-regular text-text-tertiary">
-          Each goal moves onto its savings pot as that pot&apos;s target. Check where each one lands, then move them.
+          Each goal moves onto its Savings pocket. Check where each one lands, then move them.
         </p>
       </div>
       <ul className="flex flex-col divide-y divide-separator-border rounded-2xl border border-border-button-default">
@@ -65,12 +65,12 @@ export function MergeGoals({ rows }: { rows: GoalMergeRow[] }) {
                 <span className="truncate">{r.pot}</span>
                 {r.isNew ? (
                   <Chip color="yellow" variant="caption">
-                    New pot
+                    New pocket
                   </Chip>
                 ) : null}
               </span>
               <span className="text-body-2-medium text-text-primary tabular-nums">
-                Target {r.target}
+                Goal {r.target}
                 {r.by ? ` ${r.by}` : ""}
               </span>
             </div>

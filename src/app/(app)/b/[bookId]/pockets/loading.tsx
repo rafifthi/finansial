@@ -3,7 +3,7 @@ import { CardSkeleton, HeaderSkeleton, PageSkeleton, StatsSkeleton } from "@/com
 
 export default function SavingsLoading() {
   return (
-    <PageSkeleton label="savings">
+    <PageSkeleton label="pockets">
       <HeaderSkeleton actions={0} wide />
       <CardSkeleton title={false}>
         <StatsSkeleton count={3} />

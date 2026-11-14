@@ -336,6 +336,7 @@ export function demoSeed() {
   const meals = ["Nasi Padang", "Tukang Sayur", "Nasi Goreng", "Sourdough", "Ayam Panglima", "TDN", "Mangga + Susu"];
   const rides = ["Gojek CSW", "E-Money", "Gojek Gym → Pitput", "Grab Kantor"];
 
+  const iphoneStart = addMonths(thisMonth, -3);
   const transactions: Transaction[] = [];
   for (const m of months) {
     const last = m === thisMonth ? now : dayInMonth(m, 31);
@@ -353,6 +354,8 @@ export function demoSeed() {
     push(3, { amount: 333_000, category_id: "billing", description: "Wifi", recurring_id: "r-wifi" });
     push(3, { amount: 100_000, category_id: "billing", description: "IPL" });
     push(5, { amount: 2_000_000, category_id: "cicilan-mobil", description: "Cicilan Mobil", installment_id: "i-mobil" });
+    // A CC 0% plan paid on the 25th; this period's payment isn't in yet, so it shows as due.
+    if (m >= iphoneStart && m < thisMonth) push(25, { amount: 1_833_000, category_id: "petty-cash", description: "iPhone 16 Pro", installment_id: "i-iphone" });
     // Payday: savings set aside first.
     push(2, { amount: 1_000_000, category_id: "travel", description: "Tabungan Travel" });
     push(2, { amount: 1_400_000, category_id: "dana-darurat", description: "Dana Darurat" });
@@ -369,11 +372,13 @@ export function demoSeed() {
   }
 
   // Last month is already closed: its leftovers covered any overspend and went to Rumah,
-  // so the dashboard has a month-end sweep to show.
+  // so the dashboard has a month-end sweep to show. One Wants pocket kept its leftover
+  // instead (pockets start last month), so this month shows a carried balance.
   const lastMonth = addMonths(thisMonth, -1);
   const closed = budgetMonth({ month: lastMonth, budgets, categories, txns: transactions });
   const name = (id: string) => categories.find((c) => c.id === id)?.name ?? "";
-  for (const m of closeMonthPlan(closed.lines, "rumah")) {
+  const kept = closed.lines.find((l) => l.category.group === "Wants" && l.remaining > 0)?.category.id;
+  for (const m of closeMonthPlan(closed.lines.filter((l) => l.category.id !== kept), "rumah")) {
     transactions.push(
       tx({
         date: dayInMonth(lastMonth, 31),
@@ -395,6 +400,7 @@ export function demoSeed() {
 
   const installments: Installment[] = [
     { id: "i-mobil", name: "Cicilan Mobil", category_id: "cicilan-mobil", monthly_amount: 2_000_000, tenor_months: 33, start_month: months[0], total_amount: 64_900_000, note: "" },
+    { id: "i-iphone", name: "iPhone 16 Pro", category_id: "petty-cash", monthly_amount: 1_833_000, tenor_months: 12, start_month: iphoneStart, total_amount: 21_996_000, note: "CC BCA 0%" },
     { id: "i-kai", name: "KAI Berangkat", category_id: "transport", monthly_amount: 450_000, tenor_months: 3, start_month: addMonths(thisMonth, -1), total_amount: 1_350_000, note: "CC CIMB Niaga 0%" },
   ];
 
@@ -407,6 +413,7 @@ export function demoSeed() {
     { key: "locale", value: "id-ID" },
     { key: "cutoff_day", value: "31" },
     { key: "members", value: "Kanza,Rafif" },
+    { key: "pockets_since", value: lastMonth },
   ];
 
   return { categories, budgets, transactions, goals, installments, recurring, settings };

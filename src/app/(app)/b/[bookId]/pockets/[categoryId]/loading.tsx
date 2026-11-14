@@ -1,9 +1,9 @@
 import { Skeleton } from "@/components/base/skeleton/skeleton";
 import { CardSkeleton, PageSkeleton, RowsSkeleton, StatsSkeleton } from "@/components/app/skeletons";
 
-export default function PotLoading() {
+export default function PocketLoading() {
   return (
-    <PageSkeleton label="savings pot">
+    <PageSkeleton label="pocket">
       <Skeleton shape="text" className="h-4 w-16" />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">

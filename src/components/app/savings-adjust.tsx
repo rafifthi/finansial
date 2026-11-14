@@ -19,8 +19,9 @@ type Mode = "match" | "add" | "subtract";
 type Errors = Partial<Record<"amount" | "date" | "note", string>>;
 
 /**
- * Corrects a pot's balance without a transaction: either type what the bank
- * shows and the difference is booked, or add or take a fixed amount.
+ * Corrects a savings pot's or a Needs/Wants pocket's balance without a
+ * transaction: either type what it really holds and the difference is booked,
+ * or add or take a fixed amount.
  */
 export function AdjustBalanceButton({
   potId,
@@ -28,12 +29,15 @@ export function AdjustBalanceButton({
   balance,
   money,
   today,
+  pocket = false,
 }: {
   potId: string;
   potName: string;
   balance: number;
   money: MoneyFormat;
   today: string;
+  /** A Needs/Wants pocket: the adjustment changes what's left to spend. */
+  pocket?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -42,7 +46,7 @@ export function AdjustBalanceButton({
         Adjust balance
       </Button>
       <FormDrawer isOpen={open} onOpenChange={setOpen} aria-label="Adjust balance">
-        <AdjustForm potId={potId} potName={potName} balance={balance} money={money} today={today} onDone={() => setOpen(false)} />
+        <AdjustForm potId={potId} potName={potName} balance={balance} money={money} today={today} pocket={pocket} onDone={() => setOpen(false)} />
       </FormDrawer>
     </>
   );
@@ -54,6 +58,7 @@ function AdjustForm({
   balance,
   money,
   today,
+  pocket,
   onDone,
 }: {
   potId: string;
@@ -61,6 +66,7 @@ function AdjustForm({
   balance: number;
   money: MoneyFormat;
   today: string;
+  pocket: boolean;
   onDone: () => void;
 }) {
   const bookId = useBookId();
@@ -99,7 +105,11 @@ function AdjustForm({
   return (
     <DrawerForm
       title="Adjust balance"
-      description={`${potName} · now ${fmt(balance)}. For interest, fees or a miscount: no transaction is written and budgets don't change.`}
+      description={
+        pocket
+          ? `${potName} · now ${fmt(balance)}. For cash found, a correction or a miscount: no transaction is written, and it changes what's left to spend in this pocket.`
+          : `${potName} · now ${fmt(balance)}. For interest, fees or a miscount: no transaction is written and budgets don't change.`
+      }
       onSubmit={submit}
       error={summarizeErrors(errors) ?? formError}
       footer={
@@ -128,7 +138,7 @@ function AdjustForm({
 
       <MoneyField
         label={mode === "match" ? "Actual balance" : "Amount"}
-        hint={mode === "match" ? "What the bank or app shows for this pot right now." : undefined}
+        hint={mode === "match" ? (pocket ? "What this pocket really has left right now." : "What the bank or app shows for this pocket right now.") : undefined}
         value={value}
         onChange={(v) => {
           setValue(v);
@@ -164,7 +174,7 @@ function AdjustForm({
           setNote(v);
           setErrors((e) => ({ ...e, note: undefined }));
         }}
-        placeholder="e.g. Bunga Oktober"
+        placeholder={pocket ? "e.g. Uang kembalian" : "e.g. Bunga Oktober"}
         isInvalid={Boolean(errors.note)}
         errorMessage={errors.note}
         maxLength={200}

@@ -2,21 +2,22 @@
 
 import { useId, useState, useTransition } from "react";
 import { parseDate, type CalendarDate } from "@internationalized/date";
-import { RiArrowDownSLine, RiArrowRightLine, RiDeleteBinLine } from "@remixicon/react";
+import { RiAlertLine, RiArrowDownSLine, RiArrowRightLine, RiCalendarScheduleLine, RiDeleteBinLine } from "@remixicon/react";
 import { deleteTransactions, restoreTransactions, saveTransaction, type TxnInput } from "@/actions/transactions";
 import { Button } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { DatePicker } from "@/components/base/date-picker/date-picker";
-import { Input } from "@/components/base/input/input";
 import { Label } from "@/components/base/input/label";
 import { SegmentedControl, SegmentedControlItem } from "@/components/base/segmented-control/segmented-control";
 import { toast } from "@/components/base/toast/toast";
 import type { ActionResult } from "@/lib/data/action";
 import type { FormOptions } from "@/lib/data/app-data";
 import { formatMoney } from "@/lib/finance/money";
+import { dueDifference, matchInstallment } from "@/lib/finance/installments";
 import { cx } from "@/utils/cx";
 import type { Transaction } from "@/lib/sheets/schema";
 import { CategoryPicker } from "./category-picker";
+import { DescriptionField, type DescriptionPick } from "./description-field";
 import { MoneyField, SelectField } from "./fields";
 import { DrawerForm, FormDrawer, summarizeErrors } from "./form-drawer";
 import { undoToast } from "./undo";
@@ -99,6 +100,8 @@ export function TransactionFormBody({
     Boolean(initial && (initial.installment_id || initial.verified || (initial.member && initial.member !== member))),
   );
   const [entry, setEntry] = useState(0);
+  // The installment link follows the description until someone sets or clears it by hand.
+  const [linkTouched, setLinkTouched] = useState(Boolean(initial?.installment_id));
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
@@ -108,10 +111,54 @@ export function TransactionFormBody({
   // Income can't be moved; a transfer runs between Needs, Wants and Savings.
   const movable = options.categories.filter((c) => c.kind === "expense");
 
+  type FormInstallment = FormOptions["installments"][number];
+  /** Links an installment and fills what's still empty: its category and the monthly due. */
+  const withInstallment = (d: Draft, inst: FormInstallment | undefined): Draft => {
+    if (!inst) return { ...d, installment_id: "" };
+    const category = options.categories.some((c) => c.id === inst.category_id && c.kind === "expense") ? inst.category_id : "";
+    return { ...d, installment_id: inst.id, category_id: d.category_id || category, amount: d.amount ?? inst.monthly_amount };
+  };
+
   function onInstallment(id: string) {
-    const inst = options.installments.find((i) => i.id === id);
-    setDraft((d) => ({ ...d, installment_id: id, amount: d.amount ?? inst?.monthly_amount ?? null }));
+    setLinkTouched(true);
+    setDraft((d) => withInstallment(d, options.installments.find((i) => i.id === id)));
   }
+
+  /** Typing a description that names an installment links it (expenses only). */
+  function onDescription(text: string) {
+    setErrors((e) => (e.description ? { ...e, description: undefined } : e));
+    setDraft((d) => {
+      const next = { ...d, description: text };
+      if (d.type !== "expense" || linkTouched) return next;
+      return withInstallment(next, matchInstallment(text, options.installments));
+    });
+  }
+
+  /** A picked suggestion fills the description, then whatever is still empty. */
+  function onPick(pick: DescriptionPick) {
+    setErrors((e) => ({ ...e, description: undefined, category_id: undefined, from_category_id: undefined }));
+    if (pick.kind === "installment") {
+      setLinkTouched(false);
+      setDraft((d) => withInstallment({ ...d, description: pick.installment.name }, pick.installment));
+      return;
+    }
+    const p = pick.past;
+    const known = (id: string) => (options.categories.some((c) => c.id === id) ? id : "");
+    setDraft((d) => {
+      const next: Draft = {
+        ...d,
+        description: p.text,
+        category_id: d.category_id || known(p.category_id),
+        from_category_id: d.type === "transfer" ? d.from_category_id || known(p.from_category_id) : d.from_category_id,
+        amount: d.amount ?? p.amount,
+      };
+      if (d.type !== "expense" || linkTouched) return next;
+      return withInstallment(next, matchInstallment(p.text, options.installments));
+    });
+  }
+
+  const linked = draft.type === "expense" ? options.installments.find((i) => i.id === draft.installment_id) : undefined;
+  const dueOff = linked && draft.amount ? dueDifference(draft.amount, linked) : 0;
 
   function validate(): Errors {
     const e: Errors = {};
@@ -145,10 +192,19 @@ export function TransactionFormBody({
       ]
         .filter(Boolean)
         .join(" · ");
-      toast(isEdit ? `Updated ${what}` : `Added ${what}`, { status: "success" });
+      toast(isEdit ? `Updated ${what}` : `Added ${what}`, {
+        status: dueOff ? "information" : "success",
+        description:
+          linked && dueOff
+            ? `${linked.name} is due ${formatMoney(linked.monthly_amount, options.money)} a month; this is ${formatMoney(Math.abs(dueOff), options.money)} ${dueOff > 0 ? "more" : "less"}.`
+            : linked
+              ? `Payment for ${linked.name}`
+              : undefined,
+      });
       if (another) {
         // Same type, date and member; a clean amount and category for the next one.
         setDraft((d) => ({ ...blank(d.date, d.member ?? ""), type: d.type }));
+        setLinkTouched(false);
         setErrors({});
         setEntry((n) => n + 1);
         return;
@@ -203,7 +259,11 @@ export function TransactionFormBody({
           const type = [...keys][0] as Draft["type"] | undefined;
           if (type && type !== draft.type) {
             setErrors({});
-            setDraft((d) => ({ ...d, type, category_id: "", from_category_id: "", installment_id: "" }));
+            setLinkTouched(false);
+            setDraft((d) => {
+              const next = { ...d, type, category_id: "", from_category_id: "", installment_id: "" };
+              return type === "expense" ? withInstallment(next, matchInstallment(d.description ?? "", options.installments)) : next;
+            });
           }
         }}
       >
@@ -263,16 +323,32 @@ export function TransactionFormBody({
         />
       )}
 
-      <Input
-        label="Description"
-        isRequired
+      <DescriptionField
+        key={`description-${entry}`}
         value={draft.description ?? ""}
-        onChange={(v) => set("description", v)}
+        onChange={onDescription}
+        onPick={onPick}
+        options={options}
+        type={draft.type}
         placeholder={draft.type === "transfer" ? "e.g. Tabungan Travel" : "e.g. Nasi Padang"}
-        isInvalid={Boolean(errors.description)}
-        errorMessage={errors.description}
-        maxLength={200}
+        error={errors.description}
       />
+
+      {linked ? (
+        <InstallmentNotice
+          name={linked.name}
+          // A saved payment keeps the instalment it settled; anything new settles the next open one.
+          payment={(draft.id ? linked.stepOf[draft.id] : undefined) ?? linked.nextStep}
+          tenor={linked.tenor_months}
+          due={formatMoney(linked.monthly_amount, options.money)}
+          off={dueOff ? `${formatMoney(Math.abs(dueOff), options.money)} ${dueOff > 0 ? "more" : "less"}` : ""}
+          onUseDue={() => set("amount", linked.monthly_amount)}
+          onUnlink={() => {
+            setLinkTouched(true);
+            set("installment_id", "");
+          }}
+        />
+      ) : null}
 
       <button
         type="button"
@@ -324,6 +400,65 @@ type Errors = Partial<Record<keyof Draft, string>>;
 function detailSummary(d: Draft, viewer: string) {
   const parts = [d.member && d.member !== viewer ? d.member : !d.member ? "Household" : "", d.verified ? "Verified" : ""];
   return parts.filter(Boolean).join(" · ") || "Member, installment, verified";
+}
+
+/**
+ * Shown while an expense is linked to an installment: which payment it is, and a
+ * warning (with a one-click fix) when the amount isn't the monthly due.
+ */
+function InstallmentNotice({
+  name,
+  payment,
+  tenor,
+  due,
+  off,
+  onUseDue,
+  onUnlink,
+}: {
+  name: string;
+  /** 1-based number of this payment. */
+  payment: number;
+  tenor: number;
+  due: string;
+  /** "Rp 50.000 more" when the amount differs from the due; "" when it matches. */
+  off: string;
+  onUseDue: () => void;
+  onUnlink: () => void;
+}) {
+  const action =
+    "cursor-pointer rounded-md text-body-2-medium outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring";
+  return (
+    <div
+      aria-live="polite"
+      className="flex flex-col gap-1.5 rounded-xl bg-background-secondary-default px-3 py-2.5"
+    >
+      <div className="flex items-start gap-2">
+        <RiCalendarScheduleLine className="mt-0.5 size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-body-2-medium text-text-primary">
+            Installment payment · {name}
+          </span>
+          <span className="text-caption-1-regular text-text-secondary tabular-nums">
+            Payment {Math.min(Math.max(payment, 1), tenor)} of {tenor} · due {due} a month
+          </span>
+        </div>
+        <button type="button" onClick={onUnlink} className={cx(action, "shrink-0 text-text-secondary")}>
+          Not an installment
+        </button>
+      </div>
+      {off ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 ps-6 text-text-negative">
+          <RiAlertLine className="size-4 shrink-0" aria-hidden />
+          <span className="text-body-2-regular">
+            {off} than the {due} due.
+          </span>
+          <button type="button" onClick={onUseDue} className={cx(action, "text-button-ghost-foreground underline")}>
+            Use {due}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 /** The date as a compact "Today" / "Yesterday" / "3 Nov" chip beside the amount. */

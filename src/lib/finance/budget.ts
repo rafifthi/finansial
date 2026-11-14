@@ -1,5 +1,6 @@
 import type { Budget, Category, Transaction } from "@/lib/sheets/schema";
 import { monthTotals, type Group } from "./ledger";
+import type { PocketCarry } from "./pockets";
 
 export interface BudgetLine {
   category: Category;
@@ -10,8 +11,15 @@ export interface BudgetLine {
   spent: number;
   /** Needs/Wants: budget sent to savings pots. The rest of `actual − spent` went to other categories. */
   toSavings: number;
-  /** actual / budget; 0 when there is no budget. */
+  /** Pockets (Needs/Wants): balance brought in from earlier periods; 0 otherwise. */
+  carried: number;
+  /** Pockets: balance adjustments dated in this period. */
+  adjusted: number;
+  /** What the line can use this period: budget + carried + adjusted. */
+  available: number;
+  /** actual / available; 0 when nothing is available. */
   usage: number;
+  /** available − actual: for a pocket, its balance at the end of the period so far. */
   remaining: number;
 }
 
@@ -42,6 +50,8 @@ export function budgetMonth(input: {
   txns: Transaction[];
   /** Budget period cut-off day (see period.ts); calendar months by default. */
   cutoff?: number;
+  /** Pocket balances brought into the month (see pockets.ts); without it each month stands alone. */
+  pockets?: Map<string, PocketCarry>;
 }): BudgetMonth {
   const { month, categories, txns } = input;
   const budgets = new Map<string, number>();
@@ -53,20 +63,25 @@ export function budgetMonth(input: {
   const toLine = (category: Category): BudgetLine => {
     const budget = budgets.get(category.id) ?? 0;
     const actual = totals.byCategory.get(category.id) ?? 0;
+    const { carried, adjusted } = input.pockets?.get(category.id) ?? { carried: 0, adjusted: 0 };
+    const available = budget + carried + adjusted;
     return {
       category,
       budget,
       actual,
       spent: totals.spentBy.get(category.id) ?? 0,
       toSavings: totals.toSavingsBy.get(category.id) ?? 0,
-      usage: budget > 0 ? actual / budget : 0,
-      remaining: budget - actual,
+      carried,
+      adjusted,
+      available,
+      usage: available > 0 ? actual / available : 0,
+      remaining: available - actual,
     };
   };
 
   // Show active categories plus any archived one that still has data this month.
   const visible = categories.filter(
-    (c) => !c.archived || budgets.has(c.id) || totals.byCategory.has(c.id),
+    (c) => !c.archived || budgets.has(c.id) || totals.byCategory.has(c.id) || Boolean(input.pockets?.get(c.id)?.carried),
   );
   const lines = visible.filter((c) => c.kind === "expense").map(toLine);
   const incomeLines = visible.filter((c) => c.kind === "income").map(toLine);
@@ -108,6 +123,8 @@ export interface MonthMove {
 /**
  * Month-end plan for Needs and Wants: leftovers first cover the lines that went
  * over budget, and whatever is still left goes to the `saveTo` Savings category.
+ * `remaining` is the pocket's whole balance, carried-over money included; lines
+ * the user keeps are left out by the caller and carry into next month.
  * Largest first on both sides, so it takes few transfers.
  */
 export function closeMonthPlan(

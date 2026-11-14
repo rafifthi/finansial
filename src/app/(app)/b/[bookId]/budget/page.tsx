@@ -3,7 +3,7 @@ import { requireBookPage } from "@/auth";
 import { BudgetEditor, type EditorLine } from "@/components/app/budget-editor";
 import { MonthNav } from "@/components/app/month-nav";
 import { PageHeader } from "@/components/app/page-header";
-import { loadAdjustments, loadAppData, monthParam } from "@/lib/data/app-data";
+import { loadAdjustments, loadAppData, loadPockets, monthParam } from "@/lib/data/app-data";
 import { budgetMonth } from "@/lib/finance/budget";
 import { savingsBalances } from "@/lib/finance/ledger";
 
@@ -13,9 +13,11 @@ export default async function BudgetPage({ params: route, searchParams }: PagePr
   const params = await searchParams;
   const data = await loadAppData(await requireBookPage((await route).bookId));
   const month = monthParam(params.m, data.current.period);
-  const bm = budgetMonth({ month, budgets: data.budgets, categories: data.categories, txns: data.transactions, cutoff: data.cutoffDay });
+  const adjustments = await loadAdjustments(data);
+  const pockets = loadPockets(data, month, adjustments);
+  const bm = budgetMonth({ month, budgets: data.budgets, categories: data.categories, txns: data.transactions, cutoff: data.cutoffDay, pockets });
 
-  const balances = savingsBalances(data.categories, data.transactions, await loadAdjustments(data));
+  const balances = savingsBalances(data.categories, data.transactions, adjustments);
   const lines: EditorLine[] = [...bm.incomeLines, ...bm.lines].map((l) => ({
     categoryId: l.category.id,
     name: l.category.name,
@@ -25,6 +27,10 @@ export default async function BudgetPage({ params: route, searchParams }: PagePr
     budget: l.budget,
     actual: l.actual,
     balance: balances.get(l.category.id),
+    carried: l.carried,
+    adjusted: l.adjusted,
+    href:
+      l.category.group === "Income" ? undefined : data.href(`/pockets/${l.category.id}`),
   }));
   const isCurrent = month === data.current.period;
   const close = {
@@ -40,7 +46,7 @@ export default async function BudgetPage({ params: route, searchParams }: PagePr
     <>
       <PageHeader
         title="Budget"
-        description="Give every rupiah a job: plan income, then allocate it to savings, needs and wants."
+        description="Give every rupiah a job: plan income, then allocate it to savings, needs and wants. Each Needs and Wants category is a pocket that keeps what you don't spend until you move it."
         actions={<MonthNav month={month} path={data.href("/budget")} cutoff={data.cutoffDay} />}
       />
       <BudgetEditor key={version} month={month} lines={lines} money={data.money} close={close} />

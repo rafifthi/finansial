@@ -4,6 +4,8 @@ import { z } from "zod";
 import { bookAction } from "@/lib/data/action";
 import { newId } from "@/lib/data/store";
 import { budgetMonth, closeMonthPlan, copyBudgets } from "@/lib/finance/budget";
+import { savingsStore } from "@/lib/data/store";
+import { pocketCarry, pocketsSince } from "@/lib/finance/pockets";
 import { addMonths, today } from "@/lib/finance/dates";
 import { normalizeCutoff, periodRange } from "@/lib/finance/period";
 
@@ -43,34 +45,40 @@ export const copyPreviousMonth = bookAction("data:write", z.object({ month }), a
 });
 
 /**
- * Books the month-end plan as transfers: leftovers on Needs and Wants cover the
- * lines that went over, and the rest moves to `save_to`. The plan is worked out
- * here from the sheet's current rows, so a stale screen can't double-book it.
+ * Books the month-end plan as transfers: each pocket's balance (carried-over money
+ * included) first covers the pockets that went over, and the rest moves to
+ * `save_to`. Pockets in `keep` are left alone and carry into next month, leftover
+ * or overspend. The plan is worked out here from the sheet's current rows, so a
+ * stale screen can't double-book it.
  */
 export const closeMonth = bookAction(
   "data:write",
-  z.object({ month, save_to: z.string().min(1, "Pick a savings category"), skip: z.array(z.string()).default([]) }),
-  async ({ month, save_to, skip }, { user, store }) => {
-    const [budgets, categories, txns, settings] = await Promise.all([
+  z.object({ month, save_to: z.string().default(""), keep: z.array(z.string()).default([]) }),
+  async ({ month, save_to, keep }, { user, store, book }) => {
+    const [budgets, categories, txns, settings, adjustments] = await Promise.all([
       store.rows("budgets"),
       store.rows("categories"),
       store.rows("transactions"),
       store.settings(),
+      savingsStore(book).then((s) => s.rows("adjustments")),
     ]);
     const target = categories.find((c) => c.id === save_to);
-    if (!target || target.group !== "Savings") throw new Error("Pick a Savings category to send the leftovers to.");
+    if (save_to && target?.group !== "Savings") throw new Error("Pick a Savings category to send the leftovers to.");
     const cutoff = normalizeCutoff(settings.cutoff_day);
     const { start, end } = periodRange(month, cutoff);
     const now = today();
     if (now < start) throw new Error("This period hasn't started yet.");
 
-    const skipped = new Set(skip);
-    const { lines } = budgetMonth({ month, budgets, categories, txns, cutoff });
+    const kept = new Set(keep);
+    const pockets = pocketCarry({ month, since: pocketsSince(settings, month), budgets, categories, txns, adjustments, cutoff });
+    const { lines } = budgetMonth({ month, budgets, categories, txns, cutoff, pockets });
     const moves = closeMonthPlan(
-      lines.filter((l) => !skipped.has(l.category.id)),
+      lines.filter((l) => !kept.has(l.category.id)),
       save_to,
     );
-    if (moves.length === 0) throw new Error("Nothing to move: every Needs and Wants budget is already used up.");
+    if (moves.length === 0) {
+      throw new Error(kept.size ? "Nothing to move: every pocket you're not keeping is already at zero." : "Nothing to move: every pocket is already at zero.");
+    }
 
     const name = (id: string) => categories.find((c) => c.id === id)?.name ?? "category";
     const date = now < end ? now : end;

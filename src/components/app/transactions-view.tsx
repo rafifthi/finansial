@@ -81,12 +81,15 @@ export function TransactionsView({
   options,
   filters,
   compact = false,
+  focus,
 }: {
   rows: TxnRow[];
   options: FormOptions;
   filters?: Record<string, string>;
   /** Reconcile mode: no filter bar, verify-first actions. */
   compact?: boolean;
+  /** A transaction to open in the editor straight away (`?txn=`). */
+  focus?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -102,7 +105,15 @@ export function TransactionsView({
     setSelected(new Set());
     setSelectMode(false);
   };
-  const [editing, setEditing] = useState<TxnRow["txn"] | null>(null);
+  const [editing, setEditing] = useState<TxnRow["txn"] | null>(() => rows.find((r) => r.txn.id === focus)?.txn ?? null);
+  // Closing the focused transaction drops `?txn=` so a reload doesn't open it again.
+  const closeEditor = () => {
+    setEditing(null);
+    if (!search.get("txn")) return;
+    const q = new URLSearchParams(search);
+    q.delete("txn");
+    router.replace(`${pathname}${q.size ? `?${q}` : ""}`, { scroll: false });
+  };
   const [creating, setCreating] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -390,7 +401,7 @@ export function TransactionsView({
                   ) : null}
                   <h2 className="text-body-medium text-text-secondary">{dayLabel(day, options.today)}</h2>
                   <span className="ms-auto flex gap-3 text-body-regular tabular-nums">
-                    {dayFlow.income ? <span className="text-status-lime-text">+{money(dayFlow.income)}</span> : null}
+                    {dayFlow.income ? <span className="text-text-positive">+{money(dayFlow.income)}</span> : null}
                     {dayFlow.out ? <span className="text-text-secondary">−{money(dayFlow.out)}</span> : null}
                   </span>
                 </div>
@@ -426,7 +437,7 @@ export function TransactionsView({
         options={options}
         initial={editing ? fromTransaction(editing) : undefined}
         isOpen={editing !== null}
-        onOpenChange={(open) => !open && setEditing(null)}
+        onOpenChange={(open) => !open && closeEditor()}
       />
     </section>
   );
@@ -484,7 +495,7 @@ function TxnListItem({
       {/* Verified against the bank statement: a check badge on the tile's corner. */}
       {txn.verified ? (
         <span title="Verified" className="absolute -end-0.5 -bottom-0.5 flex rounded-full bg-background-primary-default">
-          <RiCheckboxCircleFill className="size-4 text-status-lime-text" aria-hidden />
+          <RiCheckboxCircleFill className="size-4 text-text-positive" aria-hidden />
           <span className="sr-only">Verified</span>
         </span>
       ) : null}
@@ -527,7 +538,7 @@ function TxnListItem({
           <span
             className={cx(
               "text-headline-medium tabular-nums",
-              txn.type === "income" ? "text-status-lime-text" : "text-text-primary",
+              txn.type === "income" ? "text-text-positive" : "text-text-primary",
             )}
           >
             {sign}

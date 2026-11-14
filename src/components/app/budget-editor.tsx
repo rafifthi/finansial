@@ -6,7 +6,7 @@ import { RiArrowGoBackLine, RiArrowRightLine, RiArrowRightSLine, RiFileCopyLine,
 import { closeMonth, copyPreviousMonth, saveBudgets } from "@/actions/budget";
 import { Chip } from "@/components/base/badges/chip";
 import { Button, ButtonLink } from "@/components/base/buttons/button";
-import { Checkbox } from "@/components/base/checkbox/checkbox";
+import { SegmentedControl, SegmentedControlItem } from "@/components/base/segmented-control/segmented-control";
 import { Meter } from "@/components/base/meter/meter";
 import { AlertDialog, Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/base/modal/modal";
 import { toast } from "@/components/base/toast/toast";
@@ -34,7 +34,17 @@ export interface EditorLine {
   actual: number;
   /** Savings only: what the pot holds today. */
   balance?: number;
+  /** Pockets (Needs/Wants): balance brought in from earlier periods. */
+  carried: number;
+  /** Pockets: balance adjustments dated in this period. */
+  adjusted: number;
+  /** Pocket ledger or savings pot page. */
+  href?: string;
 }
+
+const isPocketLine = (l: Pick<EditorLine, "group">) => l.group === "Needs" || l.group === "Wants";
+/** What a pocket line holds after spending, using the (possibly unsaved) budget typed in. */
+const pocketLeft = (l: EditorLine, budget: number) => budget + l.carried + l.adjusted - l.actual;
 
 /** Whether the month can be closed: past and current periods only, with days left in the current one. */
 export interface CloseState {
@@ -54,7 +64,7 @@ const SECTIONS = [
   {
     group: "Savings",
     title: "Savings",
-    hint: "Set aside first — these fill your savings pots",
+    hint: "Set aside first — these fill your Savings pockets",
   },
   { group: "Needs", title: "Needs", hint: "Bills and essentials" },
   { group: "Wants", title: "Wants", hint: "Everything else" },
@@ -316,8 +326,11 @@ export function BudgetEditor({
               <ul className="flex flex-col divide-y divide-separator-border">
                 {items.map((l) => {
                   const budget = values[l.categoryId] ?? 0;
+                  const pocket = isPocketLine(l);
+                  const available = pocket ? budget + l.carried + l.adjusted : budget;
+                  const left = pocketLeft(l, budget);
                   const usage =
-                    budget > 0 ? l.actual / budget : l.actual > 0 ? 2 : 0;
+                    available > 0 ? l.actual / available : l.actual > 0 ? 2 : 0;
                   return (
                     <li
                       key={l.categoryId}
@@ -327,13 +340,26 @@ export function BudgetEditor({
                         <CategoryIcon name={l.name} emoji={l.emoji} color={l.color} group={l.group} />
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
                           <div className="flex min-w-0 flex-col">
-                            <span className="truncate text-body-medium text-text-primary">
-                              {l.name}
-                            </span>
+                            {l.href ? (
+                              <Link
+                                href={l.href}
+                                className="w-fit max-w-full truncate rounded-sm text-body-medium text-text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-border-focus-ring"
+                              >
+                                {l.name}
+                              </Link>
+                            ) : (
+                              <span className="truncate text-body-medium text-text-primary">{l.name}</span>
+                            )}
                             <span className="flex min-w-0 justify-between gap-2 text-caption-1-medium text-text-tertiary">
-                              <span className="truncate tabular-nums">{l.balance !== undefined ? `Pot ${fmt(l.balance)}` : null}</span>
-                              <span className="shrink-0 tabular-nums">
-                                {section.group === "Income" || section.group === "Savings" ? fmt(l.actual) : `${fmt(Math.max(budget - l.actual, 0))} left`}
+                              <span className="truncate tabular-nums">
+                                {l.balance !== undefined
+                                  ? `Holds ${fmt(l.balance)}`
+                                  : pocket && l.carried + l.adjusted !== 0
+                                    ? `${l.carried + l.adjusted > 0 ? "+" : "−"}${fmt(Math.abs(l.carried + l.adjusted))} carried`
+                                    : null}
+                              </span>
+                              <span className={cx("shrink-0 tabular-nums", pocket && left < 0 && "text-text-negative")}>
+                                {pocket ? (left < 0 ? `${fmt(-left)} over` : `${fmt(left)} left`) : fmt(l.actual)}
                               </span>
                             </span>
                           </div>
@@ -389,11 +415,11 @@ export function BudgetEditor({
 }
 
 /**
- * Month-end close: what's left on Needs and Wants first covers the lines that
- * went over, and the rest moves to a savings pot, so every budget ends at zero.
- * A toolbar button opens it in a popup; from the 28th it's highlighted as a
- * reminder while there's still something to move. The preview uses the saved
- * budget; the server re-plans from the sheet on confirm.
+ * Month-end close. Every Needs and Wants pocket with money left (or gone over)
+ * gets a choice: send it on (leftovers to savings, after covering pockets that
+ * went over) or keep it, so it carries into next month. A toolbar button opens
+ * it in a popup; from the 28th it's highlighted while a pocket isn't at zero.
+ * The preview uses the saved budget; the server re-plans from the sheet on confirm.
  */
 function MonthClose({
   month,
@@ -414,30 +440,50 @@ function MonthClose({
   const fmt = (n: number) => formatMoney(n, money);
   const pots = lines.filter((l) => l.group === "Savings");
   const [saveTo, setSaveTo] = useState(() => [...pots].sort((a, b) => (b.balance ?? 0) - (a.balance ?? 0))[0]?.categoryId ?? "");
-  const [skip, setSkip] = useState<Set<string>>(() => new Set());
+  const [keep, setKeep] = useState<Set<string>>(() => new Set());
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const spending = lines.filter((l) => l.group === "Needs" || l.group === "Wants");
-  const asPlan = (list: EditorLine[]) => list.map((l) => ({ category: { id: l.categoryId, group: l.group }, remaining: l.budget - l.actual }));
-  const leftovers = spending.filter((l) => l.budget - l.actual > 0);
-  const over = spending.filter((l) => l.budget - l.actual < 0);
-  const moves = closeMonthPlan(asPlan(spending.filter((l) => !skip.has(l.categoryId))), saveTo);
+  const pockets = lines
+    .filter(isPocketLine)
+    .map((l) => ({ ...l, left: pocketLeft(l, l.budget) }))
+    .filter((l) => l.left !== 0);
+  const moving = pockets.filter((l) => !keep.has(l.categoryId));
+  const moves = closeMonthPlan(
+    moving.map((l) => ({ category: { id: l.categoryId, group: l.group }, remaining: l.left })),
+    saveTo,
+  );
   const covered = moves.filter((m) => m.reason === "cover").reduce((s, m) => s + m.amount, 0);
   const saved = moves.filter((m) => m.reason === "save").reduce((s, m) => s + m.amount, 0);
-  const stillOver = over.reduce((s, l) => s + (l.actual - l.budget), 0) - covered;
+  const stillOver = moving.filter((l) => l.left < 0).reduce((s, l) => s - l.left, 0) - covered;
+  const keptLeft = pockets.filter((l) => keep.has(l.categoryId)).reduce((s, l) => s + l.left, 0);
   const name = (id: string) => lines.find((l) => l.categoryId === id)?.name ?? "";
-  const todo = leftovers.length > 0 || over.length > 0;
+  const todo = pockets.length > 0;
   const highlight = remind && todo;
-  const left = leftovers.reduce((s, l) => s + (l.budget - l.actual), 0);
+  const left = pockets.filter((l) => l.left > 0).reduce((s, l) => s + l.left, 0);
+  const setChoice = (id: string, k: boolean) =>
+    setKeep((s) => {
+      const next = new Set(s);
+      if (k) next.add(id);
+      else next.delete(id);
+      return next;
+    });
 
-  const book = () =>
+  const book = () => {
+    if (moves.length === 0) {
+      toast("Pockets kept", { status: "success", description: `${fmt(keptLeft)} carries into next month.` });
+      return setOpen(false);
+    }
     startTransition(async () => {
-      const res = await closeMonth(bookId, { month, save_to: saveTo, skip: [...skip] });
+      const res = await closeMonth(bookId, { month, save_to: saveTo, keep: [...keep] });
       if (!res.ok) return void toast("Couldn't close the month", { status: "error", description: res.error });
-      toast(res.data?.saved ? `Moved ${fmt(res.data.saved)} to ${name(saveTo)}` : "Overspending covered", { status: "success" });
+      toast(res.data?.saved ? `Moved ${fmt(res.data.saved)} to ${name(saveTo)}` : "Overspending covered", {
+        status: "success",
+        description: keep.size ? `${keep.size} ${keep.size === 1 ? "pocket keeps" : "pockets keep"} their balance.` : undefined,
+      });
       setOpen(false);
     });
+  };
 
   return (
     <>
@@ -445,7 +491,7 @@ function MonthClose({
         variant={highlight ? "primary" : "secondary"}
         leadingIcon={RiSafe2Line}
         onClick={() => setOpen(true)}
-        aria-description={highlight ? `${fmt(left)} left in ${periodName(month)} to move` : undefined}
+        aria-description={highlight ? `${fmt(left)} left in pockets for ${periodName(month)}` : undefined}
       >
         Close the month
       </Button>
@@ -455,37 +501,40 @@ function MonthClose({
           title={`Close ${periodName(month)}`}
           description={
             todo
-              ? `Leftovers on Needs and Wants first cover what went over budget. The rest goes to savings.${
+              ? `For each pocket, send what's left to savings or keep it for next month. Pockets you send first cover the ones that went over.${
                   daysLeft > 0 ? ` ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left in this period, so it's best done on the last day.` : ""
                 }`
-              : "Every Needs and Wants budget is used up. Nothing to move."
+              : "Every Needs and Wants pocket is at zero. Nothing to move."
           }
         />
         {todo ? (
           <ModalBody className="flex flex-col gap-3">
-            {leftovers.length > 0 ? (
-              <ul className="flex flex-col divide-y divide-separator-border rounded-2xl border border-border-button-default">
-                {leftovers.map((l) => (
-                  <li key={l.categoryId} className="flex items-center justify-between gap-3 px-3 py-2">
-                    <Checkbox
-                      isSelected={!skip.has(l.categoryId)}
-                      onChange={(on) =>
-                        setSkip((s) => {
-                          const next = new Set(s);
-                          if (on) next.delete(l.categoryId);
-                          else next.add(l.categoryId);
-                          return next;
-                        })
-                      }
-                      className="min-h-11 min-w-0 sm:min-h-0"
+            <ul className="flex flex-col divide-y divide-separator-border rounded-2xl border border-border-button-default">
+              {pockets.map((l) => {
+                const kept = keep.has(l.categoryId);
+                return (
+                  <li key={l.categoryId} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
+                    <CategoryIcon name={l.name} emoji={l.emoji} color={l.color} group={l.group} size="sm" />
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-body-medium text-text-primary">{l.name}</span>
+                      <span className={cx("text-caption-1-medium tabular-nums", l.left < 0 ? "text-text-negative" : "text-text-tertiary")}>
+                        {l.left < 0 ? `${fmt(-l.left)} over` : `${fmt(l.left)} left`}
+                        {l.carried ? ` · incl. ${l.carried > 0 ? "" : "−"}${fmt(Math.abs(l.carried))} carried` : ""}
+                      </span>
+                    </div>
+                    <SegmentedControl
+                      aria-label={`${l.name}: what to do with it`}
+                      selectedKeys={[kept ? "keep" : "move"]}
+                      onSelectionChange={(keys) => setChoice(l.categoryId, [...keys][0] === "keep")}
+                      className="max-sm:w-full max-sm:[&>*]:flex-1"
                     >
-                      <span className="truncate">{l.name}</span>
-                    </Checkbox>
-                    <span className="shrink-0 text-body-2-medium text-text-primary tabular-nums">{fmt(l.budget - l.actual)} left</span>
+                      <SegmentedControlItem id="move">{l.left < 0 ? "Cover" : "To savings"}</SegmentedControlItem>
+                      <SegmentedControlItem id="keep">{l.left < 0 ? "Carry" : "Keep"}</SegmentedControlItem>
+                    </SegmentedControl>
                   </li>
-                ))}
-              </ul>
-            ) : null}
+                );
+              })}
+            </ul>
 
             {moves.length > 0 ? (
               <ul className="flex flex-col gap-1.5">
@@ -495,11 +544,7 @@ function MonthClose({
                       <span className="truncate">{name(m.from)}</span>
                       <RiArrowRightLine className="size-3.5 shrink-0 text-foreground-icon-tertiary rtl:rotate-180" aria-label="to" />
                       <span className="truncate text-text-primary">{name(m.to)}</span>
-                      {m.reason === "cover" ? (
-                        <Chip color="yellow" variant="caption">
-                          Covers overspend
-                        </Chip>
-                      ) : null}
+                      {m.reason === "cover" ? <span className="shrink-0 text-caption-1-medium text-text-tertiary">covers overspend</span> : null}
                     </span>
                     <span className="shrink-0 text-body-2-medium text-text-primary tabular-nums">{fmt(m.amount)}</span>
                   </li>
@@ -507,26 +552,35 @@ function MonthClose({
               </ul>
             ) : null}
 
+            {keptLeft !== 0 ? (
+              <p className="text-body-2-regular text-text-secondary">
+                {keptLeft > 0 ? `${fmt(keptLeft)} stays in its pockets for next month.` : `${fmt(-keptLeft)} of overspend carries into next month.`}
+              </p>
+            ) : null}
             {stillOver > 0 ? (
               <p className="text-body-2-medium text-text-error-primary">
-                {fmt(stillOver)} is still over budget with no leftover to cover it. Move it from savings with a transfer if you need to.
+                {fmt(stillOver)} is still over with no leftover to cover it, so it carries into next month. Move money from savings with a transfer if you need to.
               </p>
             ) : null}
 
-            {pots.length > 0 ? (
-              <SelectField
-                label="Send leftovers to"
-                value={saveTo}
-                onChange={setSaveTo}
-                options={pots.map((p) => ({ id: p.categoryId, label: p.name }))}
-              />
-            ) : (
-              <p className="text-body-2-regular text-text-secondary">Add a Savings category to send leftovers to.</p>
-            )}
+            {saved > 0 || moving.some((l) => l.left > 0) ? (
+              pots.length > 0 ? (
+                <SelectField
+                  label="Send leftovers to"
+                  value={saveTo}
+                  onChange={setSaveTo}
+                  options={pots.map((p) => ({ id: p.categoryId, label: p.name }))}
+                />
+              ) : (
+                <p className="text-body-2-regular text-text-secondary">Add a Savings category to send leftovers to.</p>
+              )
+            ) : null}
             {dirty ? <p className="text-body-2-regular text-text-tertiary">Save your budget changes first.</p> : null}
-            <p className="text-caption-1-regular text-text-tertiary">
-              Booked as transfers dated {daysLeft > 0 ? "today" : "the last day of the period"}.
-            </p>
+            {moves.length > 0 ? (
+              <p className="text-caption-1-regular text-text-tertiary">
+                Booked as transfers dated {daysLeft > 0 ? "today" : "the last day of the period"}.
+              </p>
+            ) : null}
           </ModalBody>
         ) : null}
         <ModalFooter>
@@ -534,8 +588,8 @@ function MonthClose({
             {todo ? "Cancel" : "Close"}
           </Button>
           {todo ? (
-            <Button variant="primary" leadingIcon={RiSafe2Line} onClick={book} disabled={pending || dirty || moves.length === 0}>
-              {pending ? "Booking…" : saved > 0 ? `Move ${fmt(saved)} to savings` : "Cover overspend"}
+            <Button variant="primary" leadingIcon={RiSafe2Line} onClick={book} disabled={pending || dirty}>
+              {pending ? "Booking…" : saved > 0 ? `Move ${fmt(saved)} to savings` : moves.length > 0 ? "Cover overspend" : "Keep all"}
             </Button>
           ) : null}
         </ModalFooter>

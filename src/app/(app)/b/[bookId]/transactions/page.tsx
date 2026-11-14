@@ -15,7 +15,9 @@ const str = (v: string | string[] | undefined) => (typeof v === "string" ? v : "
 export default async function TransactionsPage({ params: route, searchParams }: PageProps<"/b/[bookId]/transactions">) {
   const params = await searchParams;
   const data = await loadAppData(await requireBookPage((await route).bookId));
-  const month = monthParam(params.m, data.current.period);
+  // `?txn=<id>` (e.g. from an installment's schedule) opens that transaction in its own period.
+  const focus = data.transactions.find((t) => t.id === str(params.txn));
+  const month = monthParam(params.m, focus ? periodOf(focus.date, data.cutoffDay) : data.current.period);
   const filters = {
     q: str(params.q),
     type: str(params.type),
@@ -55,7 +57,7 @@ export default async function TransactionsPage({ params: route, searchParams }: 
           </>
         }
       />
-      <TransactionsView rows={rows} options={options} filters={filters} />
+      <TransactionsView rows={rows} options={options} filters={filters} focus={focus?.id} />
     </>
   );
 }
